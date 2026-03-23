@@ -3,7 +3,8 @@
     "rootNamespace":  "UnityMCP.Editor",
     "references":  [
                        "VRseBuilder.Core",
-                       "VRseBuilder.Backend.Editor"
+                       "VRseBuilder.Backend.Editor",
+                       "VRseBuilder.Tools.Editor"
                    ],
     "includePlatforms":  [
                              "Editor"

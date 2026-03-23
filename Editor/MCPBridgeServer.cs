@@ -380,6 +380,13 @@ namespace UnityMCP.Editor
                 "vrse/open-menu-scene",
                 "vrse/open-module",
                 "vrse/open-room-manager-config",
+                "vrse/get-selected-project",
+                "vrse/get-project-config",
+                "vrse/ensure-project-settings",
+                "vrse/apply-project-settings",
+                "vrse/open-studio-project-window",
+                "vrse/open-project-config-window",
+                "vrse/open-build-tool",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -931,6 +938,20 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.OpenModule(ParseJson(body));
                 case "vrse/open-room-manager-config":
                     return MCPVRseBuilderCommands.OpenRoomManagerConfig(ParseJson(body));
+                case "vrse/get-selected-project":
+                    return MCPVRseBuilderCommands.GetSelectedProject(ParseJson(body));
+                case "vrse/get-project-config":
+                    return MCPVRseBuilderCommands.GetProjectConfig(ParseJson(body));
+                case "vrse/ensure-project-settings":
+                    return MCPVRseBuilderCommands.EnsureProjectSettings(ParseJson(body));
+                case "vrse/apply-project-settings":
+                    return MCPVRseBuilderCommands.ApplyProjectSettings(ParseJson(body));
+                case "vrse/open-studio-project-window":
+                    return MCPVRseBuilderCommands.OpenStudioProjectWindow(ParseJson(body));
+                case "vrse/open-project-config-window":
+                    return MCPVRseBuilderCommands.OpenProjectConfigWindow(ParseJson(body));
+                case "vrse/open-build-tool":
+                    return MCPVRseBuilderCommands.OpenBuildToolWindow(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":

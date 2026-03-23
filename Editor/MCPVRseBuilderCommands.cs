@@ -10,6 +10,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRseBuilder.Backend.Editor.Auth;
 using VRseBuilder.Core.Framework;
+using VRseBuilder.Tools.Editor;
+using VRseBuilder.Tools.Editor.BuildTool;
 
 namespace UnityMCP.Editor
 {
@@ -379,6 +381,98 @@ namespace UnityMCP.Editor
             };
         }
 
+        public static object GetSelectedProject(Dictionary<string, object> args)
+        {
+            string projectName = GetSelectedProjectName();
+            RoomManagerConfig config = null;
+            bool hasConfig = !string.IsNullOrEmpty(projectName) && TryGetRoomManagerConfig(projectName, out config);
+            bool hasMenuScene = hasConfig && !string.IsNullOrEmpty(config.MainMenuScene) && File.Exists(config.MainMenuScene);
+            return new Dictionary<string, object>
+            {
+                { "selectedProject", projectName },
+                { "hasRoomManagerConfig", hasConfig },
+                { "hasMenuScene", hasMenuScene }
+            };
+        }
+
+        public static object GetProjectConfig(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
+                return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
+
+            return new Dictionary<string, object>
+            {
+                { "projectName", projectName },
+                { "projectId", roomManagerConfig.ProjectID },
+                { "mainMenuScene", roomManagerConfig.MainMenuScene },
+                { "liveLinkEnabled", roomManagerConfig.LiveLinkEnabled },
+                { "useCustomAvatars", roomManagerConfig.UseCustomAvatars },
+                { "stepNavigationDataEnabled", roomManagerConfig.StepNavigationDataEnabled },
+                { "moduleCount", roomManagerConfig.experiences != null ? roomManagerConfig.experiences.Length : 0 },
+                { "photonAppSettings", roomManagerConfig.photonAppSettings },
+                { "loginAccessSettings", roomManagerConfig.loginAccessSettings },
+                { "buildSettings", roomManagerConfig.buildSettings },
+                { "ttsSettings", roomManagerConfig.ttsSettings }
+            };
+        }
+
+        public static object EnsureProjectSettings(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            bool created = VRseProjectWindowProjectSettingsController.EnsureProjectSettingsExist(projectName);
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "projectName", projectName },
+                { "newSettingsCreated", created }
+            };
+        }
+
+        public static object ApplyProjectSettings(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            return VRseProjectConfigAutoApply.AutoApplyAllSettingsOnProjectChange(projectName);
+        }
+
+        public static object OpenStudioProjectWindow(Dictionary<string, object> args)
+        {
+            VRseProjectWindowUI.ShowWindow();
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "window", "VRse Studio Projects" }
+            };
+        }
+
+        public static object OpenProjectConfigWindow(Dictionary<string, object> args)
+        {
+            VRseProjectConfigWindow.ShowWindow();
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "window", "VRse Project Config" }
+            };
+        }
+
+        public static object OpenBuildToolWindow(Dictionary<string, object> args)
+        {
+            VRseBuildToolWindow.ShowWindow();
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "window", "VRse Build Tool" }
+            };
+        }
         private static string ResolveProjectName(Dictionary<string, object> args)
         {
             string requestedProject = args.ContainsKey("projectName") ? args["projectName"]?.ToString()?.Trim() : string.Empty;
