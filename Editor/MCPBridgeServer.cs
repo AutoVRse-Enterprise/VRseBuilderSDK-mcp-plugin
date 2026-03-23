@@ -371,6 +371,15 @@ namespace UnityMCP.Editor
                 "prefab/info", "prefab/set-object-reference",
                 "packages/list", "packages/add", "packages/remove", "packages/search", "packages/info",
                 "project/info",
+                // VRseBuilder
+                "vrse/status",
+                "vrse/login",
+                "vrse/list-projects",
+                "vrse/select-project",
+                "vrse/list-modules",
+                "vrse/open-menu-scene",
+                "vrse/open-module",
+                "vrse/open-room-manager-config",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -905,6 +914,23 @@ namespace UnityMCP.Editor
                     return MCPSearchCommands.FindMissingReferences(ParseJson(body));
                 case "search/scene-stats":
                     return MCPSearchCommands.GetSceneStats(ParseJson(body));
+                // VRseBuilder SDK
+                case "vrse/status":
+                    return MCPVRseBuilderCommands.GetStatus(ParseJson(body));
+                case "vrse/login":
+                    return MCPVRseBuilderCommands.Login(ParseJson(body));
+                case "vrse/list-projects":
+                    return MCPVRseBuilderCommands.ListProjects(ParseJson(body));
+                case "vrse/select-project":
+                    return MCPVRseBuilderCommands.SelectProject(ParseJson(body));
+                case "vrse/list-modules":
+                    return MCPVRseBuilderCommands.ListModules(ParseJson(body));
+                case "vrse/open-menu-scene":
+                    return MCPVRseBuilderCommands.OpenMenuScene(ParseJson(body));
+                case "vrse/open-module":
+                    return MCPVRseBuilderCommands.OpenModule(ParseJson(body));
+                case "vrse/open-room-manager-config":
+                    return MCPVRseBuilderCommands.OpenRoomManagerConfig(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":
