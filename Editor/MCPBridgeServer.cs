@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -387,6 +387,14 @@ namespace UnityMCP.Editor
                 "vrse/open-studio-project-window",
                 "vrse/open-project-config-window",
                 "vrse/open-build-tool",
+                "vrse/create-experience",
+                "vrse/get-experience-creation-status",
+                "vrse/open-art-scene",
+                "vrse/story-add-trigger-set",
+                "vrse/story-add-action",
+                "vrse/story-update-node",
+                "vrse/story-save",
+                "vrse/story-validate",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -952,6 +960,22 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.OpenProjectConfigWindow(ParseJson(body));
                 case "vrse/open-build-tool":
                     return MCPVRseBuilderCommands.OpenBuildToolWindow(ParseJson(body));
+                case "vrse/create-experience":
+                    return MCPVRseBuilderCommands.CreateExperience(ParseJson(body));
+                case "vrse/get-experience-creation-status":
+                    return MCPVRseBuilderCommands.GetExperienceCreationStatus(ParseJson(body));
+                case "vrse/open-art-scene":
+                    return MCPVRseBuilderCommands.OpenArtScene(ParseJson(body));
+                case "vrse/story-add-trigger-set":
+                    return MCPVRseBuilderCommands.StoryAddTriggerSet(ParseJson(body));
+                case "vrse/story-add-action":
+                    return MCPVRseBuilderCommands.StoryAddAction(ParseJson(body));
+                case "vrse/story-update-node":
+                    return MCPVRseBuilderCommands.StoryUpdateNode(ParseJson(body));
+                case "vrse/story-save":
+                    return MCPVRseBuilderCommands.StorySave(ParseJson(body));
+                case "vrse/story-validate":
+                    return MCPVRseBuilderCommands.StoryValidate(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":

@@ -1,9 +1,11 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Text;
+using Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -473,6 +475,948 @@ namespace UnityMCP.Editor
                 { "window", "VRse Build Tool" }
             };
         }
+
+        public static object CreateExperience(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            string moduleName = GetStringArg(args, "moduleName");
+            string experienceName = GetStringArg(args, "experienceName");
+            string moduleId = GetStringArg(args, "moduleId");
+            string experienceId = GetStringArg(args, "experienceId");
+            string jsonFileUrl = GetStringArg(args, "jsonFileUrl");
+
+            if (string.IsNullOrEmpty(moduleName) || string.IsNullOrEmpty(experienceName))
+                return new { error = "moduleName and experienceName are required." };
+
+            if (string.IsNullOrEmpty(jsonFileUrl))
+                jsonFileUrl = ResolveExperienceJsonFileUrl(projectName, args);
+
+            if (string.IsNullOrEmpty(jsonFileUrl))
+                return new { error = "jsonFileUrl is required, or the experience must be resolvable from the logged-in backend project." };
+
+            if (!Uri.TryCreate(jsonFileUrl, UriKind.Absolute, out Uri jsonUri) ||
+                (jsonUri.Scheme != Uri.UriSchemeHttp && jsonUri.Scheme != Uri.UriSchemeHttps))
+            {
+                return new { error = "jsonFileUrl must be an absolute http or https URL." };
+            }
+
+            ModuleData.ExperienceType experienceType = ResolveExperienceType(args);
+            var controller = new VRseProjectWindowController();
+
+            try
+            {
+                controller.CreateExperienceDevScene(projectName, moduleName, experienceName, jsonFileUrl, moduleId, experienceId, experienceType);
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Experience creation failed: {ex.Message}" };
+            }
+
+            AssetDatabase.Refresh();
+
+            TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig);
+            ModuleData module = roomManagerConfig != null ? ResolveModule(roomManagerConfig, args) : null;
+            ModuleData.ExperienceData experience = module != null ? ResolveExperience(module, args) : null;
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "projectName", projectName },
+                { "jsonFileUrl", jsonFileUrl },
+                { "module", BuildModulePayload(module, moduleId, moduleName) },
+                { "experience", BuildExperiencePayload(experience, experienceId, experienceName, experienceType) },
+                { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) },
+                { "warning", experience == null ? "The creation flow ran, but the experience could not be resolved from RoomManagerConfig. Provide moduleId and experienceId for reliable config tracking." : null }
+            };
+        }
+
+        public static object GetExperienceCreationStatus(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
+                return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
+
+            ModuleData module = ResolveModule(roomManagerConfig, args);
+            if (module == null)
+                return new { error = "Module not found. Provide moduleId or moduleName." };
+
+            ModuleData.ExperienceData experience = ResolveExperience(module, args);
+            if (experience == null)
+                return new { error = "Experience not found. Provide experienceId, experienceName, or experienceType." };
+
+            return new Dictionary<string, object>
+            {
+                { "projectName", projectName },
+                { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
+                { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
+                { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) }
+            };
+        }
+
+        public static object OpenArtScene(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
+                return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
+
+            ModuleData module = ResolveModule(roomManagerConfig, args);
+            if (module == null)
+                return new { error = "Module not found. Provide moduleId or moduleName." };
+
+            ModuleData.ExperienceData experience = ResolveExperience(module, args);
+            if (experience == null)
+                return new { error = "Experience not found. Provide experienceId, experienceName, or experienceType." };
+
+            if (string.IsNullOrEmpty(experience.ArtScene))
+            {
+                return new Dictionary<string, object>
+                {
+                    { "error", $"Experience '{experience.Name}' does not have an art scene configured." },
+                    { "projectName", projectName },
+                    { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
+                    { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
+                    { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) }
+                };
+            }
+
+            if (!File.Exists(experience.ArtScene))
+            {
+                return new Dictionary<string, object>
+                {
+                    { "error", $"Art scene file does not exist: {experience.ArtScene}" },
+                    { "projectName", projectName },
+                    { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
+                    { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
+                    { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) }
+                };
+            }
+
+            Scene artScene = EditorSceneManager.OpenScene(experience.ArtScene, OpenSceneMode.Additive);
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "projectName", projectName },
+                { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
+                { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
+                { "artScenePath", experience.ArtScene },
+                { "openedSceneName", artScene.name }
+            };
+        }
+
+        public static object StoryAddTriggerSet(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string section = NormalizeSectionName(GetStringArg(args, "section"));
+            if (section != "onWrong" && section != "onRight")
+                return new { error = "section must be 'onWrong' or 'onRight'." };
+
+            var newTriggerActionSet = new TriggerActionSet
+            {
+                trigger = CreateDefaultNode(isAction: false),
+                actions = new Node[0]
+            };
+
+            int triggerSetIndex;
+            if (section == "onWrong")
+            {
+                if (moment.onWrong == null)
+                    moment.onWrong = new TriggerActionSet[0];
+
+                Array.Resize(ref moment.onWrong, moment.onWrong.Length + 1);
+                triggerSetIndex = moment.onWrong.Length - 1;
+                moment.onWrong[triggerSetIndex] = newTriggerActionSet;
+            }
+            else
+            {
+                if (moment.onRight == null)
+                {
+                    moment.onRight = new TriggerActionSetsWithMode
+                    {
+                        mode = string.IsNullOrEmpty(GetStringArg(args, "mode")) ? _Constants.IN_ORDER : GetStringArg(args, "mode"),
+                        triggerActionSets = new TriggerActionSet[0]
+                    };
+                }
+
+                if (moment.onRight.triggerActionSets == null)
+                    moment.onRight.triggerActionSets = new TriggerActionSet[0];
+
+                if (string.IsNullOrEmpty(moment.onRight.mode))
+                    moment.onRight.mode = string.IsNullOrEmpty(GetStringArg(args, "mode")) ? _Constants.IN_ORDER : GetStringArg(args, "mode");
+
+                Array.Resize(ref moment.onRight.triggerActionSets, moment.onRight.triggerActionSets.Length + 1);
+                triggerSetIndex = moment.onRight.triggerActionSets.Length - 1;
+                moment.onRight.triggerActionSets[triggerSetIndex] = newTriggerActionSet;
+            }
+
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "section", section },
+                { "triggerSetIndex", triggerSetIndex },
+                { "trigger", SerializeNode(newTriggerActionSet.trigger) },
+                { "actionCount", 0 }
+            };
+        }
+
+        public static object StoryAddAction(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string section = NormalizeSectionName(GetStringArg(args, "section"));
+            Node newNode = CreateDefaultNode(isAction: true);
+            int nodeIndex;
+
+            if (IsSimpleActionSection(section))
+            {
+                ActionSet actionSet = GetOrCreateActionSet(moment, section);
+                if (actionSet.actions == null)
+                    actionSet.actions = new Node[0];
+
+                Array.Resize(ref actionSet.actions, actionSet.actions.Length + 1);
+                nodeIndex = actionSet.actions.Length - 1;
+                actionSet.actions[nodeIndex] = newNode;
+            }
+            else if (section == "onWrong" || section == "onRight")
+            {
+                int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
+                if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out string triggerSetError))
+                    return new { error = triggerSetError };
+
+                if (triggerActionSet.actions == null)
+                    triggerActionSet.actions = new Node[0];
+
+                Array.Resize(ref triggerActionSet.actions, triggerActionSet.actions.Length + 1);
+                nodeIndex = triggerActionSet.actions.Length - 1;
+                triggerActionSet.actions[nodeIndex] = newNode;
+
+                MarkStoryChanged(storyCreator);
+
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "chapterIndex", chapterIndex },
+                    { "momentIndex", momentIndex },
+                    { "section", section },
+                    { "triggerSetIndex", triggerSetIndex },
+                    { "nodeIndex", nodeIndex },
+                    { "node", SerializeNode(newNode) }
+                };
+            }
+            else
+            {
+                return new { error = "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight." };
+            }
+
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "section", section },
+                { "nodeIndex", nodeIndex },
+                { "node", SerializeNode(newNode) }
+            };
+        }
+
+        public static object StoryUpdateNode(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string section = NormalizeSectionName(GetStringArg(args, "section"));
+            string nodeKind = GetStringArg(args, "nodeKind");
+            int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
+            int nodeIndex = GetIntArg(args, "nodeIndex", -1);
+
+            if (!TryResolveNode(moment, section, nodeKind, triggerSetIndex, nodeIndex, out Node node, out string nodeError))
+                return new { error = nodeError };
+
+            if (args.ContainsKey("name"))
+                node.Name = args["name"]?.ToString() ?? string.Empty;
+
+            if (args.ContainsKey("option"))
+                node.Option = args["option"]?.ToString() ?? string.Empty;
+
+            if (args.ContainsKey("query"))
+                node.Query = args["query"]?.ToString() ?? string.Empty;
+
+            if (args.ContainsKey("data"))
+                node.Data = args["data"]?.ToString() ?? string.Empty;
+
+            if (args.ContainsKey("type"))
+                node.Type = ParseNodeTypeArg(args["type"], node.Type);
+
+            if (GetBoolArg(args, "clearTargetGameObject", false))
+            {
+                node.TargetGameObject = null;
+                node.Query = string.Empty;
+            }
+
+            string targetSpecifier = GetStringArg(args, "targetGameObjectPath");
+            if (string.IsNullOrEmpty(targetSpecifier))
+                targetSpecifier = GetStringArg(args, "targetGameObjectName");
+
+            if (!string.IsNullOrEmpty(targetSpecifier))
+            {
+                GameObject targetGameObject = GameObject.Find(targetSpecifier);
+                if (targetGameObject == null)
+                    return new { error = $"Target GameObject not found in the open scene(s): {targetSpecifier}" };
+
+                SetNodeTargetGameObject(node, targetGameObject);
+            }
+
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "section", section },
+                { "triggerSetIndex", triggerSetIndex },
+                { "nodeIndex", nodeIndex },
+                { "nodeKind", string.IsNullOrEmpty(nodeKind) ? "action" : nodeKind },
+                { "node", SerializeNode(node) }
+            };
+        }
+
+        public static object StorySave(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            try
+            {
+                storyCreator.SaveToJSONFile();
+                AssetDatabase.Refresh();
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Failed to save story JSON: {ex.Message}" };
+            }
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "storyCreator", storyCreator.gameObject.name },
+                { "fileName", storyCreator._fileName },
+                { "filePath", storyCreator._FilePath },
+                { "isSavedToFile", storyCreator.GetIsStorySavedToFileCached() }
+            };
+        }
+
+        public static object StoryValidate(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            if (storyCreator._story == null)
+                return new { error = "The active StoryCreator does not have a story loaded." };
+
+            try
+            {
+                if (GetBoolArg(args, "autoAssignDefaultTargets", true))
+                {
+                    var helper = new DataVrseHelper();
+                    helper.AutoAssignDefaultNodeTargetObjects(storyCreator._story);
+                }
+
+                Type validatorType = typeof(StoryReportEditor).GetNestedType("StoryFlowValidator", BindingFlags.NonPublic);
+                if (validatorType == null)
+                    return new { error = "Could not locate the StoryFlowValidator implementation." };
+
+                object validatorInstance = Activator.CreateInstance(validatorType, true);
+                MethodInfo validateMethod = validatorType.GetMethod("Validate", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                if (validateMethod == null)
+                    return new { error = "Could not locate StoryFlowValidator.Validate." };
+
+                var validationResult = validateMethod.Invoke(validatorInstance, new object[] { storyCreator._story })
+                    as Dictionary<Moment, Dictionary<string, List<string>>>;
+
+                if (validationResult == null)
+                    validationResult = new Dictionary<Moment, Dictionary<string, List<string>>>();
+
+                List<object> issues = BuildValidationIssues(storyCreator._story, validationResult);
+                int totalIssueCount = issues
+                    .OfType<Dictionary<string, object>>()
+                    .Sum(entry => entry.ContainsKey("issueCount") ? Convert.ToInt32(entry["issueCount"]) : 0);
+
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "storyCreator", storyCreator.gameObject.name },
+                    { "isValid", totalIssueCount == 0 },
+                    { "totalMomentsWithIssues", issues.Count },
+                    { "totalIssueCount", totalIssueCount },
+                    { "issues", issues }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Story validation failed: {ex.Message}" };
+            }
+        }
+
+        private static string GetStringArg(Dictionary<string, object> args, string key)
+        {
+            return args.ContainsKey(key) ? args[key]?.ToString()?.Trim() ?? string.Empty : string.Empty;
+        }
+
+        private static int GetIntArg(Dictionary<string, object> args, string key, int defaultValue)
+        {
+            if (!args.ContainsKey(key) || args[key] == null)
+                return defaultValue;
+
+            object value = args[key];
+            if (value is long longValue)
+                return (int)longValue;
+            if (value is int intValue)
+                return intValue;
+            if (value is double doubleValue)
+                return (int)doubleValue;
+
+            return int.TryParse(value.ToString(), out int parsed) ? parsed : defaultValue;
+        }
+
+        private static bool GetBoolArg(Dictionary<string, object> args, string key, bool defaultValue)
+        {
+            if (!args.ContainsKey(key) || args[key] == null)
+                return defaultValue;
+
+            object value = args[key];
+            if (value is bool boolValue)
+                return boolValue;
+
+            return bool.TryParse(value.ToString(), out bool parsed) ? parsed : defaultValue;
+        }
+
+        private static ModuleData.ExperienceType ResolveExperienceType(Dictionary<string, object> args)
+        {
+            string experienceType = GetStringArg(args, "experienceType");
+            return Enum.TryParse(experienceType, true, out ModuleData.ExperienceType parsedType)
+                ? parsedType
+                : ModuleData.ExperienceType.Training;
+        }
+
+        private static byte ParseNodeTypeArg(object rawType, byte defaultValue)
+        {
+            if (rawType == null)
+                return defaultValue;
+
+            if (rawType is long longValue)
+                return (byte)longValue;
+            if (rawType is int intValue)
+                return (byte)intValue;
+
+            string typeText = rawType.ToString()?.Trim() ?? string.Empty;
+            if (byte.TryParse(typeText, out byte numericType))
+                return numericType;
+
+            if (string.Equals(typeText, "action", StringComparison.OrdinalIgnoreCase))
+                return (byte)_Constants.ACTION_TYPE;
+
+            if (string.Equals(typeText, "trigger", StringComparison.OrdinalIgnoreCase))
+                return (byte)_Constants.TRIGGER_TYPE;
+
+            return defaultValue;
+        }
+
+        private static StoryCreator FindStoryCreator(Dictionary<string, object> args)
+        {
+            string storyCreatorName = GetStringArg(args, "storyCreatorName");
+            IEnumerable<StoryCreator> storyCreators = Resources.FindObjectsOfTypeAll<StoryCreator>()
+                .Where(candidate => candidate != null && candidate.gameObject.scene.IsValid() && candidate.gameObject.scene.isLoaded);
+
+            if (!string.IsNullOrEmpty(storyCreatorName))
+            {
+                return storyCreators.FirstOrDefault(candidate =>
+                    string.Equals(candidate.gameObject.name, storyCreatorName, StringComparison.OrdinalIgnoreCase));
+            }
+
+            return storyCreators.FirstOrDefault();
+        }
+
+        private static bool TryResolveMoment(Dictionary<string, object> args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error)
+        {
+            storyCreator = FindStoryCreator(args);
+            moment = null;
+            chapterIndex = GetIntArg(args, "chapterIndex", -1);
+            momentIndex = GetIntArg(args, "momentIndex", -1);
+            error = null;
+
+            if (storyCreator == null)
+            {
+                error = "No StoryCreator found in the loaded scenes.";
+                return false;
+            }
+
+            if (storyCreator._story?.chapters == null || storyCreator._story.chapters.Length == 0)
+            {
+                error = "The active StoryCreator does not have any chapters loaded.";
+                return false;
+            }
+
+            if (chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
+            {
+                error = $"chapterIndex is out of range. Valid range: 0-{storyCreator._story.chapters.Length - 1}.";
+                return false;
+            }
+
+            Chapter chapter = storyCreator._story.chapters[chapterIndex];
+            if (chapter?.moments == null || chapter.moments.Length == 0)
+            {
+                error = $"Chapter {chapterIndex} does not contain any moments.";
+                return false;
+            }
+
+            if (momentIndex < 0 || momentIndex >= chapter.moments.Length)
+            {
+                error = $"momentIndex is out of range for chapter {chapterIndex}. Valid range: 0-{chapter.moments.Length - 1}.";
+                return false;
+            }
+
+            moment = chapter.moments[momentIndex];
+            if (moment == null)
+            {
+                error = $"Moment {momentIndex} in chapter {chapterIndex} is null.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool IsSimpleActionSection(string section)
+        {
+            return section == "onAwake" ||
+                   section == "onStart" ||
+                   section == "onFirstWarning" ||
+                   section == "onLastWarning" ||
+                   section == "onEnd";
+        }
+
+        private static ActionSet GetOrCreateActionSet(Moment moment, string section)
+        {
+            switch (section)
+            {
+                case "onAwake":
+                    if (moment.onAwake == null) moment.onAwake = new ActionSet { actions = new Node[0] };
+                    return moment.onAwake;
+                case "onStart":
+                    if (moment.onStart == null) moment.onStart = new ActionSet { actions = new Node[0] };
+                    return moment.onStart;
+                case "onFirstWarning":
+                    if (moment.onFirstWarning == null) moment.onFirstWarning = new ActionSet { actions = new Node[0] };
+                    return moment.onFirstWarning;
+                case "onLastWarning":
+                    if (moment.onLastWarning == null) moment.onLastWarning = new ActionSet { actions = new Node[0] };
+                    return moment.onLastWarning;
+                case "onEnd":
+                    if (moment.onEnd == null) moment.onEnd = new ActionSet { actions = new Node[0] };
+                    return moment.onEnd;
+                default:
+                    return null;
+            }
+        }
+
+        private static bool TryGetTriggerActionSet(Moment moment, string section, int triggerSetIndex, out TriggerActionSet triggerActionSet, out string error)
+        {
+            triggerActionSet = null;
+            error = null;
+
+            if (triggerSetIndex < 0)
+            {
+                error = "triggerSetIndex is required for onWrong and onRight sections.";
+                return false;
+            }
+
+            TriggerActionSet[] sets = null;
+            if (section == "onWrong")
+            {
+                sets = moment.onWrong;
+            }
+            else if (section == "onRight")
+            {
+                sets = moment.onRight?.triggerActionSets;
+            }
+
+            if (sets == null || sets.Length == 0)
+            {
+                error = $"Section '{section}' does not contain any trigger sets.";
+                return false;
+            }
+
+            if (triggerSetIndex >= sets.Length)
+            {
+                error = $"triggerSetIndex is out of range for section '{section}'. Valid range: 0-{sets.Length - 1}.";
+                return false;
+            }
+
+            triggerActionSet = sets[triggerSetIndex];
+            if (triggerActionSet == null)
+            {
+                error = $"Trigger set {triggerSetIndex} in section '{section}' is null.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool TryResolveNode(Moment moment, string section, string nodeKind, int triggerSetIndex, int nodeIndex, out Node node, out string error)
+        {
+            node = null;
+            error = null;
+
+            if (IsSimpleActionSection(section))
+            {
+                ActionSet actionSet = GetOrCreateActionSet(moment, section);
+                if (actionSet?.actions == null || actionSet.actions.Length == 0)
+                {
+                    error = $"Section '{section}' does not contain any actions.";
+                    return false;
+                }
+
+                if (nodeIndex < 0 || nodeIndex >= actionSet.actions.Length)
+                {
+                    error = $"nodeIndex is out of range for section '{section}'. Valid range: 0-{actionSet.actions.Length - 1}.";
+                    return false;
+                }
+
+                node = actionSet.actions[nodeIndex];
+                return true;
+            }
+
+            if (section != "onWrong" && section != "onRight")
+            {
+                error = "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight.";
+                return false;
+            }
+
+            if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out error))
+                return false;
+
+            string normalizedNodeKind = string.IsNullOrEmpty(nodeKind) ? "action" : nodeKind.Trim().ToLowerInvariant();
+            if (normalizedNodeKind == "trigger")
+            {
+                node = triggerActionSet.trigger;
+                if (node == null)
+                {
+                    error = $"Trigger set {triggerSetIndex} in section '{section}' does not have a trigger node.";
+                    return false;
+                }
+
+                return true;
+            }
+
+            if (triggerActionSet.actions == null || triggerActionSet.actions.Length == 0)
+            {
+                error = $"Trigger set {triggerSetIndex} in section '{section}' does not contain any actions.";
+                return false;
+            }
+
+            if (nodeIndex < 0 || nodeIndex >= triggerActionSet.actions.Length)
+            {
+                error = $"nodeIndex is out of range for trigger set {triggerSetIndex} in section '{section}'. Valid range: 0-{triggerActionSet.actions.Length - 1}.";
+                return false;
+            }
+
+            node = triggerActionSet.actions[nodeIndex];
+            return true;
+        }
+
+        private static string NormalizeSectionName(string section)
+        {
+            string normalized = (section ?? string.Empty)
+                .Trim()
+                .Replace("-", string.Empty)
+                .Replace("_", string.Empty)
+                .ToLowerInvariant();
+
+            switch (normalized)
+            {
+                case "onawake": return "onAwake";
+                case "onstart": return "onStart";
+                case "onwrong": return "onWrong";
+                case "onright": return "onRight";
+                case "onfirstwarning": return "onFirstWarning";
+                case "onlastwarning": return "onLastWarning";
+                case "onend": return "onEnd";
+                default: return section;
+            }
+        }
+
+        private static Node CreateDefaultNode(bool isAction)
+        {
+            string defaultName = isAction ? "Objects" : "GrabbableTrigger";
+            var node = new Node
+            {
+                Name = defaultName,
+                Type = (byte)(isAction ? _Constants.ACTION_TYPE : _Constants.TRIGGER_TYPE),
+                Query = string.Empty,
+                Option = isAction ? "Spawn" : string.Empty,
+                Data = "{}",
+                TargetGameObject = null
+            };
+
+            NodeTemplatesData nodeTemplatesData = LoadNodeTemplatesData();
+            NodeTemplatesData.NodeData template = nodeTemplatesData != null ? nodeTemplatesData.GetNodeTemplate(defaultName) : null;
+            if (template != null && template.Options != null && template.Options.Count > 0)
+            {
+                NodeTemplatesData.OptionData option = template.Options.FirstOrDefault(currentOption => !string.IsNullOrWhiteSpace(currentOption.Name));
+                if (option != null)
+                {
+                    node.Option = option.Name;
+                    var data = new Dictionary<string, object>();
+                    foreach (NodeTemplatesData.ParameterData parameter in option.Parameters)
+                    {
+                        data[parameter.Key] = parameter.DefaultValue ?? string.Empty;
+                    }
+                    node.Data = JsonConvert.SerializeObject(data);
+                }
+            }
+
+            return node;
+        }
+
+        private static NodeTemplatesData LoadNodeTemplatesData()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:NodeTemplatesData");
+            if (guids == null || guids.Length == 0)
+                return null;
+
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            NodeTemplatesData nodeTemplatesData = AssetDatabase.LoadAssetAtPath<NodeTemplatesData>(path);
+            if (nodeTemplatesData != null)
+                nodeTemplatesData.OnValidate();
+            return nodeTemplatesData;
+        }
+
+        private static void SetNodeTargetGameObject(Node node, GameObject targetGameObject)
+        {
+            node.TargetGameObject = targetGameObject;
+
+            QueryObjectsIdManager queryObjectsIdManager = UnityEngine.Object.FindObjectOfType<QueryObjectsIdManager>();
+            if (queryObjectsIdManager != null)
+            {
+                node.Query = queryObjectsIdManager.GetQueryObjectNameWithId(targetGameObject);
+            }
+            else
+            {
+                node.Query = targetGameObject != null ? targetGameObject.name : string.Empty;
+            }
+        }
+
+        private static void MarkStoryChanged(StoryCreator storyCreator)
+        {
+            if (storyCreator == null)
+                return;
+
+            if (storyCreator._story != null)
+                storyCreator._story.AssignChapterAndMomentIndex();
+            storyCreator.InvalidateIsStorySavedToFileCache();
+
+            ReferenceManager referenceManager = UnityEngine.Object.FindObjectOfType<ReferenceManager>();
+            if (referenceManager != null)
+                referenceManager.OnStoryChangedFromInspector();
+
+            EditorUtility.SetDirty(storyCreator);
+            if (storyCreator.gameObject.scene.IsValid())
+                EditorSceneManager.MarkSceneDirty(storyCreator.gameObject.scene);
+        }
+
+        private static Dictionary<string, object> SerializeNode(Node node)
+        {
+            return new Dictionary<string, object>
+            {
+                { "name", node?.Name },
+                { "option", node?.Option },
+                { "query", node?.Query },
+                { "data", node?.Data },
+                { "type", node != null ? node.Type : (byte)0 },
+                { "targetGameObject", node?.TargetGameObject != null ? node.TargetGameObject.name : null }
+            };
+        }
+
+        private static Dictionary<string, object> BuildModulePayload(ModuleData module, string fallbackModuleId, string fallbackModuleName)
+        {
+            return new Dictionary<string, object>
+            {
+                { "id", module != null ? module.ModuleId : fallbackModuleId },
+                { "name", module != null ? module.GetModuleName() : fallbackModuleName }
+            };
+        }
+
+        private static Dictionary<string, object> BuildExperiencePayload(ModuleData.ExperienceData experience, string fallbackExperienceId, string fallbackExperienceName, ModuleData.ExperienceType fallbackType)
+        {
+            return new Dictionary<string, object>
+            {
+                { "id", experience != null ? experience.ExperienceId : fallbackExperienceId },
+                { "name", experience != null ? experience.Name : fallbackExperienceName },
+                { "type", experience != null ? experience.Type.ToString() : fallbackType.ToString() }
+            };
+        }
+
+        private static Dictionary<string, object> BuildExperienceCreationStatus(string projectName, ModuleData module, ModuleData.ExperienceData experience)
+        {
+            if (experience == null)
+            {
+                return new Dictionary<string, object>
+                {
+                    { "projectName", projectName },
+                    { "moduleFound", module != null },
+                    { "experienceFound", false }
+                };
+            }
+
+            string storyJsonAbsolutePath = GetAbsoluteStoryJsonPath(experience.StoryJsonPath);
+            bool storyJsonExists = !string.IsNullOrEmpty(storyJsonAbsolutePath) && File.Exists(storyJsonAbsolutePath);
+            bool devSceneExists = !string.IsNullOrEmpty(experience.DevScene) && File.Exists(experience.DevScene);
+            bool artSceneExists = !string.IsNullOrEmpty(experience.ArtScene) && File.Exists(experience.ArtScene);
+
+            return new Dictionary<string, object>
+            {
+                { "projectName", projectName },
+                { "moduleFound", module != null },
+                { "experienceFound", true },
+                { "moduleId", module?.ModuleId },
+                { "moduleName", module?.GetModuleName() },
+                { "experienceId", experience.ExperienceId },
+                { "experienceName", experience.Name },
+                { "experienceType", experience.Type.ToString() },
+                { "jsonUrl", experience.JsonUrl },
+                { "storyJsonPath", experience.StoryJsonPath },
+                { "storyJsonAbsolutePath", storyJsonAbsolutePath },
+                { "storyJsonExists", storyJsonExists },
+                { "devScenePath", experience.DevScene },
+                { "devSceneExists", devSceneExists },
+                { "artScenePath", experience.ArtScene },
+                { "artSceneExists", artSceneExists },
+                { "isFullyConfigured", storyJsonExists && devSceneExists && artSceneExists }
+            };
+        }
+
+        private static string GetAbsoluteStoryJsonPath(string storyJsonPath)
+        {
+            if (string.IsNullOrEmpty(storyJsonPath))
+                return null;
+
+            if (Path.IsPathRooted(storyJsonPath))
+                return storyJsonPath;
+
+            string trimmed = storyJsonPath.TrimStart('/', '\\');
+            return Path.Combine(Application.streamingAssetsPath, trimmed).Replace("\\", "/");
+        }
+
+        private static string ResolveExperienceJsonFileUrl(string projectName, Dictionary<string, object> args)
+        {
+            if (!AuthUtility.IsLoggedIn())
+                return null;
+
+            try
+            {
+                AccessModulesResponse response = FetchAccessModules();
+                if (response?.projects == null)
+                    return null;
+
+                string projectId = GetStringArg(args, "projectId");
+                AccessProject remoteProject = response.projects.FirstOrDefault(project =>
+                    (!string.IsNullOrEmpty(projectId) && string.Equals(project._id, projectId, StringComparison.OrdinalIgnoreCase)) ||
+                    string.Equals(project.name, projectName, StringComparison.OrdinalIgnoreCase));
+
+                if (remoteProject?.modules == null)
+                    return null;
+
+                string moduleId = GetStringArg(args, "moduleId");
+                string moduleName = GetStringArg(args, "moduleName");
+                AccessModule remoteModule = remoteProject.modules.FirstOrDefault(module =>
+                    (!string.IsNullOrEmpty(moduleId) && string.Equals(module._id, moduleId, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(moduleName) && string.Equals(module.name, moduleName, StringComparison.OrdinalIgnoreCase)));
+
+                if (remoteModule?.experiences == null)
+                    return null;
+
+                string experienceId = GetStringArg(args, "experienceId");
+                string experienceName = GetStringArg(args, "experienceName");
+                ModuleData.ExperienceType experienceType = ResolveExperienceType(args);
+                AccessExperience remoteExperience = remoteModule.experiences.FirstOrDefault(experience =>
+                    (!string.IsNullOrEmpty(experienceId) && string.Equals(experience._id, experienceId, StringComparison.OrdinalIgnoreCase)) ||
+                    (!string.IsNullOrEmpty(experienceName) && string.Equals(experience.name, experienceName, StringComparison.OrdinalIgnoreCase)) ||
+                    string.Equals(experience.type, experienceType.ToString(), StringComparison.OrdinalIgnoreCase));
+
+                return remoteExperience?.jsonFileUrl;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static List<object> BuildValidationIssues(Story story, Dictionary<Moment, Dictionary<string, List<string>>> validationResult)
+        {
+            var issues = new List<object>();
+            if (story?.chapters == null)
+                return issues;
+
+            for (int chapterIndex = 0; chapterIndex < story.chapters.Length; chapterIndex++)
+            {
+                Chapter chapter = story.chapters[chapterIndex];
+                if (chapter?.moments == null)
+                    continue;
+
+                for (int momentIndex = 0; momentIndex < chapter.moments.Length; momentIndex++)
+                {
+                    Moment moment = chapter.moments[momentIndex];
+                    if (moment == null || !validationResult.TryGetValue(moment, out Dictionary<string, List<string>> momentIssues) || momentIssues == null || momentIssues.Count == 0)
+                        continue;
+
+                    var sections = new List<object>();
+                    int issueCount = 0;
+                    foreach (KeyValuePair<string, List<string>> entry in momentIssues)
+                    {
+                        List<string> messages = entry.Value ?? new List<string>();
+                        issueCount += messages.Count;
+                        sections.Add(new Dictionary<string, object>
+                        {
+                            { "section", entry.Key },
+                            { "messages", messages }
+                        });
+                    }
+
+                    issues.Add(new Dictionary<string, object>
+                    {
+                        { "chapterIndex", chapterIndex },
+                        { "chapterName", chapter.name },
+                        { "momentIndex", momentIndex },
+                        { "momentName", moment.name },
+                        { "issueCount", issueCount },
+                        { "sections", sections }
+                    });
+                }
+            }
+
+            return issues;
+        }
+
+
         private static string ResolveProjectName(Dictionary<string, object> args)
         {
             string requestedProject = args.ContainsKey("projectName") ? args["projectName"]?.ToString()?.Trim() : string.Empty;
