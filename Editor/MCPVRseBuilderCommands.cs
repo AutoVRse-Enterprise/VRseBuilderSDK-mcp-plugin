@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -949,6 +949,359 @@ namespace UnityMCP.Editor
             };
         }
 
+        public static object StoryRead(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            if (storyCreator._story == null)
+                return new { error = "The active StoryCreator does not have a story loaded." };
+
+            Story story = storyCreator._story;
+            int filterChapter = GetIntArg(args, "chapterIndex", -1);
+            int filterMoment = GetIntArg(args, "momentIndex", -1);
+            string filterSection = NormalizeSectionName(GetStringArg(args, "section"));
+            int maxNodes = GetIntArg(args, "maxNodes", 500);
+
+            int nodeCount = 0;
+            var chapters = new List<object>();
+
+            for (int ci = 0; ci < (story.chapters?.Length ?? 0); ci++)
+            {
+                if (filterChapter >= 0 && ci != filterChapter) continue;
+                Chapter chapter = story.chapters[ci];
+                if (chapter == null) continue;
+
+                var moments = new List<object>();
+                for (int mi = 0; mi < (chapter.moments?.Length ?? 0); mi++)
+                {
+                    if (filterMoment >= 0 && mi != filterMoment) continue;
+                    Moment moment = chapter.moments[mi];
+                    if (moment == null) continue;
+
+                    var momentData = new Dictionary<string, object>
+                    {
+                        { "index", mi },
+                        { "name", moment.name },
+                        { "defaults", moment.defaults }
+                    };
+
+                    var sections = new Dictionary<string, object>();
+                    string[] sectionNames = { "onAwake", "onStart", "onFirstWarning", "onLastWarning", "onEnd" };
+                    foreach (string sectionName in sectionNames)
+                    {
+                        if (!string.IsNullOrEmpty(filterSection) && filterSection != sectionName) continue;
+                        ActionSet actionSet = GetOrCreateActionSet(moment, sectionName);
+                        if (actionSet?.actions != null && actionSet.actions.Length > 0)
+                        {
+                            var nodes = new List<object>();
+                            foreach (Node node in actionSet.actions)
+                            {
+                                if (nodeCount >= maxNodes) break;
+                                nodes.Add(SerializeNode(node));
+                                nodeCount++;
+                            }
+                            sections[sectionName] = nodes;
+                        }
+                    }
+
+                    // onWrong
+                    if (string.IsNullOrEmpty(filterSection) || filterSection == "onWrong")
+                    {
+                        if (moment.onWrong != null && moment.onWrong.Length > 0)
+                        {
+                            var wrongSets = new List<object>();
+                            for (int tsi = 0; tsi < moment.onWrong.Length; tsi++)
+                            {
+                                TriggerActionSet tas = moment.onWrong[tsi];
+                                if (tas == null) continue;
+                                wrongSets.Add(SerializeTriggerActionSet(tas, tsi, ref nodeCount, maxNodes));
+                            }
+                            sections["onWrong"] = wrongSets;
+                        }
+                    }
+
+                    // onRight
+                    if (string.IsNullOrEmpty(filterSection) || filterSection == "onRight")
+                    {
+                        if (moment.onRight?.triggerActionSets != null && moment.onRight.triggerActionSets.Length > 0)
+                        {
+                            var rightSets = new List<object>();
+                            for (int tsi = 0; tsi < moment.onRight.triggerActionSets.Length; tsi++)
+                            {
+                                TriggerActionSet tas = moment.onRight.triggerActionSets[tsi];
+                                if (tas == null) continue;
+                                rightSets.Add(SerializeTriggerActionSet(tas, tsi, ref nodeCount, maxNodes));
+                            }
+                            var onRightData = new Dictionary<string, object>
+                            {
+                                { "mode", moment.onRight.mode },
+                                { "triggerActionSets", rightSets }
+                            };
+                            sections["onRight"] = onRightData;
+                        }
+                    }
+
+                    momentData["sections"] = sections;
+                    moments.Add(momentData);
+                }
+
+                chapters.Add(new Dictionary<string, object>
+                {
+                    { "index", ci },
+                    { "name", chapter.name },
+                    { "momentCount", chapter.moments?.Length ?? 0 },
+                    { "moments", moments }
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "storyCreator", storyCreator.gameObject.name },
+                { "fileName", storyCreator._fileName },
+                { "isSavedToFile", storyCreator.GetIsStorySavedToFileCached() },
+                { "totalChapters", story.chapters?.Length ?? 0 },
+                { "totalNodesReturned", nodeCount },
+                { "maxNodes", maxNodes },
+                { "chapters", chapters }
+            };
+        }
+
+        private static Dictionary<string, object> SerializeTriggerActionSet(TriggerActionSet tas, int index, ref int nodeCount, int maxNodes)
+        {
+            var result = new Dictionary<string, object>
+            {
+                { "index", index },
+                { "trigger", nodeCount < maxNodes ? SerializeNode(tas.trigger) : null }
+            };
+            if (tas.trigger != null) nodeCount++;
+
+            var actions = new List<object>();
+            if (tas.actions != null)
+            {
+                foreach (Node action in tas.actions)
+                {
+                    if (nodeCount >= maxNodes) break;
+                    actions.Add(SerializeNode(action));
+                    nodeCount++;
+                }
+            }
+            result["actions"] = actions;
+            return result;
+        }
+
+        public static object StoryListNodeTemplates(Dictionary<string, object> args)
+        {
+            NodeTemplatesData nodeTemplatesData = LoadNodeTemplatesData();
+            if (nodeTemplatesData == null)
+                return new { error = "NodeTemplatesData ScriptableObject not found in the project." };
+
+            var actionTemplates = new List<object>();
+            foreach (NodeTemplatesData.NodeData template in nodeTemplatesData.actionTemplates)
+            {
+                actionTemplates.Add(SerializeNodeTemplate(template));
+            }
+
+            var triggerTemplates = new List<object>();
+            foreach (NodeTemplatesData.NodeData template in nodeTemplatesData.triggerTemplates)
+            {
+                triggerTemplates.Add(SerializeNodeTemplate(template));
+            }
+
+            var defaultParams = new List<object>();
+            foreach (NodeTemplatesData.ParameterData param in nodeTemplatesData.DefaultParameters)
+            {
+                defaultParams.Add(new Dictionary<string, object>
+                {
+                    { "key", param.Key },
+                    { "type", param.Type },
+                    { "defaultValue", param.DefaultValue },
+                    { "description", param.Description }
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "actionTemplateCount", actionTemplates.Count },
+                { "triggerTemplateCount", triggerTemplates.Count },
+                { "actionTemplates", actionTemplates },
+                { "triggerTemplates", triggerTemplates },
+                { "defaultParameters", defaultParams }
+            };
+        }
+
+        private static Dictionary<string, object> SerializeNodeTemplate(NodeTemplatesData.NodeData template)
+        {
+            var options = new List<object>();
+            if (template.Options != null)
+            {
+                foreach (NodeTemplatesData.OptionData option in template.Options)
+                {
+                    var parameters = new List<object>();
+                    if (option.Parameters != null)
+                    {
+                        foreach (NodeTemplatesData.ParameterData param in option.Parameters)
+                        {
+                            parameters.Add(new Dictionary<string, object>
+                            {
+                                { "key", param.Key },
+                                { "type", param.Type },
+                                { "defaultValue", param.DefaultValue },
+                                { "description", param.Description }
+                            });
+                        }
+                    }
+
+                    var nestedParams = new List<object>();
+                    if (option.NestedParameters != null)
+                    {
+                        foreach (NodeTemplatesData.NestedParameterData nested in option.NestedParameters)
+                        {
+                            var nestedParamList = new List<object>();
+                            if (nested.Parameters != null)
+                            {
+                                foreach (NodeTemplatesData.ParameterData np in nested.Parameters)
+                                {
+                                    nestedParamList.Add(new Dictionary<string, object>
+                                    {
+                                        { "key", np.Key },
+                                        { "type", np.Type },
+                                        { "defaultValue", np.DefaultValue },
+                                        { "description", np.Description }
+                                    });
+                                }
+                            }
+                            nestedParams.Add(new Dictionary<string, object>
+                            {
+                                { "key", nested.Key },
+                                { "description", nested.Description },
+                                { "parameters", nestedParamList }
+                            });
+                        }
+                    }
+
+                    options.Add(new Dictionary<string, object>
+                    {
+                        { "name", option.Name },
+                        { "description", option.Description },
+                        { "parameters", parameters },
+                        { "nestedParameters", nestedParams }
+                    });
+                }
+            }
+
+            return new Dictionary<string, object>
+            {
+                { "name", template.Name },
+                { "backendId", template.BackendId },
+                { "type", template.Type },
+                { "description", template.Description },
+                { "options", options }
+            };
+        }
+
+        public static object QueryObjectsList(Dictionary<string, object> args)
+        {
+            QueryObjectsIdManager queryManager = UnityEngine.Object.FindObjectOfType<QueryObjectsIdManager>();
+            if (queryManager == null)
+                return new { error = "No QueryObjectsIdManager found in loaded scenes." };
+
+            List<GameObjectQuery> queries = queryManager.GetAllGameObjectQueries();
+            if (queries == null)
+                queries = new List<GameObjectQuery>();
+
+            var result = new List<object>();
+            foreach (GameObjectQuery goQuery in queries)
+            {
+                if (goQuery == null || goQuery.gameObject == null) continue;
+
+                var components = new List<string>();
+                foreach (Component comp in goQuery.GetComponents<Component>())
+                {
+                    if (comp == null) continue;
+                    System.Type type = comp.GetType();
+                    string typeName = type.Name;
+                    if (typeName.Contains("Grabbable")) components.Add("Grabbable");
+                    else if (typeName.Contains("PlacePoint")) components.Add("PlacePoint");
+                    else if (typeName.Contains("BaseItem")) components.Add("BaseItem");
+                }
+
+                string path = GetGameObjectPath(goQuery.gameObject);
+
+                result.Add(new Dictionary<string, object>
+                {
+                    { "queryName", goQuery.Name },
+                    { "id", goQuery.ID },
+                    { "isIDValid", goQuery.IsIDValid },
+                    { "gameObjectName", goQuery.gameObject.name },
+                    { "gameObjectPath", path },
+                    { "activeInHierarchy", goQuery.gameObject.activeInHierarchy },
+                    { "vrseComponents", components }
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "count", result.Count },
+                { "queryObjects", result }
+            };
+        }
+
+        private static string GetGameObjectPath(GameObject go)
+        {
+            string path = go.name;
+            Transform parent = go.transform.parent;
+            while (parent != null)
+            {
+                path = parent.name + "/" + path;
+                parent = parent.parent;
+            }
+            return path;
+        }
+
+        public static object StoryRemoveAction(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string section = NormalizeSectionName(GetStringArg(args, "section"));
+            int nodeIndex = GetIntArg(args, "nodeIndex", -1);
+            int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
+
+            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+                return new { error = arrayError };
+
+            if (nodeIndex < 0 || nodeIndex >= nodeArray.Length)
+                return new { error = $"nodeIndex must be within 0-{nodeArray.Length - 1}." };
+
+            Dictionary<string, object> removedNode = SerializeNode(nodeArray[nodeIndex]);
+
+            var newArray = new Node[nodeArray.Length - 1];
+            if (nodeIndex > 0)
+                Array.Copy(nodeArray, 0, newArray, 0, nodeIndex);
+            if (nodeIndex < nodeArray.Length - 1)
+                Array.Copy(nodeArray, nodeIndex + 1, newArray, nodeIndex, nodeArray.Length - nodeIndex - 1);
+
+            SetActionNodeArray(moment, section, triggerSetIndex, newArray);
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "section", section },
+                { "triggerSetIndex", triggerSetIndex },
+                { "removedNodeIndex", nodeIndex },
+                { "removedNode", removedNode },
+                { "remainingCount", newArray.Length }
+            };
+        }
+
         public static object CreateEvaluationFromTraining(Dictionary<string, object> args)
         {
             string projectName = ResolveProjectName(args);
@@ -974,7 +1327,8 @@ namespace UnityMCP.Editor
             if (storyCreator == null)
                 return new { error = "StoryCreator not found in training scene." };
 
-            string storyJsonPath = GetLocalStoryJsonPathFromConfig(projectName, module.ModuleId, experience.ExperienceId);
+            VRseProjectWindowController projectController = new VRseProjectWindowController();
+            string storyJsonPath = projectController.GetLocalStoryJsonPathFromConfig(projectName, module.ModuleId, experience.ExperienceId);
             if (string.IsNullOrEmpty(storyJsonPath) || !File.Exists(storyJsonPath))
                 return new { error = "Training story JSON file not found." };
 

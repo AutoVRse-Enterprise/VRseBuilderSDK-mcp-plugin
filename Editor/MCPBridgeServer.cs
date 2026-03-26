@@ -994,6 +994,14 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.StoryHasPendingVO(ParseJson(body));
                 case "vrse/create-evaluation-from-training":
                     return MCPVRseBuilderCommands.CreateEvaluationFromTraining(ParseJson(body));
+                case "vrse/story-read":
+                    return MCPVRseBuilderCommands.StoryRead(ParseJson(body));
+                case "vrse/story-list-node-templates":
+                    return MCPVRseBuilderCommands.StoryListNodeTemplates(ParseJson(body));
+                case "vrse/query-objects-list":
+                    return MCPVRseBuilderCommands.QueryObjectsList(ParseJson(body));
+                case "vrse/story-remove-action":
+                    return MCPVRseBuilderCommands.StoryRemoveAction(ParseJson(body));
                 case "vrse/story-move-action":
                     return MCPVRseBuilderCommands.StoryMoveAction(ParseJson(body));
                 case "vrse/story-duplicate-action":
