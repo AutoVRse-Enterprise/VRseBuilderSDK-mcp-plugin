@@ -395,6 +395,12 @@ namespace UnityMCP.Editor
                 "vrse/story-update-node",
                 "vrse/story-save",
                 "vrse/story-validate",
+                "vrse/story-move-action",
+                "vrse/story-duplicate-action",
+                "vrse/story-apply-action-to-multiple-moments",
+                "vrse/list-story-backups",
+                "vrse/create-story-backup",
+                "vrse/restore-story-backup",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -976,6 +982,18 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.StorySave(ParseJson(body));
                 case "vrse/story-validate":
                     return MCPVRseBuilderCommands.StoryValidate(ParseJson(body));
+                case "vrse/story-move-action":
+                    return MCPVRseBuilderCommands.StoryMoveAction(ParseJson(body));
+                case "vrse/story-duplicate-action":
+                    return MCPVRseBuilderCommands.StoryDuplicateAction(ParseJson(body));
+                case "vrse/story-apply-action-to-multiple-moments":
+                    return MCPVRseBuilderCommands.StoryApplyActionToMultipleMoments(ParseJson(body));
+                case "vrse/list-story-backups":
+                    return MCPVRseBuilderCommands.ListStoryBackups(ParseJson(body));
+                case "vrse/create-story-backup":
+                    return MCPVRseBuilderCommands.CreateStoryBackup(ParseJson(body));
+                case "vrse/restore-story-backup":
+                    return MCPVRseBuilderCommands.RestoreStoryBackup(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":

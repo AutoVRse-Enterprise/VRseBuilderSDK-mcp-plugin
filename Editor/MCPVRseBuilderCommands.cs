@@ -1417,6 +1417,398 @@ namespace UnityMCP.Editor
         }
 
 
+
+        public static object StoryMoveAction(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string section = NormalizeSectionName(GetStringArg(args, "section"));
+            int fromIndex = GetIntArg(args, "fromIndex", -1);
+            int toIndex = GetIntArg(args, "toIndex", -1);
+            int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
+
+            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+                return new { error = arrayError };
+
+            if (fromIndex < 0 || fromIndex >= nodeArray.Length || toIndex < 0 || toIndex >= nodeArray.Length)
+                return new { error = $"fromIndex and toIndex must be within 0-{nodeArray.Length - 1}." };
+
+            MoveNodeInArray(ref nodeArray, fromIndex, toIndex);
+            SetActionNodeArray(moment, section, triggerSetIndex, nodeArray);
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "section", section },
+                { "triggerSetIndex", triggerSetIndex },
+                { "fromIndex", fromIndex },
+                { "toIndex", toIndex }
+            };
+        }
+
+        public static object StoryDuplicateAction(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string section = NormalizeSectionName(GetStringArg(args, "section"));
+            int nodeIndex = GetIntArg(args, "nodeIndex", -1);
+            int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
+
+            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+                return new { error = arrayError };
+
+            if (nodeIndex < 0 || nodeIndex >= nodeArray.Length)
+                return new { error = $"nodeIndex must be within 0-{nodeArray.Length - 1}." };
+
+            var newArray = new Node[nodeArray.Length + 1];
+            Array.Copy(nodeArray, 0, newArray, 0, nodeIndex + 1);
+            newArray[nodeIndex + 1] = CloneNode(nodeArray[nodeIndex]);
+            Array.Copy(nodeArray, nodeIndex + 1, newArray, nodeIndex + 2, nodeArray.Length - nodeIndex - 1);
+
+            SetActionNodeArray(moment, section, triggerSetIndex, newArray);
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "section", section },
+                { "triggerSetIndex", triggerSetIndex },
+                { "sourceNodeIndex", nodeIndex },
+                { "newNodeIndex", nodeIndex + 1 },
+                { "node", SerializeNode(newArray[nodeIndex + 1]) }
+            };
+        }
+
+        public static object StoryApplyActionToMultipleMoments(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment sourceMoment, out int sourceChapterIndex, out int sourceMomentIndex, out string error))
+                return new { error };
+
+            string sourceSection = NormalizeSectionName(GetStringArg(args, "section"));
+            int sourceNodeIndex = GetIntArg(args, "nodeIndex", -1);
+            int sourceTriggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
+
+            if (!TryGetActionNodeArray(sourceMoment, sourceSection, sourceTriggerSetIndex, out Node[] sourceArray, out string sourceArrayError))
+                return new { error = sourceArrayError };
+
+            if (sourceNodeIndex < 0 || sourceNodeIndex >= sourceArray.Length)
+                return new { error = $"nodeIndex must be within 0-{sourceArray.Length - 1}." };
+
+            if (!args.TryGetValue("targets", out object targetsObj) || !(targetsObj is List<object> rawTargets) || rawTargets.Count == 0)
+                return new { error = "targets is required and must contain at least one target moment." };
+
+            Node sourceNode = sourceArray[sourceNodeIndex];
+            var appliedTargets = new List<object>();
+
+            foreach (object rawTarget in rawTargets)
+            {
+                if (!(rawTarget is Dictionary<string, object> target))
+                    continue;
+
+                int targetChapterIndex = GetNestedIntArg(target, "chapterIndex", -1);
+                int targetMomentIndex = GetNestedIntArg(target, "momentIndex", -1);
+                string targetSection = NormalizeSectionName(GetNestedStringArg(target, "section"));
+                if (string.IsNullOrEmpty(targetSection))
+                    targetSection = sourceSection;
+                int targetTriggerSetIndex = GetNestedIntArg(target, "triggerSetIndex", sourceTriggerSetIndex);
+
+                if (!TryResolveMomentByIndex(storyCreator, targetChapterIndex, targetMomentIndex, out Moment targetMoment, out string targetMomentError))
+                {
+                    appliedTargets.Add(new Dictionary<string, object>
+                    {
+                        { "chapterIndex", targetChapterIndex },
+                        { "momentIndex", targetMomentIndex },
+                        { "section", targetSection },
+                        { "triggerSetIndex", targetTriggerSetIndex },
+                        { "success", false },
+                        { "error", targetMomentError }
+                    });
+                    continue;
+                }
+
+                if (!TryGetActionNodeArray(targetMoment, targetSection, targetTriggerSetIndex, out Node[] targetArray, out string targetArrayError))
+                {
+                    appliedTargets.Add(new Dictionary<string, object>
+                    {
+                        { "chapterIndex", targetChapterIndex },
+                        { "momentIndex", targetMomentIndex },
+                        { "section", targetSection },
+                        { "triggerSetIndex", targetTriggerSetIndex },
+                        { "success", false },
+                        { "error", targetArrayError }
+                    });
+                    continue;
+                }
+
+                Array.Resize(ref targetArray, targetArray.Length + 1);
+                int newNodeIndex = targetArray.Length - 1;
+                targetArray[newNodeIndex] = CloneNode(sourceNode);
+                SetActionNodeArray(targetMoment, targetSection, targetTriggerSetIndex, targetArray);
+
+                appliedTargets.Add(new Dictionary<string, object>
+                {
+                    { "chapterIndex", targetChapterIndex },
+                    { "momentIndex", targetMomentIndex },
+                    { "section", targetSection },
+                    { "triggerSetIndex", targetTriggerSetIndex },
+                    { "success", true },
+                    { "newNodeIndex", newNodeIndex }
+                });
+            }
+
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "source", new Dictionary<string, object>
+                    {
+                        { "chapterIndex", sourceChapterIndex },
+                        { "momentIndex", sourceMomentIndex },
+                        { "section", sourceSection },
+                        { "triggerSetIndex", sourceTriggerSetIndex },
+                        { "nodeIndex", sourceNodeIndex },
+                        { "node", SerializeNode(sourceNode) }
+                    }
+                },
+                { "targets", appliedTargets }
+            };
+        }
+
+        public static object ListStoryBackups(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            string filePath = storyCreator._FilePath;
+            var backups = StoryVersioning.GetHistory(filePath)
+                .Select((backup, index) => new Dictionary<string, object>
+                {
+                    { "index", index },
+                    { "filePath", backup.filePath },
+                    { "timestamp", backup.timestamp },
+                    { "displayDate", backup.displayDate },
+                    { "reason", backup.reason }
+                })
+                .Cast<object>()
+                .ToList();
+
+            return new Dictionary<string, object>
+            {
+                { "storyCreator", storyCreator.gameObject.name },
+                { "filePath", filePath },
+                { "backupCount", backups.Count },
+                { "backups", backups }
+            };
+        }
+
+        public static object CreateStoryBackup(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            string filePath = storyCreator._FilePath;
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+                return new { error = $"Story JSON file does not exist: {filePath}" };
+
+            string reason = GetStringArg(args, "reason");
+            if (string.IsNullOrEmpty(reason))
+                reason = "Manual MCP Backup";
+
+            StoryVersioning.CreateVersion(filePath, reason);
+            var latest = StoryVersioning.GetHistory(filePath).FirstOrDefault();
+
+            return new Dictionary<string, object>
+            {
+                { "success", latest != null },
+                { "storyCreator", storyCreator.gameObject.name },
+                { "filePath", filePath },
+                { "latestBackup", latest == null ? null : new Dictionary<string, object>
+                    {
+                        { "filePath", latest.filePath },
+                        { "timestamp", latest.timestamp },
+                        { "displayDate", latest.displayDate },
+                        { "reason", latest.reason }
+                    }
+                }
+            };
+        }
+
+        public static object RestoreStoryBackup(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            string filePath = storyCreator._FilePath;
+            if (string.IsNullOrEmpty(filePath))
+                return new { error = "The active StoryCreator does not have a valid story file path." };
+
+            string backupPath = GetStringArg(args, "backupPath");
+            if (string.IsNullOrEmpty(backupPath))
+            {
+                int backupIndex = GetIntArg(args, "backupIndex", -1);
+                var history = StoryVersioning.GetHistory(filePath);
+                if (backupIndex < 0 || backupIndex >= history.Count)
+                    return new { error = $"backupIndex must be within 0-{Math.Max(history.Count - 1, 0)}." };
+                backupPath = history[backupIndex].filePath;
+            }
+
+            if (!File.Exists(backupPath))
+                return new { error = $"Backup file does not exist: {backupPath}" };
+
+            StoryVersioning.RestoreVersion(filePath, backupPath);
+            storyCreator.SetStoryFromFile();
+            storyCreator.InvalidateIsStorySavedToFileCache();
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "storyCreator", storyCreator.gameObject.name },
+                { "filePath", filePath },
+                { "restoredBackupPath", backupPath }
+            };
+        }
+
+        private static string GetNestedStringArg(Dictionary<string, object> args, string key)
+        {
+            return args.ContainsKey(key) ? args[key]?.ToString()?.Trim() ?? string.Empty : string.Empty;
+        }
+
+        private static int GetNestedIntArg(Dictionary<string, object> args, string key, int defaultValue)
+        {
+            if (!args.ContainsKey(key) || args[key] == null)
+                return defaultValue;
+
+            object value = args[key];
+            if (value is long longValue)
+                return (int)longValue;
+            if (value is int intValue)
+                return intValue;
+            if (value is double doubleValue)
+                return (int)doubleValue;
+
+            return int.TryParse(value.ToString(), out int parsed) ? parsed : defaultValue;
+        }
+
+        private static bool TryResolveMomentByIndex(StoryCreator storyCreator, int chapterIndex, int momentIndex, out Moment moment, out string error)
+        {
+            moment = null;
+            error = null;
+
+            if (storyCreator?._story?.chapters == null || storyCreator._story.chapters.Length == 0)
+            {
+                error = "The active StoryCreator does not have any chapters loaded.";
+                return false;
+            }
+
+            if (chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
+            {
+                error = $"chapterIndex is out of range. Valid range: 0-{storyCreator._story.chapters.Length - 1}.";
+                return false;
+            }
+
+            Chapter chapter = storyCreator._story.chapters[chapterIndex];
+            if (chapter?.moments == null || chapter.moments.Length == 0)
+            {
+                error = $"Chapter {chapterIndex} does not contain any moments.";
+                return false;
+            }
+
+            if (momentIndex < 0 || momentIndex >= chapter.moments.Length)
+            {
+                error = $"momentIndex is out of range for chapter {chapterIndex}. Valid range: 0-{chapter.moments.Length - 1}.";
+                return false;
+            }
+
+            moment = chapter.moments[momentIndex];
+            return moment != null;
+        }
+
+        private static bool TryGetActionNodeArray(Moment moment, string section, int triggerSetIndex, out Node[] nodeArray, out string error)
+        {
+            nodeArray = null;
+            error = null;
+
+            if (IsSimpleActionSection(section))
+            {
+                ActionSet actionSet = GetOrCreateActionSet(moment, section);
+                if (actionSet.actions == null)
+                    actionSet.actions = new Node[0];
+                nodeArray = actionSet.actions;
+                return true;
+            }
+
+            if (section == "onWrong" || section == "onRight")
+            {
+                if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out error))
+                    return false;
+
+                if (triggerActionSet.actions == null)
+                    triggerActionSet.actions = new Node[0];
+
+                nodeArray = triggerActionSet.actions;
+                return true;
+            }
+
+            error = "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight.";
+            return false;
+        }
+
+        private static void SetActionNodeArray(Moment moment, string section, int triggerSetIndex, Node[] nodeArray)
+        {
+            if (IsSimpleActionSection(section))
+            {
+                GetOrCreateActionSet(moment, section).actions = nodeArray;
+                return;
+            }
+
+            if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out _))
+                return;
+
+            triggerActionSet.actions = nodeArray;
+        }
+
+        private static void MoveNodeInArray(ref Node[] nodeArray, int oldIndex, int newIndex)
+        {
+            Node node = nodeArray[oldIndex];
+
+            for (int i = oldIndex; i < nodeArray.Length - 1; i++)
+                nodeArray[i] = nodeArray[i + 1];
+
+            for (int i = nodeArray.Length - 1; i > newIndex; i--)
+                nodeArray[i] = nodeArray[i - 1];
+
+            nodeArray[newIndex] = node;
+        }
+
+        private static Node CloneNode(Node original)
+        {
+            if (original == null)
+                return null;
+
+            return new Node
+            {
+                Name = original.Name,
+                TargetGameObject = original.TargetGameObject,
+                ID = original.ID,
+                Query = original.Query,
+                Option = original.Option,
+                Data = original.Data,
+                Type = original.Type
+            };
+        }
+
         private static string ResolveProjectName(Dictionary<string, object> args)
         {
             string requestedProject = args.ContainsKey("projectName") ? args["projectName"]?.ToString()?.Trim() : string.Empty;
