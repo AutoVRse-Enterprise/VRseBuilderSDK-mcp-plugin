@@ -29,7 +29,6 @@ This package runs a lightweight HTTP server inside the Unity Editor on `localhos
 - **Physics** — Raycasts, sphere/box casts, overlap tests, get/set physics settings (gravity, layers, collision matrix)
 - **Lighting** — Manage lights, configure environment lighting/skybox, bake lightmaps, list/manage reflection probes
 - **Audio** — Manage AudioSources, AudioListeners, AudioMixers, play/stop clips, adjust mixer parameters
-- **Terrain** — Create/modify terrains, paint heightmaps/textures, manage terrain layers, trees, and detail objects
 - **Navigation** — NavMesh baking, agents, obstacles, off-mesh links
 - **Particles** — Particle system creation, inspection, module editing
 - **UI** — Canvas, UI elements, layout groups, event system
@@ -160,7 +159,6 @@ AnkleBreaker Unity MCP is the most comprehensive MCP integration for Unity, purp
 | **Unity Hub Control** | ✅ Install editors & modules | ❌ | ❌ | ❌ |
 | **Scene Hierarchy** | ✅ Full tree + pagination | ⚠️ Limited | ⚠️ Basic | ⚠️ Limited |
 | **Physics Tools** | ✅ Raycasts, overlap, settings | ❌ | ❌ | ❌ |
-| **Terrain Tools** | ✅ Full terrain pipeline | ❌ | ❌ | ❌ |
 | **Shader Graph** | ✅ Create, inspect, open | ❌ | ❌ | ❌ |
 | **Profiling & Debugging** | ✅ Profiler + Frame Debugger + Memory | ❌ | ❌ | ⚠️ Basic |
 | **Animation System** | ✅ Controllers, clips, parameters | ⚠️ Basic | ⚠️ Basic | ⚠️ Basic |
@@ -193,7 +191,7 @@ AnkleBreaker Unity MCP is the most comprehensive MCP integration for Unity, purp
 Bezi runs as a proprietary Unity plugin with its own credit-based billing — $20–$200/mo on top of your AI subscription. It has historically suffered from freezing the Unity Editor during AI tasks, blocking your workflow. AnkleBreaker MCP is completely free and open source, runs entirely in the background with zero editor impact, and offers 6x more tools — the only cost is your existing Claude subscription.
 
 **vs. Coplay MCP:**
-Coplay MCP provides 34 tools across ~5 categories. AnkleBreaker MCP delivers 200+ tools across 30+ categories including advanced features like physics raycasts, terrain editing, shader graph management, profiling, NavMesh, particle systems, and MPPM multiplayer — none of which exist in Coplay. Our two-tier lazy loading system is specifically optimized for Claude Cowork's tool limits.
+Coplay MCP provides 34 tools across ~5 categories. AnkleBreaker MCP delivers 200+ tools across 30+ categories including advanced features like physics raycasts, shader graph management, profiling, NavMesh, particle systems, and MPPM multiplayer — none of which exist in Coplay. Our two-tier lazy loading system is specifically optimized for Claude Cowork's tool limits.
 
 **vs. Unity AI:**
 Unity AI (successor to Muse) is built into Unity 6.2+ but limited to Unity's own AI models and a credit-based "Unity Points" system. It cannot be used with Claude or any external AI assistant, has no MCP support, and offers a fraction of the automation capabilities. AnkleBreaker MCP works with any MCP-compatible AI while giving you full control over which AI models you use.
