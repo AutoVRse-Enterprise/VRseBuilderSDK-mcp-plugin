@@ -1002,6 +1002,18 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.QueryObjectsList(ParseJson(body));
                 case "vrse/story-remove-action":
                     return MCPVRseBuilderCommands.StoryRemoveAction(ParseJson(body));
+                case "vrse/story-add-chapter":
+                    return MCPVRseBuilderCommands.StoryAddChapter(ParseJson(body));
+                case "vrse/story-rename-chapter":
+                    return MCPVRseBuilderCommands.StoryRenameChapter(ParseJson(body));
+                case "vrse/story-remove-chapter":
+                    return MCPVRseBuilderCommands.StoryRemoveChapter(ParseJson(body));
+                case "vrse/story-add-moment":
+                    return MCPVRseBuilderCommands.StoryAddMoment(ParseJson(body));
+                case "vrse/story-rename-moment":
+                    return MCPVRseBuilderCommands.StoryRenameMoment(ParseJson(body));
+                case "vrse/story-remove-moment":
+                    return MCPVRseBuilderCommands.StoryRemoveMoment(ParseJson(body));
                 case "vrse/story-move-action":
                     return MCPVRseBuilderCommands.StoryMoveAction(ParseJson(body));
                 case "vrse/story-duplicate-action":

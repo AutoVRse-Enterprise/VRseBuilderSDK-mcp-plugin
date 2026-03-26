@@ -1302,6 +1302,143 @@ namespace UnityMCP.Editor
             };
         }
 
+        public static object StoryAddChapter(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+
+            string name = GetStringArg(args, "name");
+            if (string.IsNullOrEmpty(name)) name = "New Chapter";
+            
+            int index = GetIntArg(args, "index", -1);
+
+            if (storyCreator._story.chapters == null)
+                storyCreator._story.chapters = new Chapter[0];
+
+            List<Chapter> chapters = storyCreator._story.chapters.ToList();
+            var newChapter = new Chapter { name = name, moments = new Moment[0] };
+
+            if (index >= 0 && index <= chapters.Count)
+                chapters.Insert(index, newChapter);
+            else
+            {
+                chapters.Add(newChapter);
+                index = chapters.Count - 1;
+            }
+
+            storyCreator._story.chapters = chapters.ToArray();
+            storyCreator._story.AssignChapterAndMomentIndex();
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", index }, { "chapterName", name } };
+        }
+
+        public static object StoryRenameChapter(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+
+            int chapterIndex = GetIntArg(args, "chapterIndex", -1);
+            if (storyCreator._story.chapters == null || chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
+                return new { error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}." };
+
+            string newName = GetStringArg(args, "newName");
+            if (string.IsNullOrEmpty(newName)) return new { error = "newName is required." };
+
+            storyCreator._story.chapters[chapterIndex].name = newName;
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "newName", newName } };
+        }
+
+        public static object StoryRemoveChapter(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+
+            int chapterIndex = GetIntArg(args, "chapterIndex", -1);
+            if (storyCreator._story.chapters == null || chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
+                return new { error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}." };
+
+            List<Chapter> chapters = storyCreator._story.chapters.ToList();
+            var removedName = chapters[chapterIndex].name;
+            chapters.RemoveAt(chapterIndex);
+            
+            storyCreator._story.chapters = chapters.ToArray();
+            storyCreator._story.AssignChapterAndMomentIndex();
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object> { { "success", true }, { "removedChapterIndex", chapterIndex }, { "removedChapterName", removedName }, { "remainingCount", chapters.Count } };
+        }
+
+        public static object StoryAddMoment(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+
+            int chapterIndex = GetIntArg(args, "chapterIndex", -1);
+            if (storyCreator._story.chapters == null || chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
+                return new { error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}." };
+
+            Chapter chapter = storyCreator._story.chapters[chapterIndex];
+
+            string name = GetStringArg(args, "name");
+            if (string.IsNullOrEmpty(name)) name = "New Moment";
+            
+            int index = GetIntArg(args, "index", -1);
+
+            if (chapter.moments == null)
+                chapter.moments = new Moment[0];
+
+            List<Moment> moments = chapter.moments.ToList();
+            var newMoment = new Moment { name = name };
+
+            if (index >= 0 && index <= moments.Count)
+                moments.Insert(index, newMoment);
+            else
+            {
+                moments.Add(newMoment);
+                index = moments.Count - 1;
+            }
+
+            chapter.moments = moments.ToArray();
+            storyCreator._story.AssignChapterAndMomentIndex();
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "momentIndex", index }, { "momentName", name } };
+        }
+
+        public static object StoryRenameMoment(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string newName = GetStringArg(args, "newName");
+            if (string.IsNullOrEmpty(newName)) return new { error = "newName is required." };
+
+            moment.name = newName;
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "momentIndex", momentIndex }, { "newName", newName } };
+        }
+
+        public static object StoryRemoveMoment(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            Chapter chapter = storyCreator._story.chapters[chapterIndex];
+            List<Moment> moments = chapter.moments.ToList();
+            string removedName = moment.name;
+            moments.RemoveAt(momentIndex);
+
+            chapter.moments = moments.ToArray();
+            storyCreator._story.AssignChapterAndMomentIndex();
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "removedMomentIndex", momentIndex }, { "removedMomentName", removedName }, { "remainingCount", moments.Count } };
+        }
+
         public static object CreateEvaluationFromTraining(Dictionary<string, object> args)
         {
             string projectName = ResolveProjectName(args);
