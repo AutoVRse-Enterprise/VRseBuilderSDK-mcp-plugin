@@ -387,6 +387,10 @@ namespace UnityMCP.Editor
                 "vrse/open-studio-project-window",
                 "vrse/open-project-config-window",
                 "vrse/open-build-tool",
+                "vrse/create-evaluation-from-training",
+                "vrse/story-remove-node-by-name",
+                "vrse/apply-moment-weightage",
+                "vrse/story-has-pending-vo",
                 "vrse/create-experience",
                 "vrse/get-experience-creation-status",
                 "vrse/open-art-scene",
@@ -982,6 +986,14 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.StorySave(ParseJson(body));
                 case "vrse/story-validate":
                     return MCPVRseBuilderCommands.StoryValidate(ParseJson(body));
+                case "vrse/story-remove-node-by-name":
+                    return MCPVRseBuilderCommands.StoryRemoveNodeByName(ParseJson(body));
+                case "vrse/apply-moment-weightage":
+                    return MCPVRseBuilderCommands.ApplyMomentWeightage(ParseJson(body));
+                case "vrse/story-has-pending-vo":
+                    return MCPVRseBuilderCommands.StoryHasPendingVO(ParseJson(body));
+                case "vrse/create-evaluation-from-training":
+                    return MCPVRseBuilderCommands.CreateEvaluationFromTraining(ParseJson(body));
                 case "vrse/story-move-action":
                     return MCPVRseBuilderCommands.StoryMoveAction(ParseJson(body));
                 case "vrse/story-duplicate-action":

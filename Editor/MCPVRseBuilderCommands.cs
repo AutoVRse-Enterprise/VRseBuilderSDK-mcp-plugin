@@ -877,6 +877,238 @@ namespace UnityMCP.Editor
             }
         }
 
+        public static object StoryRemoveNodeByName(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            string section = NormalizeSectionName(GetStringArg(args, "section"));
+            int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
+            string nodeName = GetStringArg(args, "nodeName");
+
+            if (string.IsNullOrEmpty(nodeName))
+                return new { error = "nodeName is required." };
+
+            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+                return new { error = arrayError };
+
+            int originalCount = nodeArray.Length;
+            Node[] filtered = nodeArray.Where(node => node == null || !string.Equals(node.Name, nodeName, StringComparison.OrdinalIgnoreCase)).ToArray();
+
+            SetActionNodeArray(moment, section, triggerSetIndex, filtered);
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "section", section },
+                { "triggerSetIndex", triggerSetIndex },
+                { "nodeName", nodeName },
+                { "removedCount", originalCount - filtered.Length }
+            };
+        }
+
+        public static object ApplyMomentWeightage(Dictionary<string, object> args)
+        {
+            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+                return new { error };
+
+            MomentDefaults defaults = LoadMomentDefaults(moment.defaults);
+
+            bool weightageProvided = args.ContainsKey("weightage");
+            bool wrongReductionProvided = args.ContainsKey("wrongReduction");
+            defaults.weightage = weightageProvided ? GetFloatArg(args, "weightage", defaults.weightage) : defaults.weightage;
+            defaults.wrongReduction = wrongReductionProvided ? GetFloatArg(args, "wrongReduction", defaults.wrongReduction) : defaults.wrongReduction;
+
+            moment.defaults = JsonUtility.ToJson(defaults);
+            MarkStoryChanged(storyCreator);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "weightage", defaults.weightage },
+                { "wrongReduction", defaults.wrongReduction }
+            };
+        }
+
+        public static object StoryHasPendingVO(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null || storyCreator._story == null)
+                return new { error = "No StoryCreator with a loaded story is available." };
+
+            bool hasPendingVOs = GenerateVOWindow.HasPendingVOsToGenerate(storyCreator._story);
+            return new Dictionary<string, object>
+            {
+                { "hasPendingVOs", hasPendingVOs },
+                { "storyCreator", storyCreator.gameObject.name }
+            };
+        }
+
+        public static object CreateEvaluationFromTraining(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
+                return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
+
+            ModuleData module = ResolveModule(roomManagerConfig, args);
+            if (module == null)
+                return new { error = "Module not found. Provide moduleId or moduleName." };
+
+            ModuleData.ExperienceData experience = ResolveExperience(module, args);
+            if (experience == null)
+                return new { error = "Training experience not found. Provide experienceId or experienceName." };
+
+            if (string.IsNullOrEmpty(experience.DevScene) || !File.Exists(experience.DevScene))
+                return new { error = "Training dev scene not found." };
+
+            EditorSceneManager.OpenScene(experience.DevScene, OpenSceneMode.Single);
+            StoryCreator storyCreator = UnityEngine.Object.FindObjectOfType<StoryCreator>();
+            if (storyCreator == null)
+                return new { error = "StoryCreator not found in training scene." };
+
+            string storyJsonPath = GetLocalStoryJsonPathFromConfig(projectName, module.ModuleId, experience.ExperienceId);
+            if (string.IsNullOrEmpty(storyJsonPath) || !File.Exists(storyJsonPath))
+                return new { error = "Training story JSON file not found." };
+
+            string evaluationSceneName = GetStringArg(args, "evaluationSceneName");
+            if (string.IsNullOrEmpty(evaluationSceneName))
+                evaluationSceneName = CreateDefaultEvaluationName(experience.Name, "Evaluation_Scene");
+
+            string evaluationStoryName = GetStringArg(args, "evaluationStoryName");
+            if (string.IsNullOrEmpty(evaluationStoryName))
+                evaluationStoryName = CreateDefaultEvaluationName(experience.Name, "Evaluation_JSON");
+
+            string storyDefaults = GetStringArg(args, "storyDefaults");
+            if (string.IsNullOrEmpty(storyDefaults))
+                storyDefaults = "{\"storyMode\":\"Evaluation\",\"maxAttempts\":\"3\",\"useDefaultMaxAttempts\":\"false\"}";
+
+            var window = EditorWindow.GetWindow<VRseEvaluationAutomationToolEditor>("Evaluation Automation Tool");
+            if (window == null)
+                return new { error = "Could not open Evaluation Automation Tool window." };
+
+            Type windowType = window.GetType();
+            if (!TrySetPrivateField(window, "_storyCreator", storyCreator) ||
+                !TrySetPrivateField(window, "_originalStoryPath", storyJsonPath))
+            {
+                return new { error = "Could not configure Evaluation Automation Tool." };
+            }
+
+            TrySetPrivateField(window, "_currentSceneName", Path.GetFileNameWithoutExtension(experience.DevScene));
+            TrySetPrivateField(window, "_currentStoryName", storyCreator._fileName ?? evaluationStoryName);
+            TrySetPrivateField(window, "_evaluationSceneName", evaluationSceneName);
+            TrySetPrivateField(window, "_evaluationStoryName", evaluationStoryName);
+            TrySetPrivateField(window, "_storyDefaults", storyDefaults);
+            TrySetPrivateField(window, "_useExistingEvaluation", false);
+
+            if (args.ContainsKey("evaluationType"))
+            {
+                string evalType = GetStringArg(args, "evaluationType");
+                if (Enum.TryParse(evalType, true, out Enums.EvaluationType parsed))
+                    TrySetPrivateField(window, "_evaluationType", parsed);
+            }
+
+            TrySetPrivateField(window, "_showAutoToastMessageForWrongAction", GetBoolArg(args, "showAutoToastForWrongAction", true));
+            TrySetPrivateField(window, "_showAutoToastMessageForRightAction", GetBoolArg(args, "showAutoToastForRightAction", true));
+            TrySetPrivateField(window, "_rightActionToastMessageDisplayTime", GetFloatArg(args, "rightActionToastMessageDisplayTime", 2.5f));
+            TrySetPrivateField(window, "_mistakeCoolDownTime", GetFloatArg(args, "mistakeCoolDownTime", 2.0f));
+            TrySetPrivateField(window, "_debugMistakesCountToPass", GetIntArg(args, "debugMistakesCountToPass", 3));
+
+            MethodInfo createMethod = windowType.GetMethod("CreateEvaluationScene", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (createMethod == null)
+                return new { error = "Evaluation creation method not found." };
+
+            try
+            {
+                createMethod.Invoke(window, null);
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Evaluation creation failed: {ex.Message}" };
+            }
+
+            string evaluationScenePath = Path.Combine(Path.GetDirectoryName(experience.DevScene) ?? string.Empty, evaluationSceneName + ".unity");
+            string evaluationStoryPath = Path.Combine(Path.GetDirectoryName(storyJsonPath) ?? string.Empty, evaluationStoryName + ".json");
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "evaluationScene", evaluationScenePath },
+                { "evaluationStory", evaluationStoryPath },
+                { "storyDefaults", storyDefaults }
+            };
+        }
+
+        private static string CreateDefaultEvaluationName(string baseName, string suffix)
+        {
+            if (string.IsNullOrEmpty(baseName))
+            {
+                return $"Evaluation_{suffix}";
+            }
+
+            if (baseName.EndsWith("_Training", StringComparison.OrdinalIgnoreCase))
+                return baseName.Substring(0, baseName.Length - "_Training".Length) + "_" + suffix;
+
+            return baseName + "_" + suffix;
+        }
+
+        private static bool TrySetPrivateField<T>(object target, string fieldName, T value)
+        {
+            FieldInfo field = typeof(VRseEvaluationAutomationToolEditor).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            if (field == null)
+                return false;
+
+            field.SetValue(target, value);
+            return true;
+        }
+
+        private static float GetFloatArg(Dictionary<string, object> args, string key, float defaultValue)
+        {
+            if (!args.ContainsKey(key) || args[key] == null)
+                return defaultValue;
+
+            object value = args[key];
+            if (value is double doubleValue)
+                return (float)doubleValue;
+            if (value is float floatValue)
+                return floatValue;
+            if (value is long longValue)
+                return (float)longValue;
+            if (value is int intValue)
+                return intValue;
+
+            return float.TryParse(value.ToString(), out float parsed) ? parsed : defaultValue;
+        }
+
+        private static MomentDefaults LoadMomentDefaults(string defaultsJson)
+        {
+            if (string.IsNullOrEmpty(defaultsJson))
+                return new MomentDefaults();
+
+            try
+            {
+                var parsed = JsonUtility.FromJson<MomentDefaults>(defaultsJson);
+                return parsed ?? new MomentDefaults();
+            }
+            catch
+            {
+                return new MomentDefaults();
+            }
+        }
+
+        private class MomentDefaults
+        {
+            public float weightage;
+            public float wrongReduction;
+        }
+
         private static string GetStringArg(Dictionary<string, object> args, string key)
         {
             return args.ContainsKey(key) ? args[key]?.ToString()?.Trim() ?? string.Empty : string.Empty;
