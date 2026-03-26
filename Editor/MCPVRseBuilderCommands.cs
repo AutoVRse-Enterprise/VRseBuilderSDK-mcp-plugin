@@ -1439,6 +1439,189 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "removedMomentIndex", momentIndex }, { "removedMomentName", removedName }, { "remainingCount", moments.Count } };
         }
 
+        public static object StoryDefaultsGet(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+
+            var response = new Dictionary<string, object>
+            {
+                { "storyDefaults", storyCreator._story.defaults }
+            };
+
+            var chaptersList = new List<object>();
+            if (storyCreator._story.chapters != null)
+            {
+                foreach (var chapter in storyCreator._story.chapters)
+                {
+                    var momentsList = new List<object>();
+                    if (chapter.moments != null)
+                    {
+                        foreach (var moment in chapter.moments)
+                        {
+                            momentsList.Add(new { momentIndex = moment.momentIndex, name = moment.name, defaults = moment.defaults });
+                        }
+                    }
+                    chaptersList.Add(new { chapterIndex = chapter.chapterIndex, name = chapter.name, defaults = chapter.defaults, moments = momentsList });
+                }
+            }
+            response.Add("chapters", chaptersList);
+            return response;
+        }
+
+        public static object BuildingBlocksList(Dictionary<string, object> args)
+        {
+            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection");
+            if (guids.Length == 0) return new { error = "No BuildingBlocksCollection found in the project." };
+
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection>(path);
+            if (collection == null) return new { error = "Failed to load BuildingBlocksCollection." };
+
+            var blocks = new List<object>();
+            foreach (var block in collection.Blocks)
+            {
+                blocks.Add(new 
+                { 
+                    blockName = block.BlockName, 
+                    description = block.Description, 
+                    category = block.Category, 
+                    tags = block.Tags,
+                    actionName = block.ActionName,
+                    triggerName = block.TriggerName
+                });
+            }
+
+            return new Dictionary<string, object> { { "blocks", blocks } };
+        }
+
+        public static object BuildingBlocksInstantiate(Dictionary<string, object> args)
+        {
+            string blockName = GetStringArg(args, "blockName");
+            if (string.IsNullOrEmpty(blockName)) return new { error = "blockName is required." };
+
+            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection");
+            if (guids.Length == 0) return new { error = "No BuildingBlocksCollection found in the project." };
+
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection>(path);
+            if (collection == null) return new { error = "Failed to load BuildingBlocksCollection." };
+
+            var block = collection.Blocks.FirstOrDefault(b => b.BlockName.Equals(blockName, System.StringComparison.OrdinalIgnoreCase));
+            if (block == null) return new { error = $"Building block '{blockName}' not found in the collection." };
+            if (block.BlockPrefab == null) return new { error = $"Building block '{blockName}' has no prefab assigned." };
+
+            GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(block.BlockPrefab);
+            if (instance == null) return new { error = $"Failed to instantiate prefab for '{blockName}'." };
+
+            var view = SceneView.lastActiveSceneView;
+            if (view != null)
+            {
+                instance.transform.position = view.pivot;
+            }
+
+            Selection.activeGameObject = instance;
+            Undo.RegisterCreatedObjectUndo(instance, $"Instantiate Building Block: {blockName}");
+
+            return new Dictionary<string, object> 
+            { 
+                { "success", true }, 
+                { "instanceName", instance.name }, 
+                { "instanceId", instance.GetInstanceID() } 
+            };
+        }
+
+        public static object SceneHierarchyCheckup(Dictionary<string, object> args)
+        {
+            var type = System.Type.GetType("VRseBuilder.Core.Editor.SceneHierarchyCheckup, VRseBuilder.Core");
+            if (type == null) return new { error = "SceneHierarchyCheckup type not found." };
+            var method = type.GetMethod("MoveQueryObjects", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            if (method == null) return new { error = "MoveQueryObjects method not found." };
+
+            method.Invoke(null, null);
+
+            return new Dictionary<string, object> { { "success", true }, { "message", "Scene hierarchy checkup complete. Query objects moved to QueryObjects parent." } };
+        }
+
+        public static object ModuleSetIncludeInBuild(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            string moduleName = GetStringArg(args, "moduleName");
+            bool include = GetBoolArg(args, "includeInBuild", true);
+
+            string configPath = $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
+            var config = AssetDatabase.LoadAssetAtPath<VRseBuilder.Core.Framework.RoomManagerConfig>(configPath);
+            if (config == null) return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
+
+            var module = config.experiences?.FirstOrDefault(m => m != null && m.GetModuleName().Equals(moduleName, System.StringComparison.OrdinalIgnoreCase));
+            if (module == null) return new { error = $"Module '{moduleName}' not found in project '{projectName}'." };
+
+            module.IncludeInBuild = include;
+            EditorUtility.SetDirty(config);
+            AssetDatabase.SaveAssets();
+
+            return new Dictionary<string, object> { { "success", true }, { "moduleName", moduleName }, { "includeInBuild", include } };
+        }
+
+        public static object BuildStart(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            string buildPath = GetStringArg(args, "buildPath");
+            if (string.IsNullOrEmpty(buildPath)) return new { error = "buildPath parameter is required for headless build start." };
+
+            string configPath = $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
+            var config = AssetDatabase.LoadAssetAtPath<VRseBuilder.Core.Framework.RoomManagerConfig>(configPath);
+            if (config != null)
+            {
+                var buildToolType = System.Type.GetType("VRseBuilder.Tools.Editor.BuildTool.VRseBuildToolWindowController, VRseBuilder.Tools.Editor");
+                if (buildToolType != null)
+                {
+                    var controller = System.Activator.CreateInstance(buildToolType);
+                    var method = buildToolType.GetMethod("AddAllScenesFromConfigToBuildScenesList");
+                    if (method != null) method.Invoke(controller, new object[] { config });
+                }
+            }
+
+            var buildScenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
+            if (buildScenes.Length == 0) return new { error = "No enabled scenes found in EditorBuildSettings." };
+
+            UnityEditor.Build.Reporting.BuildReport report = null;
+            try
+            {
+                UnityEditor.BuildPlayerOptions options = new UnityEditor.BuildPlayerOptions
+                {
+                    scenes = buildScenes,
+                    locationPathName = buildPath,
+                    target = EditorUserBuildSettings.activeBuildTarget,
+                    options = UnityEditor.BuildOptions.None
+                };
+
+                report = BuildPipeline.BuildPlayer(options);
+            }
+            catch (System.Exception ex)
+            {
+                return new { error = $"Build encounter exception: {ex.Message}" };
+            }
+
+            return new Dictionary<string, object> 
+            { 
+                { "success", report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded }, 
+                { "result", report.summary.result.ToString() },
+                { "totalErrors", report.summary.totalErrors },
+                { "totalWarnings", report.summary.totalWarnings },
+                { "outputPath", report.summary.outputPath }
+            };
+        }
+
+        public static object BuildStatus(Dictionary<string, object> args)
+        {
+            return new Dictionary<string, object> 
+            { 
+                { "status", "ready" },
+                { "message", "Unity Editor builds triggered by MCP are synchronous and block the main thread. If the Editor is responsive, no build is currently running." }
+            };
+        }
+
         public static object CreateEvaluationFromTraining(Dictionary<string, object> args)
         {
             string projectName = ResolveProjectName(args);

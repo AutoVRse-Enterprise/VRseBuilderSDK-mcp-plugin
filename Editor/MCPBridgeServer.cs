@@ -1018,6 +1018,20 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.StoryMoveAction(ParseJson(body));
                 case "vrse/story-duplicate-action":
                     return MCPVRseBuilderCommands.StoryDuplicateAction(ParseJson(body));
+                case "vrse/story-defaults-get":
+                    return MCPVRseBuilderCommands.StoryDefaultsGet(ParseJson(body));
+                case "vrse/building-blocks-list":
+                    return MCPVRseBuilderCommands.BuildingBlocksList(ParseJson(body));
+                case "vrse/building-blocks-instantiate":
+                    return MCPVRseBuilderCommands.BuildingBlocksInstantiate(ParseJson(body));
+                case "vrse/scene-hierarchy-checkup":
+                    return MCPVRseBuilderCommands.SceneHierarchyCheckup(ParseJson(body));
+                case "vrse/module-set-include-in-build":
+                    return MCPVRseBuilderCommands.ModuleSetIncludeInBuild(ParseJson(body));
+                case "vrse/build-start":
+                    return MCPVRseBuilderCommands.BuildStart(ParseJson(body));
+                case "vrse/build-status":
+                    return MCPVRseBuilderCommands.BuildStatus(ParseJson(body));
                 case "vrse/story-apply-action-to-multiple-moments":
                     return MCPVRseBuilderCommands.StoryApplyActionToMultipleMoments(ParseJson(body));
                 case "vrse/list-story-backups":
