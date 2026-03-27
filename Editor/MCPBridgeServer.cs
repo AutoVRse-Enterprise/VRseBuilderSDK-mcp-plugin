@@ -423,35 +423,9 @@ namespace UnityMCP.Editor
                 // Lighting
                 "lighting/create", "lighting/set-property", "lighting/bake", "lighting/get-settings",
                 "lighting/set-settings", "lighting/get-probes",
-                // NavMesh
-                "navmesh/bake", "navmesh/add-agent", "navmesh/set-area", "navmesh/get-info",
-                "navmesh/add-obstacle", "navmesh/add-link",
-                // ShaderGraph
-                "shadergraph/create", "shadergraph/get-info", "shadergraph/add-node",
-                "shadergraph/remove-node", "shadergraph/connect", "shadergraph/disconnect",
-                "shadergraph/set-property", "shadergraph/list-nodes", "shadergraph/get-connections",
-                // Amplify
-                "amplify/list", "amplify/info", "amplify/open", "amplify/list-functions",
-                "amplify/get-node-types", "amplify/get-nodes", "amplify/get-connections",
-                "amplify/create-shader", "amplify/add-node", "amplify/remove-node",
-                "amplify/connect", "amplify/disconnect", "amplify/node-info",
-                "amplify/set-node-property", "amplify/move-node",
                 // Graphics
                 "graphics/camera-info", "graphics/render-settings", "graphics/set-render-settings",
                 "graphics/texture-info", "graphics/renderer-info", "graphics/lighting-summary",
-                // Terrain
-                "terrain/create", "terrain/info", "terrain/set-height", "terrain/flatten",
-                "terrain/add-layer", "terrain/get-height", "terrain/list",
-                "terrain/raise-lower", "terrain/smooth", "terrain/noise",
-                "terrain/set-heights-region", "terrain/get-heights-region",
-                "terrain/remove-layer", "terrain/paint-layer", "terrain/fill-layer",
-                "terrain/add-tree-prototype", "terrain/remove-tree-prototype",
-                "terrain/place-trees", "terrain/clear-trees", "terrain/get-tree-instances",
-                "terrain/add-detail-prototype", "terrain/paint-detail",
-                "terrain/scatter-detail", "terrain/clear-detail",
-                "terrain/set-holes", "terrain/set-settings", "terrain/resize",
-                "terrain/create-grid", "terrain/set-neighbors",
-                "terrain/import-heightmap", "terrain/export-heightmap", "terrain/get-steepness",
                 // Particle System
                 "particle/create", "particle/info", "particle/set-main", "particle/set-emission",
                 "particle/set-shape", "particle/set-velocity", "particle/set-color",
@@ -822,92 +796,6 @@ namespace UnityMCP.Editor
                 case "profiler/memory-snapshot":
                     return MCPMemoryProfilerCommands.TakeMemorySnapshot(ParseJson(body));
 
-                // ─── Shader Graph ───
-                case "shadergraph/status":
-                    return MCPShaderGraphCommands.GetStatus(ParseJson(body));
-                case "shadergraph/list-shaders":
-                    return MCPShaderGraphCommands.ListShaders(ParseJson(body));
-                case "shadergraph/list":
-                    return MCPShaderGraphCommands.ListShaderGraphs(ParseJson(body));
-                case "shadergraph/info":
-                    return MCPShaderGraphCommands.GetShaderGraphInfo(ParseJson(body));
-                case "shadergraph/get-properties":
-                    return MCPShaderGraphCommands.GetShaderProperties(ParseJson(body));
-                case "shadergraph/create":
-                    return MCPShaderGraphCommands.CreateShaderGraph(ParseJson(body));
-                case "shadergraph/open":
-                    return MCPShaderGraphCommands.OpenShaderGraph(ParseJson(body));
-                case "shadergraph/list-subgraphs":
-                    return MCPShaderGraphCommands.ListSubGraphs(ParseJson(body));
-                case "shadergraph/list-vfx":
-                    return MCPShaderGraphCommands.ListVFXGraphs(ParseJson(body));
-                case "shadergraph/open-vfx":
-                    return MCPShaderGraphCommands.OpenVFXGraph(ParseJson(body));
-                case "shadergraph/get-nodes":
-                    return MCPShaderGraphCommands.GetGraphNodes(ParseJson(body));
-                case "shadergraph/get-edges":
-                    return MCPShaderGraphCommands.GetGraphEdges(ParseJson(body));
-                case "shadergraph/add-node":
-                    return MCPShaderGraphCommands.AddGraphNode(ParseJson(body));
-                case "shadergraph/remove-node":
-                    return MCPShaderGraphCommands.RemoveGraphNode(ParseJson(body));
-                case "shadergraph/connect":
-                    return MCPShaderGraphCommands.ConnectGraphNodes(ParseJson(body));
-                case "shadergraph/disconnect":
-                    return MCPShaderGraphCommands.DisconnectGraphNodes(ParseJson(body));
-                case "shadergraph/set-node-property":
-                    return MCPShaderGraphCommands.SetGraphNodeProperty(ParseJson(body));
-                case "shadergraph/get-node-types":
-                    return MCPShaderGraphCommands.GetNodeTypes(ParseJson(body));
-
-                // ─── Amplify Shader Editor ───
-                case "amplify/status":
-                    return MCPAmplifyCommands.GetStatus(ParseJson(body));
-                case "amplify/list":
-                    return MCPAmplifyCommands.ListAmplifyShaders(ParseJson(body));
-                case "amplify/info":
-                    return MCPAmplifyCommands.GetAmplifyShaderInfo(ParseJson(body));
-                case "amplify/open":
-                    return MCPAmplifyCommands.OpenAmplifyShader(ParseJson(body));
-                case "amplify/list-functions":
-                    return MCPAmplifyCommands.ListAmplifyFunctions(ParseJson(body));
-                case "amplify/get-node-types":
-                    return MCPAmplifyCommands.GetAmplifyNodeTypes(ParseJson(body));
-                case "amplify/get-nodes":
-                    return MCPAmplifyCommands.GetAmplifyGraphNodes(ParseJson(body));
-                case "amplify/get-connections":
-                    return MCPAmplifyCommands.GetAmplifyGraphConnections(ParseJson(body));
-                case "amplify/create-shader":
-                    return MCPAmplifyCommands.CreateAmplifyShader(ParseJson(body));
-                case "amplify/add-node":
-                    return MCPAmplifyCommands.AddAmplifyNode(ParseJson(body));
-                case "amplify/remove-node":
-                    return MCPAmplifyCommands.RemoveAmplifyNode(ParseJson(body));
-                case "amplify/connect":
-                    return MCPAmplifyCommands.ConnectAmplifyNodes(ParseJson(body));
-                case "amplify/disconnect":
-                    return MCPAmplifyCommands.DisconnectAmplifyNodes(ParseJson(body));
-                case "amplify/node-info":
-                    return MCPAmplifyCommands.GetAmplifyNodeInfo(ParseJson(body));
-                case "amplify/set-node-property":
-                    return MCPAmplifyCommands.SetAmplifyNodeProperty(ParseJson(body));
-                case "amplify/move-node":
-                    return MCPAmplifyCommands.MoveAmplifyNode(ParseJson(body));
-                case "amplify/save":
-                    return MCPAmplifyCommands.SaveAmplifyGraph(ParseJson(body));
-                case "amplify/close":
-                    return MCPAmplifyCommands.CloseAmplifyEditor(ParseJson(body));
-                case "amplify/create-from-template":
-                    return MCPAmplifyCommands.CreateAmplifyFromTemplate(ParseJson(body));
-                case "amplify/focus-node":
-                    return MCPAmplifyCommands.FocusAmplifyNode(ParseJson(body));
-                case "amplify/master-node-info":
-                    return MCPAmplifyCommands.GetAmplifyMasterNodeInfo(ParseJson(body));
-                case "amplify/disconnect-all":
-                    return MCPAmplifyCommands.DisconnectAllAmplifyNode(ParseJson(body));
-                case "amplify/duplicate-node":
-                    return MCPAmplifyCommands.DuplicateAmplifyNode(ParseJson(body));
-
                 // ─── Agent Management ───
                 case "agents/list":
                     return MCPRequestQueue.GetActiveSessions();
@@ -1136,20 +1024,6 @@ namespace UnityMCP.Editor
                     return MCPTextureCommands.SetAsSprite(ParseJson(body));
                 case "texture/set-normalmap":
                     return MCPTextureCommands.SetAsNormalMap(ParseJson(body));
-
-                // ─── Navigation ───
-                case "navigation/bake":
-                    return MCPNavigationCommands.BakeNavMesh(ParseJson(body));
-                case "navigation/clear":
-                    return MCPNavigationCommands.ClearNavMesh(ParseJson(body));
-                case "navigation/add-agent":
-                    return MCPNavigationCommands.AddNavMeshAgent(ParseJson(body));
-                case "navigation/add-obstacle":
-                    return MCPNavigationCommands.AddNavMeshObstacle(ParseJson(body));
-                case "navigation/info":
-                    return MCPNavigationCommands.GetNavMeshInfo(ParseJson(body));
-                case "navigation/set-destination":
-                    return MCPNavigationCommands.SetAgentDestination(ParseJson(body));
 
                 // ─── UI ───
                 case "ui/create-canvas":
