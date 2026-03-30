@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -12,6 +13,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using VRseBuilder.Backend.Editor.Auth;
 using VRseBuilder.Core.Framework;
+using VRseBuilder.Core.Systems.TextToSpeech;
 using VRseBuilder.Tools.Editor;
 using VRseBuilder.Tools.Editor.BuildTool;
 
@@ -187,6 +189,7 @@ namespace UnityMCP.Editor
                 return new { error = "Project not found. Provide a valid projectName or projectId." };
 
             EditorPrefs.SetString(SelectedProjectKey, selectedName);
+            VRseProjectWindowUI.RefreshAllOpenWindows();
             return new Dictionary<string, object>
             {
                 { "success", true },
@@ -1201,6 +1204,150 @@ namespace UnityMCP.Editor
                 { "description", template.Description },
                 { "options", options }
             };
+        }
+
+        public static object StorySearchNodeTemplates(Dictionary<string, object> args)
+        {
+            string query = GetStringArg(args, "query");
+            if (string.IsNullOrWhiteSpace(query))
+                return new { error = "Parameter 'query' is required." };
+
+            string type = GetStringArg(args, "type"); // "action", "trigger", or empty for both
+            int maxResults = GetIntArg(args, "maxResults", 20);
+
+            NodeTemplatesData nodeTemplatesData = LoadNodeTemplatesData();
+            if (nodeTemplatesData == null)
+                return new { error = "NodeTemplatesData ScriptableObject not found in the project." };
+
+            string queryLower = query.ToLowerInvariant();
+            string[] queryTokens = queryLower.Split(new[] { ' ', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var results = new List<Dictionary<string, object>>();
+
+            // Search action templates
+            if (string.IsNullOrEmpty(type) || type.Equals("action", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (NodeTemplatesData.NodeData template in nodeTemplatesData.actionTemplates)
+                {
+                    int score = FuzzyScoreNodeTemplate(template, queryLower, queryTokens);
+                    if (score > 0)
+                    {
+                        var serialized = SerializeNodeTemplate(template);
+                        serialized["matchScore"] = score;
+                        serialized["category"] = "action";
+                        results.Add(serialized);
+                    }
+                }
+            }
+
+            // Search trigger templates
+            if (string.IsNullOrEmpty(type) || type.Equals("trigger", StringComparison.OrdinalIgnoreCase))
+            {
+                foreach (NodeTemplatesData.NodeData template in nodeTemplatesData.triggerTemplates)
+                {
+                    int score = FuzzyScoreNodeTemplate(template, queryLower, queryTokens);
+                    if (score > 0)
+                    {
+                        var serialized = SerializeNodeTemplate(template);
+                        serialized["matchScore"] = score;
+                        serialized["category"] = "trigger";
+                        results.Add(serialized);
+                    }
+                }
+            }
+
+            // Sort by score descending, take top N
+            results.Sort((a, b) => ((int)b["matchScore"]).CompareTo((int)a["matchScore"]));
+            if (results.Count > maxResults)
+                results = results.GetRange(0, maxResults);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "query", query },
+                { "resultCount", results.Count },
+                { "results", results }
+            };
+        }
+
+        private static int FuzzyScoreNodeTemplate(NodeTemplatesData.NodeData template, string queryLower, string[] queryTokens)
+        {
+            int score = 0;
+            string nameLower = (template.Name ?? "").ToLowerInvariant();
+            string descLower = (template.Description ?? "").ToLowerInvariant();
+            string backendIdLower = (template.BackendId ?? "").ToLowerInvariant();
+
+            // Exact name match (highest)
+            if (nameLower == queryLower) score += 100;
+            // Name contains full query
+            else if (nameLower.Contains(queryLower)) score += 50;
+            // BackendId contains full query
+            if (backendIdLower.Contains(queryLower)) score += 30;
+            // Description contains full query
+            if (descLower.Contains(queryLower)) score += 20;
+
+            // Token-level matching (for multi-word fuzzy search)
+            foreach (string token in queryTokens)
+            {
+                if (token.Length < 2) continue;
+                if (nameLower.Contains(token)) score += 10;
+                if (descLower.Contains(token)) score += 5;
+            }
+
+            // Check option names for matches
+            if (template.Options != null)
+            {
+                foreach (NodeTemplatesData.OptionData option in template.Options)
+                {
+                    string optNameLower = (option.Name ?? "").ToLowerInvariant();
+                    string optDescLower = (option.Description ?? "").ToLowerInvariant();
+                    if (optNameLower.Contains(queryLower)) score += 15;
+                    if (optDescLower.Contains(queryLower)) score += 5;
+                    foreach (string token in queryTokens)
+                    {
+                        if (token.Length < 2) continue;
+                        if (optNameLower.Contains(token)) score += 3;
+                    }
+                }
+            }
+
+            return score;
+        }
+
+        public static object StoryGenerateVO(Dictionary<string, object> args)
+        {
+            bool clearAndRegenerate = false;
+            if (args.ContainsKey("clearAndRegenerate"))
+            {
+                bool.TryParse(args["clearAndRegenerate"]?.ToString(), out clearAndRegenerate);
+            }
+
+            try
+            {
+                // Open the window
+                GenerateVOWindow.ShowWindow();
+                GenerateVOWindow window = EditorWindow.GetWindow<GenerateVOWindow>();
+
+                if (window == null)
+                    return new { error = "Failed to open GenerateVOWindow." };
+
+                // Trigger generation via the window's existing logic
+                // We don't await/wait here to avoid blocking the MCP response or hanging the editor.
+                // The window handles its own internal Task management and progress bar.
+                _ = window.OnGenerateVOsButtonClicked(clearAndRegenerate);
+
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "message", "VO generation started in the Unity Editor. Use the 'Generate VO' window to monitor progress." },
+                    { "windowOpened", true },
+                    { "clearAndRegenerate", clearAndRegenerate }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Failed to start VO generation: {ex.Message}" };
+            }
         }
 
         public static object QueryObjectsList(Dictionary<string, object> args)

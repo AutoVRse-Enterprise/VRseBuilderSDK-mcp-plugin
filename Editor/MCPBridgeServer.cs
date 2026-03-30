@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -933,6 +933,10 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.CreateStoryBackup(ParseJson(body));
                 case "vrse/restore-story-backup":
                     return MCPVRseBuilderCommands.RestoreStoryBackup(ParseJson(body));
+                case "vrse/story-search-node-templates":
+                    return MCPVRseBuilderCommands.StorySearchNodeTemplates(ParseJson(body));
+                case "vrse/story-generate-vo":
+                    return MCPVRseBuilderCommands.StoryGenerateVO(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":
