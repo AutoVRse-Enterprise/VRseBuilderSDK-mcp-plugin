@@ -4,7 +4,8 @@
     "references":  [
                        "VRseBuilder.Core",
                        "VRseBuilder.Backend.Editor",
-                       "VRseBuilder.Tools.Editor"
+                       "VRseBuilder.Tools.Editor",
+                       "VRseBuilder.Platform.MetaXR.Editor"
                    ],
     "includePlatforms":  [
                              "Editor"
