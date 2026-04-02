@@ -5,7 +5,8 @@
                        "VRseBuilder.Core",
                        "VRseBuilder.Backend.Editor",
                        "VRseBuilder.Tools.Editor",
-                       "VRseBuilder.Platform.MetaXR.Editor"
+                       "VRseBuilder.Platform.MetaXR.Editor",
+                       "VRseBuilder.InfinityWorkshop"
                    ],
     "includePlatforms":  [
                              "Editor"
