@@ -398,6 +398,10 @@ namespace UnityMCP.Editor
                 "vrse/story-add-trigger-set",
                 "vrse/story-add-action",
                 "vrse/story-update-node",
+                "vrse/story-apply-json",
+                "vrse/story-patch",
+                "vrse/story-get-info",
+                "vrse/story-undo-write",
                 "vrse/story-save",
                 "vrse/story-validate",
                 "vrse/story-move-action",
@@ -882,6 +886,14 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.StoryValidate(ParseJson(body));
                 case "vrse/story-remove-node-by-name":
                     return MCPVRseBuilderCommands.StoryRemoveNodeByName(ParseJson(body));
+                case "vrse/story-apply-json":
+                    return MCPVRseBuilderCommands.StoryApplyJson(ParseJson(body));
+                case "vrse/story-patch":
+                    return MCPVRseBuilderCommands.StoryPatch(ParseJson(body));
+                case "vrse/story-get-info":
+                    return MCPVRseBuilderCommands.StoryGetInfo(ParseJson(body));
+                case "vrse/story-undo-write":
+                    return MCPVRseBuilderCommands.StoryUndoWrite(ParseJson(body));
                 case "vrse/apply-moment-weightage":
                     return MCPVRseBuilderCommands.ApplyMomentWeightage(ParseJson(body));
                 case "vrse/story-has-pending-vo":

@@ -1072,6 +1072,174 @@ namespace UnityMCP.Editor
             };
         }
 
+        public static object StoryGetInfo(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            if (storyCreator._story == null)
+                return new { error = "The active StoryCreator does not have a story loaded." };
+
+            Story story = storyCreator._story;
+            var chapters = new List<object>();
+
+            for (int ci = 0; ci < (story.chapters?.Length ?? 0); ci++)
+            {
+                Chapter chapter = story.chapters[ci];
+                if (chapter == null) continue;
+
+                var moments = new List<object>();
+                for (int mi = 0; mi < (chapter.moments?.Length ?? 0); mi++)
+                {
+                    Moment moment = chapter.moments[mi];
+                    if (moment == null) continue;
+
+                    moments.Add(new { index = mi, name = moment.name });
+                }
+
+                chapters.Add(new Dictionary<string, object>
+                {
+                    { "index", ci },
+                    { "name", chapter.name },
+                    { "momentCount", moments.Count },
+                    { "moments", moments }
+                });
+            }
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "storyCreator", storyCreator.gameObject.name },
+                { "fileName", storyCreator._fileName },
+                { "filePath", storyCreator._FilePath },
+                { "isDirty", !storyCreator.GetIsStorySavedToFileCached() },
+                { "totalChapters", story.chapters?.Length ?? 0 },
+                { "chapters", chapters }
+            };
+        }
+
+        public static object StoryApplyJson(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            string json = GetStringArg(args, "json");
+            if (string.IsNullOrEmpty(json))
+                return new { error = "Parameter 'json' is required." };
+
+            try
+            {
+                // Create backup before applying
+                if (System.IO.File.Exists(storyCreator._FilePath))
+                {
+                    VRseBuilder.Tools.Editor.StoryVersioning.CreateVersion(storyCreator._FilePath, "MCP Apply Story JSON");
+                }
+
+                Story newStory = JsonConvert.DeserializeObject<Story>(json);
+                if (newStory == null)
+                    return new { error = "Failed to deserialize story JSON." };
+
+                storyCreator._story = newStory;
+                MarkStoryChanged(storyCreator);
+
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "storyCreator", storyCreator.gameObject.name },
+                    { "chapterCount", newStory.chapters?.Length ?? 0 }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Failed to apply story JSON: {ex.Message}" };
+            }
+        }
+
+        public static object StoryPatch(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            string patchJson = GetStringArg(args, "patch");
+            if (string.IsNullOrEmpty(patchJson))
+                return new { error = "Parameter 'patch' is required." };
+
+            try
+            {
+                // Simple patch implementation using JObject Merge
+                var currentJson = JsonConvert.SerializeObject(storyCreator._story);
+                var currentObj = Newtonsoft.Json.Linq.JObject.Parse(currentJson);
+                var patchObj = Newtonsoft.Json.Linq.JObject.Parse(patchJson);
+
+                currentObj.Merge(patchObj, new Newtonsoft.Json.Linq.JsonMergeSettings
+                {
+                    MergeArrayHandling = Newtonsoft.Json.Linq.MergeArrayHandling.Replace
+                });
+
+                // Create backup before applying
+                if (System.IO.File.Exists(storyCreator._FilePath))
+                {
+                    VRseBuilder.Tools.Editor.StoryVersioning.CreateVersion(storyCreator._FilePath, "MCP Patch Story");
+                }
+
+                Story patchedStory = currentObj.ToObject<Story>();
+                storyCreator._story = patchedStory;
+                MarkStoryChanged(storyCreator);
+
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "storyCreator", storyCreator.gameObject.name }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Failed to patch story: {ex.Message}" };
+            }
+        }
+
+        public static object StoryUndoWrite(Dictionary<string, object> args)
+        {
+            StoryCreator storyCreator = FindStoryCreator(args);
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
+
+            string filePath = storyCreator._FilePath;
+            if (string.IsNullOrEmpty(filePath))
+                return new { error = "StoryCreator does not have a valid file path." };
+
+            var history = VRseBuilder.Tools.Editor.StoryVersioning.GetHistory(filePath);
+            if (history == null || history.Count == 0)
+                return new { error = "No undo history available for this story." };
+
+            try
+            {
+                // Restore the most recent version
+                string backupPath = history[0].filePath;
+                VRseBuilder.Tools.Editor.StoryVersioning.RestoreVersion(filePath, backupPath);
+                
+                // Reload story into creator
+                storyCreator.SetStoryFromFile();
+                storyCreator.InvalidateIsStorySavedToFileCache();
+                MarkStoryChanged(storyCreator);
+
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "restoredFrom", history[0].displayDate },
+                    { "reason", history[0].reason }
+                };
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Undo failed: {ex.Message}" };
+            }
+        }
+
+
         private static Dictionary<string, object> SerializeTriggerActionSet(TriggerActionSet tas, int index, ref int nodeCount, int maxNodes)
         {
             var result = new Dictionary<string, object>
