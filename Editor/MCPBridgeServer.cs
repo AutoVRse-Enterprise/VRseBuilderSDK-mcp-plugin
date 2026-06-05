@@ -436,6 +436,13 @@ namespace UnityMCP.Editor
                 "particle/create", "particle/info", "particle/set-main", "particle/set-emission",
                 "particle/set-shape", "particle/set-velocity", "particle/set-color",
                 "particle/set-size", "particle/set-renderer",
+                // VRse Parity Layer (unity-mcp-pro compatibility for the VRse build pipeline)
+                "vrse/parity/batch-execute", "vrse/parity/get-components",
+                "vrse/parity/get-screenshot-inline", "vrse/parity/list-loaded-scenes",
+                // VRse Spatial (no-marker spatial placement at Step 4.5)
+                "vrse/spatial/analyze-scene", "vrse/spatial/get-bounds",
+                "vrse/spatial/get-surface", "vrse/spatial/check-placement",
+                "vrse/spatial/list-probe-surfaces",
             };
 
             // Group by category
@@ -1113,9 +1120,51 @@ namespace UnityMCP.Editor
                 case "scenario/info":
                     return MCPScenarioCommands.GetMultiplayerInfo(ParseJson(body));
 
+                // ─── VRse Parity Layer (replaces unity-mcp-pro tools the build pipeline depends on) ───
+                case "vrse/parity/batch-execute":
+                    return MCPParityCommands.BatchExecute(ParseJson(body));
+                case "vrse/parity/get-components":
+                    return MCPParityCommands.GetAllComponents(ParseJson(body));
+                case "vrse/parity/get-screenshot-inline":
+                    return MCPParityCommands.CaptureSceneViewInline(ParseJson(body));
+                case "vrse/parity/list-loaded-scenes":
+                    return MCPParityCommands.SearchAllLoadedScenes(ParseJson(body));
+                // Missing-route fill: editor-tools.js calls "compilation/errors" but no C# handler existed.
+                case "compilation/errors":
+                    return MCPParityCommands.GetCompilationErrors(ParseJson(body));
+
+                // ─── VRse Spatial (ported from unity-mcp-pro for no-marker placement) ───
+                case "vrse/spatial/analyze-scene":
+                    return MCPSpatialCommands.AnalyzeScene(ParseJson(body));
+                case "vrse/spatial/get-bounds":
+                    return MCPSpatialCommands.GetBounds(ParseJson(body));
+                case "vrse/spatial/get-surface":
+                    return MCPSpatialCommands.FindSurface(ParseJson(body));
+                case "vrse/spatial/check-placement":
+                    return MCPSpatialCommands.CheckPlacement(ParseJson(body));
+                case "vrse/spatial/list-probe-surfaces":
+                    return MCPSpatialCommands.ProbeSurfaces(ParseJson(body));
+
                 default:
                     return new { error = $"Unknown API endpoint: {path}" };
             }
+        }
+
+        /// <summary>
+        /// Public dispatcher used by VRse parity commands (notably batch-execute) to invoke
+        /// other API routes in-process on the main thread. Serializes args to JSON, then
+        /// delegates to RouteRequest. Returns the same shape as a direct HTTP call.
+        ///
+        /// This is internal to the assembly — only VRse parity commands use it.
+        /// External callers must go through the HTTP listener.
+        /// </summary>
+        internal static object ExecuteRouteInternal(string path, Dictionary<string, object> args)
+        {
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentException("path is required");
+
+            string body = args != null ? MiniJson.Serialize(args) : "";
+            return RouteRequest(path, "POST", body);
         }
 
         // ─── Helpers ───
