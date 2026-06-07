@@ -1129,9 +1129,6 @@ namespace UnityMCP.Editor
                     return MCPParityCommands.CaptureSceneViewInline(ParseJson(body));
                 case "vrse/parity/list-loaded-scenes":
                     return MCPParityCommands.SearchAllLoadedScenes(ParseJson(body));
-                // Missing-route fill: editor-tools.js calls "compilation/errors" but no C# handler existed.
-                case "compilation/errors":
-                    return MCPParityCommands.GetCompilationErrors(ParseJson(body));
 
                 // ─── VRse Spatial (ported from unity-mcp-pro for no-marker placement) ───
                 case "vrse/spatial/analyze-scene":
