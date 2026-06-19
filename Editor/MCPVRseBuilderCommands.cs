@@ -3308,9 +3308,20 @@ namespace UnityMCP.Editor
                 SetField(paramsType, p, "staticMeshNames",  args.TryGetValue("staticMeshNames",  out var smVal)  ? smVal?.ToString()  ?? ""         : "");
                 SetField(paramsType, p, "rootMeshIsStatic", args.TryGetValue("rootMeshIsStatic", out var rmsVal) ? Convert.ToBoolean(rmsVal)        : true);
                 SetField(paramsType, p, "rotationAxis",     rotationAxisRaw);
+                SetField(paramsType, p, "rotationKind",     args.TryGetValue("rotationKind",  out var rkVal)   ? rkVal?.ToString() ?? ""          : "");
                 SetField(paramsType, p, "minAngle",         args.TryGetValue("minAngle", out var minVal)         ? (float)Convert.ToDouble(minVal)  : 0f);
                 SetField(paramsType, p, "maxAngle",         args.TryGetValue("maxAngle", out var maxVal)         ? (float)Convert.ToDouble(maxVal)  : 90f);
                 SetField(paramsType, p, "useRootAsParent",  args.TryGetValue("useRootAsParent", out var urpVal)  ? Convert.ToBoolean(urpVal)        : false);
+                // Hinge placement. hingeDirX/Y/Z is the world-direction-toward-hinge that drives the
+                // deterministic server-side snap; overridePivot/pivotX-Z are the explicit world-position
+                // escape hatch. These were previously dropped here, which is why the hinge stayed at center.
+                SetField(paramsType, p, "hingeDirX",        args.TryGetValue("hingeDirX",     out var hdxVal)  ? (float)Convert.ToDouble(hdxVal)  : 0f);
+                SetField(paramsType, p, "hingeDirY",        args.TryGetValue("hingeDirY",     out var hdyVal)  ? (float)Convert.ToDouble(hdyVal)  : 0f);
+                SetField(paramsType, p, "hingeDirZ",        args.TryGetValue("hingeDirZ",     out var hdzVal)  ? (float)Convert.ToDouble(hdzVal)  : 0f);
+                SetField(paramsType, p, "overridePivot",    args.TryGetValue("overridePivot", out var opVal)   ? Convert.ToBoolean(opVal)         : false);
+                SetField(paramsType, p, "pivotX",           args.TryGetValue("pivotX",        out var pxVal)   ? (float)Convert.ToDouble(pxVal)   : 0f);
+                SetField(paramsType, p, "pivotY",           args.TryGetValue("pivotY",        out var pyVal)   ? (float)Convert.ToDouble(pyVal)   : 0f);
+                SetField(paramsType, p, "pivotZ",           args.TryGetValue("pivotZ",        out var pzVal)   ? (float)Convert.ToDouble(pzVal)   : 0f);
 
                 string result = (string)createMethod.Invoke(null, new object[] { p });
                 var parts = result.Split(new[] { "|||" }, StringSplitOptions.None);
