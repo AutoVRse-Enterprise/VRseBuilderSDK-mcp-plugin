@@ -414,9 +414,15 @@ namespace UnityMCP.Editor
                 // VRse create-rotator-from-mesh tools
                 "vrse/create-rotator-from-mesh/analyze",
                 "vrse/create-rotator-from-mesh/create",
+                // VRse setup/place object tools
                 "vrse/setup-objects",
                 "vrse/place-objects",
                 "vrse/harvest-ids",
+                // VRse create-button-from-mesh tools
+                "vrse/create-button-from-mesh/analyze",
+                "vrse/create-button-from-mesh/create",
+                // VRse story report
+                "vrse/story/report",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -975,6 +981,12 @@ namespace UnityMCP.Editor
                     return MCPSetupObjectsCommands.PlaceObjects(ParseJson(body));
                 case "vrse/harvest-ids":
                     return MCPSetupObjectsCommands.HarvestIds(ParseJson(body));
+                case "vrse/create-button-from-mesh/analyze":
+                    return MCPPhysicalButtonCommands.Analyze(ParseJson(body));
+                case "vrse/create-button-from-mesh/create":
+                    return MCPPhysicalButtonCommands.Create(ParseJson(body));
+                case "vrse/story/report":
+                    return MCPStoryReportCommands.GetReport(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":
