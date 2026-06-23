@@ -411,6 +411,9 @@ namespace UnityMCP.Editor
                 "vrse/create-story-backup",
                 "vrse/restore-story-backup",
                 "vrse/interactable_convert",
+                "vrse/setup-objects",
+                "vrse/place-objects",
+                "vrse/harvest-ids",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -959,6 +962,12 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.StoryGenerateVO(ParseJson(body));
                 case "vrse/interactable_convert":
                     return MCPInteractableCommands.InteractableConvert(ParseJson(body));
+                case "vrse/setup-objects":
+                    return MCPSetupObjectsCommands.SetupObjects(ParseJson(body));
+                case "vrse/place-objects":
+                    return MCPSetupObjectsCommands.PlaceObjects(ParseJson(body));
+                case "vrse/harvest-ids":
+                    return MCPSetupObjectsCommands.HarvestIds(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":

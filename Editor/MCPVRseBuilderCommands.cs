@@ -1127,7 +1127,9 @@ namespace UnityMCP.Editor
 
             string json = GetStringArg(args, "json");
             if (string.IsNullOrEmpty(json))
-                return new { error = "Parameter 'json' is required." };
+                json = GetStringArg(args, "storyJson"); // accept both: legacy callers send 'storyJson'
+            if (string.IsNullOrEmpty(json))
+                return new { error = "Parameter 'json' (or 'storyJson') is required." };
 
             try
             {
@@ -1288,8 +1290,7 @@ namespace UnityMCP.Editor
                 {
                     { "key", param.Key },
                     { "type", param.Type },
-                    { "defaultValue", param.DefaultValue },
-                    { "description", param.Description }
+                    { "defaultValue", param.DefaultValue }
                 });
             }
 
@@ -1320,8 +1321,7 @@ namespace UnityMCP.Editor
                             {
                                 { "key", param.Key },
                                 { "type", param.Type },
-                                { "defaultValue", param.DefaultValue },
-                                { "description", param.Description }
+                                { "defaultValue", param.DefaultValue }
                             });
                         }
                     }
@@ -1340,15 +1340,13 @@ namespace UnityMCP.Editor
                                     {
                                         { "key", np.Key },
                                         { "type", np.Type },
-                                        { "defaultValue", np.DefaultValue },
-                                        { "description", np.Description }
+                                        { "defaultValue", np.DefaultValue }
                                     });
                                 }
                             }
                             nestedParams.Add(new Dictionary<string, object>
                             {
                                 { "key", nested.Key },
-                                { "description", nested.Description },
                                 { "parameters", nestedParamList }
                             });
                         }
@@ -1357,7 +1355,6 @@ namespace UnityMCP.Editor
                     options.Add(new Dictionary<string, object>
                     {
                         { "name", option.Name },
-                        { "description", option.Description },
                         { "parameters", parameters },
                         { "nestedParameters", nestedParams }
                     });
@@ -1367,9 +1364,6 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "name", template.Name },
-                { "backendId", template.BackendId },
-                { "type", template.Type },
-                { "description", template.Description },
                 { "options", options }
             };
         }
@@ -1442,24 +1436,17 @@ namespace UnityMCP.Editor
         {
             int score = 0;
             string nameLower = (template.Name ?? "").ToLowerInvariant();
-            string descLower = (template.Description ?? "").ToLowerInvariant();
-            string backendIdLower = (template.BackendId ?? "").ToLowerInvariant();
 
             // Exact name match (highest)
             if (nameLower == queryLower) score += 100;
             // Name contains full query
             else if (nameLower.Contains(queryLower)) score += 50;
-            // BackendId contains full query
-            if (backendIdLower.Contains(queryLower)) score += 30;
-            // Description contains full query
-            if (descLower.Contains(queryLower)) score += 20;
 
             // Token-level matching (for multi-word fuzzy search)
             foreach (string token in queryTokens)
             {
                 if (token.Length < 2) continue;
                 if (nameLower.Contains(token)) score += 10;
-                if (descLower.Contains(token)) score += 5;
             }
 
             // Check option names for matches
@@ -1468,9 +1455,7 @@ namespace UnityMCP.Editor
                 foreach (NodeTemplatesData.OptionData option in template.Options)
                 {
                     string optNameLower = (option.Name ?? "").ToLowerInvariant();
-                    string optDescLower = (option.Description ?? "").ToLowerInvariant();
                     if (optNameLower.Contains(queryLower)) score += 15;
-                    if (optDescLower.Contains(queryLower)) score += 5;
                     foreach (string token in queryTokens)
                     {
                         if (token.Length < 2) continue;
@@ -2810,8 +2795,9 @@ namespace UnityMCP.Editor
                 return new { error = "No StoryCreator found in the loaded scenes." };
 
             string filePath = storyCreator._FilePath;
-            var backups = StoryVersioning.GetHistory(filePath)
-                .Select((backup, index) => new Dictionary<string, object>
+            List<StoryVersioning.StoryVersion> history = StoryVersioning.GetHistory(filePath);
+            var backups = history
+                .Select((backup, index) => (object)new Dictionary<string, object>
                 {
                     { "index", index },
                     { "filePath", backup.filePath },
@@ -2819,7 +2805,6 @@ namespace UnityMCP.Editor
                     { "displayDate", backup.displayDate },
                     { "reason", backup.reason }
                 })
-                .Cast<object>()
                 .ToList();
 
             return new Dictionary<string, object>
@@ -2879,8 +2864,8 @@ namespace UnityMCP.Editor
             {
                 int backupIndex = GetIntArg(args, "backupIndex", -1);
                 var history = StoryVersioning.GetHistory(filePath);
-                if (backupIndex < 0 || backupIndex >= history.Count)
-                    return new { error = $"backupIndex must be within 0-{Math.Max(history.Count - 1, 0)}." };
+                if (backupIndex < 0 || backupIndex >= history.Count())
+                    return new { error = $"backupIndex must be within 0-{Math.Max(history.Count() - 1, 0)}." };
                 backupPath = history[backupIndex].filePath;
             }
 
