@@ -44,19 +44,7 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(path))
                 return new { error = "path is required" };
 
-            // Optional additive load (e.g. loading an art scene alongside the dev scene for a VRse
-            // build preflight). Backward-compatible: callers that omit `additive` get Single mode as before.
-            bool additive = false;
-            if (args.ContainsKey("additive") && args["additive"] != null)
-                additive = args["additive"] is bool b ? b : args["additive"].ToString().ToLowerInvariant() == "true";
-
-            if (additive)
-            {
-                var addScene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
-                return new { success = true, name = addScene.name, path = addScene.path, additive = true };
-            }
-
-            // Check for unsaved changes (Single mode replaces the current scene)
+            // Check for unsaved changes
             if (SceneManager.GetActiveScene().isDirty)
             {
                 if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())

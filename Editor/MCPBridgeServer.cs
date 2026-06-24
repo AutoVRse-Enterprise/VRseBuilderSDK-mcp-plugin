@@ -414,9 +414,6 @@ namespace UnityMCP.Editor
                 // VRse create-rotator-from-mesh tools
                 "vrse/create-rotator-from-mesh/analyze",
                 "vrse/create-rotator-from-mesh/create",
-                "vrse/setup-objects",
-                "vrse/place-objects",
-                "vrse/harvest-ids",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -969,12 +966,6 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.PivotRotateLimiterAnalyze(ParseJson(body));
                 case "vrse/create-rotator-from-mesh/create":
                     return MCPVRseBuilderCommands.PivotRotateLimiterCreate(ParseJson(body));
-                case "vrse/setup-objects":
-                    return MCPSetupObjectsCommands.SetupObjects(ParseJson(body));
-                case "vrse/place-objects":
-                    return MCPSetupObjectsCommands.PlaceObjects(ParseJson(body));
-                case "vrse/harvest-ids":
-                    return MCPSetupObjectsCommands.HarvestIds(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":
