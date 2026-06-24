@@ -411,6 +411,9 @@ namespace UnityMCP.Editor
                 "vrse/create-story-backup",
                 "vrse/restore-story-backup",
                 "vrse/interactable_convert",
+                // VRse create-rotator-from-mesh tools
+                "vrse/create-rotator-from-mesh/analyze",
+                "vrse/create-rotator-from-mesh/create",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -959,6 +962,10 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.StoryGenerateVO(ParseJson(body));
                 case "vrse/interactable_convert":
                     return MCPInteractableCommands.InteractableConvert(ParseJson(body));
+                case "vrse/create-rotator-from-mesh/analyze":
+                    return MCPVRseBuilderCommands.PivotRotateLimiterAnalyze(ParseJson(body));
+                case "vrse/create-rotator-from-mesh/create":
+                    return MCPVRseBuilderCommands.PivotRotateLimiterCreate(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":

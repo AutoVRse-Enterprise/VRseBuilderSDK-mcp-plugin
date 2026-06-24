@@ -3241,5 +3241,122 @@ namespace UnityMCP.Editor
             public string type;
             public string jsonFileUrl;
         }
+
+        // ══════════════════════════════════════════════
+        // TOOL: vrse/create-rotator-from-mesh/analyze
+        // Calls VRsePivotRotateLimiterSetup.Analyze() via reflection (different assembly).
+        // ══════════════════════════════════════════════
+        public static object PivotRotateLimiterAnalyze(Dictionary<string, object> args)
+        {
+            string gameObjectName = args != null && args.ContainsKey("gameObjectName")
+                ? args["gameObjectName"]?.ToString() ?? ""
+                : "";
+
+            if (string.IsNullOrEmpty(gameObjectName))
+                return new Dictionary<string, object> { { "error", "gameObjectName is required" } };
+
+            try
+            {
+                var setupType = FindTypeAcrossAssemblies("VRsePivotRotateLimiterSetup");
+                if (setupType == null)
+                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup not found — ensure the script is compiled in the project." } };
+
+                var analyzeMethod = setupType.GetMethod("Analyze", BindingFlags.Public | BindingFlags.Static);
+                if (analyzeMethod == null)
+                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup.Analyze method not found." } };
+
+                string json = (string)analyzeMethod.Invoke(null, new object[] { gameObjectName });
+                var parsed = MiniJson.Deserialize(json);
+                return parsed ?? new Dictionary<string, object> { { "error", "Analyze returned null" } };
+            }
+            catch (Exception ex)
+            {
+                return new Dictionary<string, object> { { "error", ex.Message }, { "stackTrace", ex.StackTrace } };
+            }
+        }
+
+        // ══════════════════════════════════════════════
+        // TOOL: vrse/create-rotator-from-mesh/create
+        // Calls VRsePivotRotateLimiterSetup.Create() via reflection (different assembly).
+        // ══════════════════════════════════════════════
+        public static object PivotRotateLimiterCreate(Dictionary<string, object> args)
+        {
+            if (args == null)
+                return new Dictionary<string, object> { { "error", "args are required" } };
+
+            try
+            {
+                var setupType = FindTypeAcrossAssemblies("VRsePivotRotateLimiterSetup");
+                if (setupType == null)
+                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup not found — ensure the script is compiled in the project." } };
+
+                var paramsType = setupType.GetNestedType("Params", BindingFlags.Public);
+                if (paramsType == null)
+                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup.Params nested type not found." } };
+
+                var createMethod = setupType.GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
+                if (createMethod == null)
+                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup.Create method not found." } };
+
+                int rotationAxisRaw = args.TryGetValue("rotationAxis", out var axisVal) ? Convert.ToInt32(axisVal) : 1;
+
+                // Build the Params instance via reflection
+                var p = Activator.CreateInstance(paramsType);
+                SetField(paramsType, p, "instanceId",       args.TryGetValue("instanceId",       out var idVal)   ? Convert.ToInt32(idVal)          : 0);
+                SetField(paramsType, p, "parentObjectPath", args.TryGetValue("parentObjectPath", out var pathVal) ? pathVal?.ToString() ?? ""        : "");
+                SetField(paramsType, p, "rotatingMeshName", args.TryGetValue("rotatingMeshName", out var rmVal)  ? rmVal?.ToString()  ?? ""         : "");
+                SetField(paramsType, p, "staticMeshNames",  args.TryGetValue("staticMeshNames",  out var smVal)  ? smVal?.ToString()  ?? ""         : "");
+                SetField(paramsType, p, "rootMeshIsStatic", args.TryGetValue("rootMeshIsStatic", out var rmsVal) ? Convert.ToBoolean(rmsVal)        : true);
+                SetField(paramsType, p, "rotationAxis",     rotationAxisRaw);
+                SetField(paramsType, p, "rotationKind",     args.TryGetValue("rotationKind",  out var rkVal)   ? rkVal?.ToString() ?? ""          : "");
+                SetField(paramsType, p, "minAngle",         args.TryGetValue("minAngle", out var minVal)         ? (float)Convert.ToDouble(minVal)  : 0f);
+                SetField(paramsType, p, "maxAngle",         args.TryGetValue("maxAngle", out var maxVal)         ? (float)Convert.ToDouble(maxVal)  : 90f);
+                SetField(paramsType, p, "useRootAsParent",  args.TryGetValue("useRootAsParent", out var urpVal)  ? Convert.ToBoolean(urpVal)        : false);
+                // Hinge placement. hingeDirX/Y/Z is the world-direction-toward-hinge that drives the
+                // deterministic server-side snap; overridePivot/pivotX-Z are the explicit world-position
+                // escape hatch. These were previously dropped here, which is why the hinge stayed at center.
+                SetField(paramsType, p, "hingeDirX",        args.TryGetValue("hingeDirX",     out var hdxVal)  ? (float)Convert.ToDouble(hdxVal)  : 0f);
+                SetField(paramsType, p, "hingeDirY",        args.TryGetValue("hingeDirY",     out var hdyVal)  ? (float)Convert.ToDouble(hdyVal)  : 0f);
+                SetField(paramsType, p, "hingeDirZ",        args.TryGetValue("hingeDirZ",     out var hdzVal)  ? (float)Convert.ToDouble(hdzVal)  : 0f);
+                SetField(paramsType, p, "overridePivot",    args.TryGetValue("overridePivot", out var opVal)   ? Convert.ToBoolean(opVal)         : false);
+                SetField(paramsType, p, "pivotX",           args.TryGetValue("pivotX",        out var pxVal)   ? (float)Convert.ToDouble(pxVal)   : 0f);
+                SetField(paramsType, p, "pivotY",           args.TryGetValue("pivotY",        out var pyVal)   ? (float)Convert.ToDouble(pyVal)   : 0f);
+                SetField(paramsType, p, "pivotZ",           args.TryGetValue("pivotZ",        out var pzVal)   ? (float)Convert.ToDouble(pzVal)   : 0f);
+
+                string result = (string)createMethod.Invoke(null, new object[] { p });
+                var parts = result.Split(new[] { "|||" }, StringSplitOptions.None);
+
+                if (parts[0] == "FAIL")
+                    return new Dictionary<string, object> { { "success", false }, { "message", parts.Length > 1 ? parts[1] : "Unknown error" } };
+
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "message", $"Created {parts[1]}" },
+                    { "rootObjectName", parts[1] },
+                    { "instanceId", parts.Length > 2 ? (object)int.Parse(parts[2]) : null },
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Dictionary<string, object> { { "error", ex.Message }, { "stackTrace", ex.StackTrace } };
+            }
+        }
+
+        private static Type FindTypeAcrossAssemblies(string typeName)
+        {
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var t = asm.GetType(typeName);
+                if (t != null) return t;
+            }
+            return null;
+        }
+
+        private static void SetField(Type type, object instance, string fieldName, object value)
+        {
+            var field = type.GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
+            if (field != null) field.SetValue(instance, value);
+        }
     }
 }
