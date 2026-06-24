@@ -364,6 +364,7 @@ namespace UnityMCP.Editor
                 "material/create", "material/set-material",
                 "build/build", "build/play-mode",
                 "console/log", "console/clear",
+                "compilation/errors",
                 "selection/get", "selection/set", "selection/focus-scene-view", "selection/find-by-type",
                 "search/by-component", "search/by-tag", "search/by-layer", "search/by-name",
                 "search/assets", "search/missing-references",
@@ -371,6 +372,48 @@ namespace UnityMCP.Editor
                 "prefab/info", "prefab/set-object-reference",
                 "packages/list", "packages/add", "packages/remove", "packages/search", "packages/info",
                 "project/info",
+                // VRseBuilder
+                "vrse/status",
+                "vrse/login",
+                "vrse/list-projects",
+                "vrse/select-project",
+                "vrse/list-modules",
+                "vrse/open-menu-scene",
+                "vrse/open-module",
+                "vrse/open-room-manager-config",
+                "vrse/get-selected-project",
+                "vrse/get-project-config",
+                "vrse/ensure-project-settings",
+                "vrse/apply-project-settings",
+                "vrse/open-studio-project-window",
+                "vrse/open-project-config-window",
+                "vrse/open-build-tool",
+                "vrse/create-evaluation-from-training",
+                "vrse/story-remove-node-by-name",
+                "vrse/apply-moment-weightage",
+                "vrse/story-has-pending-vo",
+                "vrse/create-experience",
+                "vrse/get-experience-creation-status",
+                "vrse/open-art-scene",
+                "vrse/story-add-trigger-set",
+                "vrse/story-add-action",
+                "vrse/story-update-node",
+                "vrse/story-apply-json",
+                "vrse/story-patch",
+                "vrse/story-get-info",
+                "vrse/story-undo-write",
+                "vrse/story-save",
+                "vrse/story-validate",
+                "vrse/story-move-action",
+                "vrse/story-duplicate-action",
+                "vrse/story-apply-action-to-multiple-moments",
+                "vrse/list-story-backups",
+                "vrse/create-story-backup",
+                "vrse/restore-story-backup",
+                "vrse/interactable_convert",
+                // VRse create-rotator-from-mesh tools
+                "vrse/create-rotator-from-mesh/analyze",
+                "vrse/create-rotator-from-mesh/create",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -389,39 +432,20 @@ namespace UnityMCP.Editor
                 // Lighting
                 "lighting/create", "lighting/set-property", "lighting/bake", "lighting/get-settings",
                 "lighting/set-settings", "lighting/get-probes",
-                // NavMesh
-                "navmesh/bake", "navmesh/add-agent", "navmesh/set-area", "navmesh/get-info",
-                "navmesh/add-obstacle", "navmesh/add-link",
-                // ShaderGraph
-                "shadergraph/create", "shadergraph/get-info", "shadergraph/add-node",
-                "shadergraph/remove-node", "shadergraph/connect", "shadergraph/disconnect",
-                "shadergraph/set-property", "shadergraph/list-nodes", "shadergraph/get-connections",
-                // Amplify
-                "amplify/list", "amplify/info", "amplify/open", "amplify/list-functions",
-                "amplify/get-node-types", "amplify/get-nodes", "amplify/get-connections",
-                "amplify/create-shader", "amplify/add-node", "amplify/remove-node",
-                "amplify/connect", "amplify/disconnect", "amplify/node-info",
-                "amplify/set-node-property", "amplify/move-node",
                 // Graphics
                 "graphics/camera-info", "graphics/render-settings", "graphics/set-render-settings",
                 "graphics/texture-info", "graphics/renderer-info", "graphics/lighting-summary",
-                // Terrain
-                "terrain/create", "terrain/info", "terrain/set-height", "terrain/flatten",
-                "terrain/add-layer", "terrain/get-height", "terrain/list",
-                "terrain/raise-lower", "terrain/smooth", "terrain/noise",
-                "terrain/set-heights-region", "terrain/get-heights-region",
-                "terrain/remove-layer", "terrain/paint-layer", "terrain/fill-layer",
-                "terrain/add-tree-prototype", "terrain/remove-tree-prototype",
-                "terrain/place-trees", "terrain/clear-trees", "terrain/get-tree-instances",
-                "terrain/add-detail-prototype", "terrain/paint-detail",
-                "terrain/scatter-detail", "terrain/clear-detail",
-                "terrain/set-holes", "terrain/set-settings", "terrain/resize",
-                "terrain/create-grid", "terrain/set-neighbors",
-                "terrain/import-heightmap", "terrain/export-heightmap", "terrain/get-steepness",
                 // Particle System
                 "particle/create", "particle/info", "particle/set-main", "particle/set-emission",
                 "particle/set-shape", "particle/set-velocity", "particle/set-color",
                 "particle/set-size", "particle/set-renderer",
+                // VRse Parity Layer (unity-mcp-pro compatibility for the VRse build pipeline)
+                "vrse/parity/batch-execute", "vrse/parity/get-components",
+                "vrse/parity/get-screenshot-inline", "vrse/parity/list-loaded-scenes",
+                // VRse Spatial (no-marker spatial placement at Step 4.5)
+                "vrse/spatial/analyze-scene", "vrse/spatial/get-bounds",
+                "vrse/spatial/get-surface", "vrse/spatial/check-placement",
+                "vrse/spatial/list-probe-surfaces",
             };
 
             // Group by category
@@ -561,6 +585,10 @@ namespace UnityMCP.Editor
                     return MCPConsoleCommands.GetLog(ParseJson(body));
                 case "console/clear":
                     return MCPConsoleCommands.Clear();
+
+                // ─── Compilation ───
+                case "compilation/errors":
+                    return MCPConsoleCommands.GetCompilationErrors(ParseJson(body));
 
                 // ─── Project ───
                 case "project/info":
@@ -788,92 +816,6 @@ namespace UnityMCP.Editor
                 case "profiler/memory-snapshot":
                     return MCPMemoryProfilerCommands.TakeMemorySnapshot(ParseJson(body));
 
-                // ─── Shader Graph ───
-                case "shadergraph/status":
-                    return MCPShaderGraphCommands.GetStatus(ParseJson(body));
-                case "shadergraph/list-shaders":
-                    return MCPShaderGraphCommands.ListShaders(ParseJson(body));
-                case "shadergraph/list":
-                    return MCPShaderGraphCommands.ListShaderGraphs(ParseJson(body));
-                case "shadergraph/info":
-                    return MCPShaderGraphCommands.GetShaderGraphInfo(ParseJson(body));
-                case "shadergraph/get-properties":
-                    return MCPShaderGraphCommands.GetShaderProperties(ParseJson(body));
-                case "shadergraph/create":
-                    return MCPShaderGraphCommands.CreateShaderGraph(ParseJson(body));
-                case "shadergraph/open":
-                    return MCPShaderGraphCommands.OpenShaderGraph(ParseJson(body));
-                case "shadergraph/list-subgraphs":
-                    return MCPShaderGraphCommands.ListSubGraphs(ParseJson(body));
-                case "shadergraph/list-vfx":
-                    return MCPShaderGraphCommands.ListVFXGraphs(ParseJson(body));
-                case "shadergraph/open-vfx":
-                    return MCPShaderGraphCommands.OpenVFXGraph(ParseJson(body));
-                case "shadergraph/get-nodes":
-                    return MCPShaderGraphCommands.GetGraphNodes(ParseJson(body));
-                case "shadergraph/get-edges":
-                    return MCPShaderGraphCommands.GetGraphEdges(ParseJson(body));
-                case "shadergraph/add-node":
-                    return MCPShaderGraphCommands.AddGraphNode(ParseJson(body));
-                case "shadergraph/remove-node":
-                    return MCPShaderGraphCommands.RemoveGraphNode(ParseJson(body));
-                case "shadergraph/connect":
-                    return MCPShaderGraphCommands.ConnectGraphNodes(ParseJson(body));
-                case "shadergraph/disconnect":
-                    return MCPShaderGraphCommands.DisconnectGraphNodes(ParseJson(body));
-                case "shadergraph/set-node-property":
-                    return MCPShaderGraphCommands.SetGraphNodeProperty(ParseJson(body));
-                case "shadergraph/get-node-types":
-                    return MCPShaderGraphCommands.GetNodeTypes(ParseJson(body));
-
-                // ─── Amplify Shader Editor ───
-                case "amplify/status":
-                    return MCPAmplifyCommands.GetStatus(ParseJson(body));
-                case "amplify/list":
-                    return MCPAmplifyCommands.ListAmplifyShaders(ParseJson(body));
-                case "amplify/info":
-                    return MCPAmplifyCommands.GetAmplifyShaderInfo(ParseJson(body));
-                case "amplify/open":
-                    return MCPAmplifyCommands.OpenAmplifyShader(ParseJson(body));
-                case "amplify/list-functions":
-                    return MCPAmplifyCommands.ListAmplifyFunctions(ParseJson(body));
-                case "amplify/get-node-types":
-                    return MCPAmplifyCommands.GetAmplifyNodeTypes(ParseJson(body));
-                case "amplify/get-nodes":
-                    return MCPAmplifyCommands.GetAmplifyGraphNodes(ParseJson(body));
-                case "amplify/get-connections":
-                    return MCPAmplifyCommands.GetAmplifyGraphConnections(ParseJson(body));
-                case "amplify/create-shader":
-                    return MCPAmplifyCommands.CreateAmplifyShader(ParseJson(body));
-                case "amplify/add-node":
-                    return MCPAmplifyCommands.AddAmplifyNode(ParseJson(body));
-                case "amplify/remove-node":
-                    return MCPAmplifyCommands.RemoveAmplifyNode(ParseJson(body));
-                case "amplify/connect":
-                    return MCPAmplifyCommands.ConnectAmplifyNodes(ParseJson(body));
-                case "amplify/disconnect":
-                    return MCPAmplifyCommands.DisconnectAmplifyNodes(ParseJson(body));
-                case "amplify/node-info":
-                    return MCPAmplifyCommands.GetAmplifyNodeInfo(ParseJson(body));
-                case "amplify/set-node-property":
-                    return MCPAmplifyCommands.SetAmplifyNodeProperty(ParseJson(body));
-                case "amplify/move-node":
-                    return MCPAmplifyCommands.MoveAmplifyNode(ParseJson(body));
-                case "amplify/save":
-                    return MCPAmplifyCommands.SaveAmplifyGraph(ParseJson(body));
-                case "amplify/close":
-                    return MCPAmplifyCommands.CloseAmplifyEditor(ParseJson(body));
-                case "amplify/create-from-template":
-                    return MCPAmplifyCommands.CreateAmplifyFromTemplate(ParseJson(body));
-                case "amplify/focus-node":
-                    return MCPAmplifyCommands.FocusAmplifyNode(ParseJson(body));
-                case "amplify/master-node-info":
-                    return MCPAmplifyCommands.GetAmplifyMasterNodeInfo(ParseJson(body));
-                case "amplify/disconnect-all":
-                    return MCPAmplifyCommands.DisconnectAllAmplifyNode(ParseJson(body));
-                case "amplify/duplicate-node":
-                    return MCPAmplifyCommands.DuplicateAmplifyNode(ParseJson(body));
-
                 // ─── Agent Management ───
                 case "agents/list":
                     return MCPRequestQueue.GetActiveSessions();
@@ -905,6 +847,125 @@ namespace UnityMCP.Editor
                     return MCPSearchCommands.FindMissingReferences(ParseJson(body));
                 case "search/scene-stats":
                     return MCPSearchCommands.GetSceneStats(ParseJson(body));
+                // VRseBuilder SDK
+                case "vrse/status":
+                    return MCPVRseBuilderCommands.GetStatus(ParseJson(body));
+                case "vrse/login":
+                    return MCPVRseBuilderCommands.Login(ParseJson(body));
+                case "vrse/list-projects":
+                    return MCPVRseBuilderCommands.ListProjects(ParseJson(body));
+                case "vrse/select-project":
+                    return MCPVRseBuilderCommands.SelectProject(ParseJson(body));
+                case "vrse/list-modules":
+                    return MCPVRseBuilderCommands.ListModules(ParseJson(body));
+                case "vrse/open-menu-scene":
+                    return MCPVRseBuilderCommands.OpenMenuScene(ParseJson(body));
+                case "vrse/open-module":
+                    return MCPVRseBuilderCommands.OpenModule(ParseJson(body));
+                case "vrse/open-room-manager-config":
+                    return MCPVRseBuilderCommands.OpenRoomManagerConfig(ParseJson(body));
+                case "vrse/get-selected-project":
+                    return MCPVRseBuilderCommands.GetSelectedProject(ParseJson(body));
+                case "vrse/get-project-config":
+                    return MCPVRseBuilderCommands.GetProjectConfig(ParseJson(body));
+                case "vrse/ensure-project-settings":
+                    return MCPVRseBuilderCommands.EnsureProjectSettings(ParseJson(body));
+                case "vrse/apply-project-settings":
+                    return MCPVRseBuilderCommands.ApplyProjectSettings(ParseJson(body));
+                case "vrse/open-studio-project-window":
+                    return MCPVRseBuilderCommands.OpenStudioProjectWindow(ParseJson(body));
+                case "vrse/open-project-config-window":
+                    return MCPVRseBuilderCommands.OpenProjectConfigWindow(ParseJson(body));
+                case "vrse/open-build-tool":
+                    return MCPVRseBuilderCommands.OpenBuildToolWindow(ParseJson(body));
+                case "vrse/create-experience":
+                    return MCPVRseBuilderCommands.CreateExperience(ParseJson(body));
+                case "vrse/get-experience-creation-status":
+                    return MCPVRseBuilderCommands.GetExperienceCreationStatus(ParseJson(body));
+                case "vrse/open-art-scene":
+                    return MCPVRseBuilderCommands.OpenArtScene(ParseJson(body));
+                case "vrse/story-add-trigger-set":
+                    return MCPVRseBuilderCommands.StoryAddTriggerSet(ParseJson(body));
+                case "vrse/story-add-action":
+                    return MCPVRseBuilderCommands.StoryAddAction(ParseJson(body));
+                case "vrse/story-update-node":
+                    return MCPVRseBuilderCommands.StoryUpdateNode(ParseJson(body));
+                case "vrse/story-save":
+                    return MCPVRseBuilderCommands.StorySave(ParseJson(body));
+                case "vrse/story-validate":
+                    return MCPVRseBuilderCommands.StoryValidate(ParseJson(body));
+                case "vrse/story-remove-node-by-name":
+                    return MCPVRseBuilderCommands.StoryRemoveNodeByName(ParseJson(body));
+                case "vrse/story-apply-json":
+                    return MCPVRseBuilderCommands.StoryApplyJson(ParseJson(body));
+                case "vrse/story-patch":
+                    return MCPVRseBuilderCommands.StoryPatch(ParseJson(body));
+                case "vrse/story-get-info":
+                    return MCPVRseBuilderCommands.StoryGetInfo(ParseJson(body));
+                case "vrse/story-undo-write":
+                    return MCPVRseBuilderCommands.StoryUndoWrite(ParseJson(body));
+                case "vrse/apply-moment-weightage":
+                    return MCPVRseBuilderCommands.ApplyMomentWeightage(ParseJson(body));
+                case "vrse/story-has-pending-vo":
+                    return MCPVRseBuilderCommands.StoryHasPendingVO(ParseJson(body));
+                case "vrse/create-evaluation-from-training":
+                    return MCPVRseBuilderCommands.CreateEvaluationFromTraining(ParseJson(body));
+                case "vrse/story-read":
+                    return MCPVRseBuilderCommands.StoryRead(ParseJson(body));
+                case "vrse/story-list-node-templates":
+                    return MCPVRseBuilderCommands.StoryListNodeTemplates(ParseJson(body));
+                case "vrse/query-objects-list":
+                    return MCPVRseBuilderCommands.QueryObjectsList(ParseJson(body));
+                case "vrse/story-remove-action":
+                    return MCPVRseBuilderCommands.StoryRemoveAction(ParseJson(body));
+                case "vrse/story-add-chapter":
+                    return MCPVRseBuilderCommands.StoryAddChapter(ParseJson(body));
+                case "vrse/story-rename-chapter":
+                    return MCPVRseBuilderCommands.StoryRenameChapter(ParseJson(body));
+                case "vrse/story-remove-chapter":
+                    return MCPVRseBuilderCommands.StoryRemoveChapter(ParseJson(body));
+                case "vrse/story-add-moment":
+                    return MCPVRseBuilderCommands.StoryAddMoment(ParseJson(body));
+                case "vrse/story-rename-moment":
+                    return MCPVRseBuilderCommands.StoryRenameMoment(ParseJson(body));
+                case "vrse/story-remove-moment":
+                    return MCPVRseBuilderCommands.StoryRemoveMoment(ParseJson(body));
+                case "vrse/story-move-action":
+                    return MCPVRseBuilderCommands.StoryMoveAction(ParseJson(body));
+                case "vrse/story-duplicate-action":
+                    return MCPVRseBuilderCommands.StoryDuplicateAction(ParseJson(body));
+                case "vrse/story-defaults-get":
+                    return MCPVRseBuilderCommands.StoryDefaultsGet(ParseJson(body));
+                case "vrse/building-blocks-list":
+                    return MCPVRseBuilderCommands.BuildingBlocksList(ParseJson(body));
+                case "vrse/building-blocks-instantiate":
+                    return MCPVRseBuilderCommands.BuildingBlocksInstantiate(ParseJson(body));
+                case "vrse/scene-hierarchy-checkup":
+                    return MCPVRseBuilderCommands.SceneHierarchyCheckup(ParseJson(body));
+                case "vrse/module-set-include-in-build":
+                    return MCPVRseBuilderCommands.ModuleSetIncludeInBuild(ParseJson(body));
+                case "vrse/build-start":
+                    return MCPVRseBuilderCommands.BuildStart(ParseJson(body));
+                case "vrse/build-status":
+                    return MCPVRseBuilderCommands.BuildStatus(ParseJson(body));
+                case "vrse/story-apply-action-to-multiple-moments":
+                    return MCPVRseBuilderCommands.StoryApplyActionToMultipleMoments(ParseJson(body));
+                case "vrse/list-story-backups":
+                    return MCPVRseBuilderCommands.ListStoryBackups(ParseJson(body));
+                case "vrse/create-story-backup":
+                    return MCPVRseBuilderCommands.CreateStoryBackup(ParseJson(body));
+                case "vrse/restore-story-backup":
+                    return MCPVRseBuilderCommands.RestoreStoryBackup(ParseJson(body));
+                case "vrse/story-search-node-templates":
+                    return MCPVRseBuilderCommands.StorySearchNodeTemplates(ParseJson(body));
+                case "vrse/story-generate-vo":
+                    return MCPVRseBuilderCommands.StoryGenerateVO(ParseJson(body));
+                case "vrse/interactable_convert":
+                    return MCPInteractableCommands.InteractableConvert(ParseJson(body));
+                case "vrse/create-rotator-from-mesh/analyze":
+                    return MCPVRseBuilderCommands.PivotRotateLimiterAnalyze(ParseJson(body));
+                case "vrse/create-rotator-from-mesh/create":
+                    return MCPVRseBuilderCommands.PivotRotateLimiterCreate(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":
@@ -966,72 +1027,6 @@ namespace UnityMCP.Editor
                 case "graphics/lighting-summary":
                     return MCPGraphicsCommands.GetLightingSummary(ParseJson(body));
 
-                // ─── Terrain ───
-                case "terrain/create":
-                    return MCPTerrainCommands.CreateTerrain(ParseJson(body));
-                case "terrain/info":
-                    return MCPTerrainCommands.GetTerrainInfo(ParseJson(body));
-                case "terrain/set-height":
-                    return MCPTerrainCommands.SetHeight(ParseJson(body));
-                case "terrain/flatten":
-                    return MCPTerrainCommands.FlattenTerrain(ParseJson(body));
-                case "terrain/add-layer":
-                    return MCPTerrainCommands.AddTerrainLayer(ParseJson(body));
-                case "terrain/get-height":
-                    return MCPTerrainCommands.GetHeightAtPosition(ParseJson(body));
-                case "terrain/list":
-                    return MCPTerrainCommands.ListTerrains(ParseJson(body));
-                case "terrain/raise-lower":
-                    return MCPTerrainCommands.RaiseLowerHeight(ParseJson(body));
-                case "terrain/smooth":
-                    return MCPTerrainCommands.SmoothHeight(ParseJson(body));
-                case "terrain/noise":
-                    return MCPTerrainCommands.SetHeightsFromNoise(ParseJson(body));
-                case "terrain/set-heights-region":
-                    return MCPTerrainCommands.SetHeightsRegion(ParseJson(body));
-                case "terrain/get-heights-region":
-                    return MCPTerrainCommands.GetHeightsRegion(ParseJson(body));
-                case "terrain/remove-layer":
-                    return MCPTerrainCommands.RemoveTerrainLayer(ParseJson(body));
-                case "terrain/paint-layer":
-                    return MCPTerrainCommands.PaintTerrainLayer(ParseJson(body));
-                case "terrain/fill-layer":
-                    return MCPTerrainCommands.FillTerrainLayer(ParseJson(body));
-                case "terrain/add-tree-prototype":
-                    return MCPTerrainCommands.AddTreePrototype(ParseJson(body));
-                case "terrain/remove-tree-prototype":
-                    return MCPTerrainCommands.RemoveTreePrototype(ParseJson(body));
-                case "terrain/place-trees":
-                    return MCPTerrainCommands.PlaceTrees(ParseJson(body));
-                case "terrain/clear-trees":
-                    return MCPTerrainCommands.ClearTrees(ParseJson(body));
-                case "terrain/get-tree-instances":
-                    return MCPTerrainCommands.GetTreeInstances(ParseJson(body));
-                case "terrain/add-detail-prototype":
-                    return MCPTerrainCommands.AddDetailPrototype(ParseJson(body));
-                case "terrain/paint-detail":
-                    return MCPTerrainCommands.PaintDetail(ParseJson(body));
-                case "terrain/scatter-detail":
-                    return MCPTerrainCommands.ScatterDetail(ParseJson(body));
-                case "terrain/clear-detail":
-                    return MCPTerrainCommands.ClearDetail(ParseJson(body));
-                case "terrain/set-holes":
-                    return MCPTerrainCommands.SetHoles(ParseJson(body));
-                case "terrain/set-settings":
-                    return MCPTerrainCommands.SetTerrainSettings(ParseJson(body));
-                case "terrain/resize":
-                    return MCPTerrainCommands.ResizeTerrain(ParseJson(body));
-                case "terrain/create-grid":
-                    return MCPTerrainCommands.CreateTerrainGrid(ParseJson(body));
-                case "terrain/set-neighbors":
-                    return MCPTerrainCommands.SetTerrainNeighbors(ParseJson(body));
-                case "terrain/import-heightmap":
-                    return MCPTerrainCommands.ImportHeightmap(ParseJson(body));
-                case "terrain/export-heightmap":
-                    return MCPTerrainCommands.ExportHeightmap(ParseJson(body));
-                case "terrain/get-steepness":
-                    return MCPTerrainCommands.GetSteepness(ParseJson(body));
-
                 // ─── Particle System ───
                 case "particle/create":
                     return MCPParticleCommands.CreateParticleSystem(ParseJson(body));
@@ -1067,20 +1062,6 @@ namespace UnityMCP.Editor
                     return MCPTextureCommands.SetAsSprite(ParseJson(body));
                 case "texture/set-normalmap":
                     return MCPTextureCommands.SetAsNormalMap(ParseJson(body));
-
-                // ─── Navigation ───
-                case "navigation/bake":
-                    return MCPNavigationCommands.BakeNavMesh(ParseJson(body));
-                case "navigation/clear":
-                    return MCPNavigationCommands.ClearNavMesh(ParseJson(body));
-                case "navigation/add-agent":
-                    return MCPNavigationCommands.AddNavMeshAgent(ParseJson(body));
-                case "navigation/add-obstacle":
-                    return MCPNavigationCommands.AddNavMeshObstacle(ParseJson(body));
-                case "navigation/info":
-                    return MCPNavigationCommands.GetNavMeshInfo(ParseJson(body));
-                case "navigation/set-destination":
-                    return MCPNavigationCommands.SetAgentDestination(ParseJson(body));
 
                 // ─── UI ───
                 case "ui/create-canvas":
@@ -1146,9 +1127,48 @@ namespace UnityMCP.Editor
                 case "scenario/info":
                     return MCPScenarioCommands.GetMultiplayerInfo(ParseJson(body));
 
+                // ─── VRse Parity Layer (replaces unity-mcp-pro tools the build pipeline depends on) ───
+                case "vrse/parity/batch-execute":
+                    return MCPParityCommands.BatchExecute(ParseJson(body));
+                case "vrse/parity/get-components":
+                    return MCPParityCommands.GetAllComponents(ParseJson(body));
+                case "vrse/parity/get-screenshot-inline":
+                    return MCPParityCommands.CaptureSceneViewInline(ParseJson(body));
+                case "vrse/parity/list-loaded-scenes":
+                    return MCPParityCommands.SearchAllLoadedScenes(ParseJson(body));
+
+                // ─── VRse Spatial (ported from unity-mcp-pro for no-marker placement) ───
+                case "vrse/spatial/analyze-scene":
+                    return MCPSpatialCommands.AnalyzeScene(ParseJson(body));
+                case "vrse/spatial/get-bounds":
+                    return MCPSpatialCommands.GetBounds(ParseJson(body));
+                case "vrse/spatial/get-surface":
+                    return MCPSpatialCommands.FindSurface(ParseJson(body));
+                case "vrse/spatial/check-placement":
+                    return MCPSpatialCommands.CheckPlacement(ParseJson(body));
+                case "vrse/spatial/list-probe-surfaces":
+                    return MCPSpatialCommands.ProbeSurfaces(ParseJson(body));
+
                 default:
                     return new { error = $"Unknown API endpoint: {path}" };
             }
+        }
+
+        /// <summary>
+        /// Public dispatcher used by VRse parity commands (notably batch-execute) to invoke
+        /// other API routes in-process on the main thread. Serializes args to JSON, then
+        /// delegates to RouteRequest. Returns the same shape as a direct HTTP call.
+        ///
+        /// This is internal to the assembly — only VRse parity commands use it.
+        /// External callers must go through the HTTP listener.
+        /// </summary>
+        internal static object ExecuteRouteInternal(string path, Dictionary<string, object> args)
+        {
+            if (string.IsNullOrEmpty(path))
+                throw new ArgumentException("path is required");
+
+            string body = args != null ? MiniJson.Serialize(args) : "";
+            return RouteRequest(path, "POST", body);
         }
 
         // ─── Helpers ───

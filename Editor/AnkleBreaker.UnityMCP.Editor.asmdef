@@ -1,16 +1,30 @@
 {
-  "name": "AnkleBreaker.UnityMCP.Editor",
-  "rootNamespace": "UnityMCP.Editor",
-  "references": [],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name":  "AnkleBreaker.UnityMCP.Editor",
+    "rootNamespace":  "UnityMCP.Editor",
+    "references":  [
+                       "VRseBuilder.Core",
+                       "VRseBuilder.Backend.Editor",
+                       "VRseBuilder.Tools.Editor",
+                       "VRseBuilder.Platform.MetaXR.Editor",
+                       "VRseBuilder.InfinityWorkshop"
+                   ],
+    "includePlatforms":  [
+                             "Editor"
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "noEngineReferences":  false
 }
