@@ -423,6 +423,8 @@ namespace UnityMCP.Editor
                 "vrse/create-button-from-mesh/create",
                 // VRse story report
                 "vrse/story/report",
+                // VRse general UI setup
+                "vrse/ui/general-setup",
                 // Animation
                 "animation/create-controller", "animation/get-controller", "animation/add-state",
                 "animation/remove-state", "animation/add-transition", "animation/remove-transition",
@@ -987,6 +989,8 @@ namespace UnityMCP.Editor
                     return MCPPhysicalButtonCommands.Create(ParseJson(body));
                 case "vrse/story/report":
                     return MCPStoryReportCommands.GetReport(ParseJson(body));
+                case "vrse/ui/general-setup":
+                    return MCPGeneralUISetupCommands.Execute(ParseJson(body));
 
                 // ─── Project Settings ───
                 case "settings/quality":
