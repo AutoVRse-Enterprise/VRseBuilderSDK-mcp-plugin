@@ -13,6 +13,7 @@ namespace UnityMCP.Editor
             string methodName = args.ContainsKey("methodName") ? args["methodName"]?.ToString() : string.Empty;
             string targetHint = args.ContainsKey("targetHint") ? args["targetHint"]?.ToString() : string.Empty;
             string objectPath = args.ContainsKey("objectPath") ? args["objectPath"]?.ToString() : string.Empty;
+            string newName = args.ContainsKey("newName") ? args["newName"]?.ToString() : string.Empty;
 
             if (string.IsNullOrEmpty(methodName))
             {
@@ -44,7 +45,7 @@ namespace UnityMCP.Editor
                         result = MetaXRInteractableConverter.ConvertToNetworkMetaXRPlacePoint(target);
                         break;
                     case "CreatePlacePoint":
-                        MetaXRInteractableConverter.CreateNetworkMetaXRPlacePoint(target);
+                        MetaXRInteractableConverter.CreateNetworkMetaXRPlacePoint(target, newName);
                         result = true; // Returns void
                         break;
                     case "ConvertToRayInteractable":
