@@ -1771,12 +1771,12 @@ namespace UnityMCP.Editor
 
         public static object BuildingBlocksList(Dictionary<string, object> args)
         {
-            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection");
-            if (guids.Length == 0) return new { error = "No BuildingBlocksCollection found in the project." };
+            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection");
+            if (guids.Length == 0) return new { error = "No VRseBlocksCollection found in the project." };
 
             string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection>(path);
-            if (collection == null) return new { error = "Failed to load BuildingBlocksCollection." };
+            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection>(path);
+            if (collection == null) return new { error = "Failed to load VRseBlocksCollection." };
 
             var blocks = new List<object>();
             foreach (var block in collection.Blocks)
@@ -1800,16 +1800,16 @@ namespace UnityMCP.Editor
             string blockName = GetStringArg(args, "blockName");
             if (string.IsNullOrEmpty(blockName)) return new { error = "blockName is required." };
 
-            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection");
-            if (guids.Length == 0) return new { error = "No BuildingBlocksCollection found in the project." };
+            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection");
+            if (guids.Length == 0) return new { error = "No VRseBlocksCollection found in the project." };
 
             string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.BuildingBlocks.BuildingBlocksCollection>(path);
-            if (collection == null) return new { error = "Failed to load BuildingBlocksCollection." };
+            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection>(path);
+            if (collection == null) return new { error = "Failed to load VRseBlocksCollection." };
 
             var block = collection.Blocks.FirstOrDefault(b => b.BlockName.Equals(blockName, System.StringComparison.OrdinalIgnoreCase));
-            if (block == null) return new { error = $"Building block '{blockName}' not found in the collection." };
-            if (block.BlockPrefab == null) return new { error = $"Building block '{blockName}' has no prefab assigned." };
+            if (block == null) return new { error = $"VRse block '{blockName}' not found in the collection." };
+            if (block.BlockPrefab == null) return new { error = $"VRse block '{blockName}' has no prefab assigned." };
 
             GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(block.BlockPrefab);
             if (instance == null) return new { error = $"Failed to instantiate prefab for '{blockName}'." };
@@ -1821,7 +1821,7 @@ namespace UnityMCP.Editor
             }
 
             Selection.activeGameObject = instance;
-            Undo.RegisterCreatedObjectUndo(instance, $"Instantiate Building Block: {blockName}");
+            Undo.RegisterCreatedObjectUndo(instance, $"Instantiate VRse Block: {blockName}");
 
             return new Dictionary<string, object> 
             { 
