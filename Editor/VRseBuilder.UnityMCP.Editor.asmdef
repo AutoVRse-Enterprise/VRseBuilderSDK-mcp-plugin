@@ -1,5 +1,5 @@
 {
-    "name":  "AnkleBreaker.UnityMCP.Editor",
+    "name":  "VRseBuilder.UnityMCP.Editor",
     "rootNamespace":  "UnityMCP.Editor",
     "references":  [
                        "VRseBuilder.Core",

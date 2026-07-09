@@ -2,6 +2,17 @@
 
 All notable changes to this package will be documented in this file.
 
+## [Unreleased] — VRseBuilder rebrand
+
+### Changed
+- Rebranded the plugin to **VRseBuilder Unity MCP** (AutoVRse). Menu path is now
+  `Window > VRseBuilder Unity MCP`, the Editor assembly is `VRseBuilder.UnityMCP.Editor`,
+  and the console log prefix is `[VRSE-UMCP]`.
+- Removed the in-editor update checker (no external release calls) and the promotional
+  content in the Welcome window.
+
+> Note: the `LICENSE` file is unchanged pending review.
+
 ## [2.24.0] - 2026-03-20
 
 ### Added
@@ -19,9 +30,7 @@ All notable changes to this package will be documented in this file.
 
 ### Changed
 - **MCP connector renamed to `unity-mcp`** for better Cowork discovery (technical name only)
-  - AnkleBreaker branding preserved in all user-facing UI (menu, dashboard, logs, tooltips)
-  - Menu item remains: `Window > AB Unity MCP`
-  - Log prefix remains: `[AB-UMCP]`
+  - Connector uses the technical name `unity-mcp` for Cowork discovery; user-facing UI branding is unchanged by this rename
 - Updated README with clear two-part installation instructions and Cowork setup guide
 - Added Project Context to dashboard documentation
 

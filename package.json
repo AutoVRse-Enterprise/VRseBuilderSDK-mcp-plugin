@@ -14,13 +14,13 @@
     "bridge"
   ],
   "author": {
-    "name": "",
+    "name": "AutoVRse",
     "email": "",
-    "url": ""
+    "url": "https://github.com/AutoVRse-Enterprise"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Venkat-Swaraj-AutoVRse/VRseBuilderSDK-mcp-plugin.git"
+    "url": "https://github.com/AutoVRse-Enterprise/VRseBuilderSDK-mcp-plugin.git"
   },
   "license": "MIT",
   "type": "tool"

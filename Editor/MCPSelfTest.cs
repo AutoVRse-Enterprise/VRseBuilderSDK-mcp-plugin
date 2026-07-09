@@ -176,7 +176,7 @@ namespace UnityMCP.Editor
                     Category = category,
                     Status = MCPTestResult.TestStatus.Failed,
                     Message = "Server not running",
-                    Details = "The AB Unity MCP server is stopped. Start it first.",
+                    Details = "The VRseBuilder Unity MCP server is stopped. Start it first.",
                     Timestamp = DateTime.UtcNow,
                 };
                 return;
@@ -333,7 +333,7 @@ namespace UnityMCP.Editor
         private static string TestScript()
         {
             // Try to read a script we know should exist (any .cs in Editor/)
-            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:MonoScript", new[] { "Packages/com.anklebreaker.unity-mcp/Editor" });
+            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:MonoScript", new[] { "Packages/com.autovrse.vrsebuilder.unity-mcp/Editor" });
             if (guids.Length == 0)
             {
                 // Fallback: look in Assets

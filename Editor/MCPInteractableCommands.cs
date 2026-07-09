@@ -45,7 +45,11 @@ namespace UnityMCP.Editor
                         result = MetaXRInteractableConverter.ConvertToNetworkMetaXRPlacePoint(target);
                         break;
                     case "CreatePlacePoint":
-                        MetaXRInteractableConverter.CreateNetworkMetaXRPlacePoint(target, newName);
+                        // CreateNetworkMetaXRPlacePoint has no name overload; it creates the
+                        // placepoint and leaves it as the active selection. Rename afterwards.
+                        MetaXRInteractableConverter.CreateNetworkMetaXRPlacePoint(target);
+                        if (!string.IsNullOrEmpty(newName) && Selection.activeGameObject != null)
+                            Selection.activeGameObject.name = newName;
                         result = true; // Returns void
                         break;
                     case "ConvertToRayInteractable":

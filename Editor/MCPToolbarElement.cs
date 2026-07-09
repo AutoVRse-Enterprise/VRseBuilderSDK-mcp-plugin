@@ -109,13 +109,13 @@ namespace UnityMCP.Editor
             get
             {
                 if (!ServerRunning)
-                    return "AB Unity MCP \u2014 Stopped\nClick for options";
+                    return "VRseBuilder Unity MCP \u2014 Stopped\nClick for options";
 
                 int activePort = MCPBridgeServer.ActivePort;
                 string portInfo = MCPSettingsManager.UseManualPort
                     ? $"port {activePort}"
                     : $"port {activePort} (auto)";
-                string tip = $"AB Unity MCP \u2014 Running on {portInfo}";
+                string tip = $"VRseBuilder Unity MCP \u2014 Running on {portInfo}";
 
                 if (MCPInstanceRegistry.IsParrelSyncClone())
                     tip += $"\nParrelSync Clone #{MCPInstanceRegistry.GetParrelSyncCloneIndex()}";
@@ -368,7 +368,7 @@ namespace UnityMCP.Editor
             {
                 EditorApplication.update -= TryInject;
                 if (!_injected && _retryCount >= MaxRetries)
-                    Debug.Log("[AB-UMCP] Main toolbar injection not available on this Unity version. Use Unity 6000.3+ for native toolbar support.");
+                    Debug.Log("[VRSE-UMCP] Main toolbar injection not available on this Unity version. Use Unity 6000.3+ for native toolbar support.");
                 return;
             }
             _retryCount++;
@@ -432,12 +432,12 @@ namespace UnityMCP.Editor
                 EditorApplication.update -= TryInject;
 
                 _mcpRoot.schedule.Execute(() => RefreshMainToolbar()).Every(1000);
-                Debug.Log("[AB-UMCP] Injected into main toolbar (legacy mode).");
+                Debug.Log("[VRSE-UMCP] Injected into main toolbar (legacy mode).");
             }
             catch (Exception ex)
             {
                 if (_retryCount >= MaxRetries)
-                    Debug.LogWarning($"[AB-UMCP] Legacy injection failed: {ex.Message}");
+                    Debug.LogWarning($"[VRSE-UMCP] Legacy injection failed: {ex.Message}");
             }
         }
 

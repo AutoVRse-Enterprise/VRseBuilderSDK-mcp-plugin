@@ -122,7 +122,7 @@ namespace UnityMCP.Editor
 
                     if (!claimedByOther && IsPortAvailable(preferredPort))
                     {
-                        Debug.Log($"[AB-UMCP] Reclaimed preferred port {preferredPort} (port affinity).");
+                        Debug.Log($"[VRSE-UMCP] Reclaimed preferred port {preferredPort} (port affinity).");
                         result = preferredPort;
                         return;
                     }
@@ -151,7 +151,7 @@ namespace UnityMCP.Editor
                     }
                 }
 
-                Debug.LogWarning($"[AB-UMCP] No available port in range {PortRangeStart}-{PortRangeEnd}. Using default {PortRangeStart}.");
+                Debug.LogWarning($"[VRSE-UMCP] No available port in range {PortRangeStart}-{PortRangeEnd}. Using default {PortRangeStart}.");
             }, "find-port");
 
             return result;
@@ -254,7 +254,7 @@ namespace UnityMCP.Editor
                 instances.Add(entry);
                 WriteRegistry(instances);
 
-                Debug.Log($"[AB-UMCP] Registered instance on port {port} in registry.");
+                Debug.Log($"[VRSE-UMCP] Registered instance on port {port} in registry.");
             }, "register");
 
             // Start the heartbeat: periodically update lastSeen so the MCP server
@@ -348,7 +348,7 @@ namespace UnityMCP.Editor
                 });
 
                 WriteRegistry(instances);
-                Debug.Log($"[AB-UMCP] Unregistered instance (port {port}) from registry.");
+                Debug.Log($"[VRSE-UMCP] Unregistered instance (port {port}) from registry.");
             }, "unregister");
             _registeredPort = -1;
         }
@@ -388,7 +388,7 @@ namespace UnityMCP.Editor
                 if (removed > 0)
                 {
                     WriteRegistry(instances);
-                    Debug.Log($"[AB-UMCP] Cleaned up {removed} stale instance(s) from registry.");
+                    Debug.Log($"[VRSE-UMCP] Cleaned up {removed} stale instance(s) from registry.");
                 }
             }, "cleanup");
         }
@@ -449,14 +449,14 @@ namespace UnityMCP.Editor
 
                 if (!acquired)
                 {
-                    Debug.LogWarning($"[AB-UMCP] Could not acquire registry lock for '{operationName}' within {MutexTimeoutMs}ms. Proceeding without lock.");
+                    Debug.LogWarning($"[VRSE-UMCP] Could not acquire registry lock for '{operationName}' within {MutexTimeoutMs}ms. Proceeding without lock.");
                 }
 
                 action();
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[AB-UMCP] Failed to {operationName} in instance registry: {ex.Message}");
+                Debug.LogWarning($"[VRSE-UMCP] Failed to {operationName} in instance registry: {ex.Message}");
             }
             finally
             {
@@ -495,7 +495,7 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[AB-UMCP] Error reading instance registry: {ex.Message}");
+                Debug.LogWarning($"[VRSE-UMCP] Error reading instance registry: {ex.Message}");
             }
 
             return result;
@@ -518,7 +518,7 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[AB-UMCP] Error writing instance registry: {ex.Message}");
+                Debug.LogWarning($"[VRSE-UMCP] Error writing instance registry: {ex.Message}");
             }
         }
 

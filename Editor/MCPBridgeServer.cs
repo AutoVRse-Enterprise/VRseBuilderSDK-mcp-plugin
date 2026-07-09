@@ -130,23 +130,23 @@ namespace UnityMCP.Editor
                 _listenerThread = new Thread(ListenLoop)
                 {
                     IsBackground = true,
-                    Name = "AB Unity MCP Server"
+                    Name = "VRseBuilder Unity MCP Server"
                 };
                 _listenerThread.Start();
 
                 // Register in the shared instance registry
                 MCPInstanceRegistry.Register(port);
 
-                Debug.Log($"[AB-UMCP] Server started on port {port}");
+                Debug.Log($"[VRSE-UMCP] Server started on port {port}");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[AB-UMCP] Failed to start on port {port}: {ex.Message}");
+                Debug.LogError($"[VRSE-UMCP] Failed to start on port {port}: {ex.Message}");
 
                 // If auto-port failed, try the next available one
                 if (!MCPSettingsManager.UseManualPort && port < MCPInstanceRegistry.PortRangeEnd)
                 {
-                    Debug.Log("[AB-UMCP] Trying next available port...");
+                    Debug.Log("[VRSE-UMCP] Trying next available port...");
                     EditorApplication.delayCall += Start;
                 }
             }
@@ -167,7 +167,7 @@ namespace UnityMCP.Editor
             }
             catch { }
             _activePort = 0;
-            Debug.Log("[AB-UMCP] Server stopped");
+            Debug.Log("[VRSE-UMCP] Server stopped");
         }
 
         // ─── EditorApplication.update — processes both legacy queue AND ticket queue ───
@@ -198,7 +198,7 @@ namespace UnityMCP.Editor
                 catch (Exception ex)
                 {
                     if (_isRunning)
-                        Debug.LogError($"[AB-UMCP] Listener error: {ex.Message}");
+                        Debug.LogError($"[VRSE-UMCP] Listener error: {ex.Message}");
                 }
             }
         }
@@ -494,7 +494,7 @@ namespace UnityMCP.Editor
             if (category != "ping" && category != "agents" && category != "queue"
                 && !MCPSettingsManager.IsCategoryEnabled(category))
             {
-                return new { error = $"Category '{category}' is currently disabled. Enable it in Window > AB Unity MCP." };
+                return new { error = $"Category '{category}' is currently disabled. Enable it in Window > VRseBuilder Unity MCP." };
             }
 
             switch (path)
@@ -1249,7 +1249,7 @@ namespace UnityMCP.Editor
                     try { action?.Invoke(); }
                     catch (Exception ex)
                     {
-                        Debug.LogError($"[AB-UMCP] Main thread action error: {ex}");
+                        Debug.LogError($"[VRSE-UMCP] Main thread action error: {ex}");
                     }
                 }
             }
@@ -1269,7 +1269,7 @@ namespace UnityMCP.Editor
             // Size validation — protect against Write EOF on large projects
             if (buffer.Length > ResponseHardLimitBytes)
             {
-                Debug.LogWarning($"[AB-UMCP] Response too large ({buffer.Length / (1024 * 1024)}MB), replacing with error. Use pagination parameters.");
+                Debug.LogWarning($"[VRSE-UMCP] Response too large ({buffer.Length / (1024 * 1024)}MB), replacing with error. Use pagination parameters.");
                 var errorData = new Dictionary<string, object>
                 {
                     { "error", "response_too_large" },
@@ -1283,7 +1283,7 @@ namespace UnityMCP.Editor
             }
             else if (buffer.Length > ResponseSoftLimitBytes)
             {
-                Debug.LogWarning($"[AB-UMCP] Large response ({buffer.Length / (1024 * 1024)}MB). Consider using pagination parameters.");
+                Debug.LogWarning($"[VRSE-UMCP] Large response ({buffer.Length / (1024 * 1024)}MB). Consider using pagination parameters.");
             }
 
             response.ContentLength64 = buffer.Length;

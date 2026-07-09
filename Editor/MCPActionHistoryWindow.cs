@@ -62,7 +62,7 @@ namespace UnityMCP.Editor
         //  Menu & Show
         // ═══════════════════════════════════════════════════════════
 
-        [MenuItem("Window/AB Unity MCP/Action History")]
+        [MenuItem("Window/VRseBuilder Unity MCP/Action History")]
         public static void ShowWindow()
         {
             var window = GetWindow<MCPActionHistoryWindow>("MCP Action History");

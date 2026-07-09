@@ -5,8 +5,7 @@ namespace UnityMCP.Editor
 {
     /// <summary>
     /// Welcome window shown on first editor startup.
-    /// Introduces AnkleBreaker Unity MCP, encourages reviews,
-    /// promotes GitHub Sponsors, and can be permanently dismissed.
+    /// Introduces VRseBuilder Unity MCP and can be permanently dismissed.
     /// </summary>
     [InitializeOnLoad]
     public class MCPWelcomeWindow : EditorWindow
@@ -14,21 +13,15 @@ namespace UnityMCP.Editor
         private const string HideKey = "UnityMCP_HideWelcome";
         private const string ShownSessionKey = "UnityMCP_WelcomeShownThisSession";
 
-        private static readonly Vector2 WindowSize = new Vector2(520, 640);
+        private static readonly Vector2 WindowSize = new Vector2(520, 420);
 
         private Vector2 _scrollPosition;
         private GUIStyle _titleStyle;
         private GUIStyle _headingStyle;
         private GUIStyle _bodyStyle;
-        private GUIStyle _italicStyle;
-        private GUIStyle _linkButtonStyle;
         private GUIStyle _accentButtonStyle;
         private bool _stylesReady;
 
-        // Colors
-        private static readonly Color AccentBlue = new Color(0.35f, 0.6f, 0.95f);
-        private static readonly Color AccentGold = new Color(0.95f, 0.75f, 0.2f);
-        private static readonly Color HeartRed = new Color(0.9f, 0.25f, 0.3f);
         private static readonly Color SubtleGrey = new Color(0.6f, 0.6f, 0.6f);
 
         static MCPWelcomeWindow()
@@ -51,7 +44,7 @@ namespace UnityMCP.Editor
             // Small delay so the editor is fully loaded
             EditorApplication.delayCall += () =>
             {
-                var window = GetWindow<MCPWelcomeWindow>(true, "Welcome to AnkleBreaker Unity MCP", true);
+                var window = GetWindow<MCPWelcomeWindow>(true, "Welcome to VRseBuilder Unity MCP", true);
                 window.minSize = WindowSize;
                 window.maxSize = new Vector2(WindowSize.x + 60, WindowSize.y + 120);
                 window.ShowUtility();
@@ -96,18 +89,6 @@ namespace UnityMCP.Editor
                 richText = true,
             };
 
-            _italicStyle = new GUIStyle(_bodyStyle)
-            {
-                fontStyle = FontStyle.Italic,
-            };
-
-            _linkButtonStyle = new GUIStyle(EditorStyles.miniButton)
-            {
-                fontSize = 11,
-                fixedHeight = 28,
-                richText = true,
-            };
-
             _accentButtonStyle = new GUIStyle(GUI.skin.button)
             {
                 fontSize = 13,
@@ -128,12 +109,12 @@ namespace UnityMCP.Editor
             EditorGUILayout.Space(12);
 
             // ─── Title ───
-            EditorGUILayout.LabelField("AnkleBreaker Unity MCP", _titleStyle, GUILayout.Height(32));
+            EditorGUILayout.LabelField("VRseBuilder Unity MCP", _titleStyle, GUILayout.Height(32));
             EditorGUILayout.Space(2);
 
             var prevColor = GUI.contentColor;
             GUI.contentColor = SubtleGrey;
-            EditorGUILayout.LabelField("by AnkleBreaker Studio", new GUIStyle(_bodyStyle)
+            EditorGUILayout.LabelField("by AutoVRse", new GUIStyle(_bodyStyle)
             {
                 alignment = TextAnchor.MiddleCenter,
                 fontSize = 11,
@@ -145,90 +126,19 @@ namespace UnityMCP.Editor
             EditorGUILayout.Space(8);
 
             // ─── About ───
-            EditorGUILayout.LabelField("Who we are", _headingStyle);
+            EditorGUILayout.LabelField("What is this?", _headingStyle);
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField(
-                "AnkleBreaker Studio is a French game development team based near Paris, " +
-                "working remotely and fueled by a shared passion for survival, competitive, " +
-                "and RTS games. We're currently working on our upcoming title, <b>Mithrall</b>.",
+                "VRseBuilder Unity MCP bridges AI assistants directly into the Unity Editor — " +
+                "giving them access to tools that read, modify, and interact with your scenes, " +
+                "assets, scripts, and more.",
                 _bodyStyle);
 
-            EditorGUILayout.Space(6);
+            EditorGUILayout.Space(8);
             EditorGUILayout.LabelField(
-                "We built the <b>Unity MCP</b> to bridge AI assistants directly into the Unity Editor \u2014 " +
-                "giving you access to <b>200+ tools</b> that let AI read, modify, and interact with " +
-                "your scenes, assets, scripts, and more.",
+                "Open <b>Window → VRseBuilder Unity MCP</b> to view the dashboard and confirm the " +
+                "bridge is running.",
                 _bodyStyle);
-
-            EditorGUILayout.Space(12);
-
-            // ─── Maintained ───
-            EditorGUILayout.LabelField("Built for the long haul", _headingStyle);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField(
-                "This MCP will be actively maintained by our team for as long as we develop " +
-                "games on Unity \u2014 and that should be a <b>very</b> long time! We use it every day " +
-                "ourselves, so you can count on it staying up-to-date and reliable.",
-                _bodyStyle);
-
-            EditorGUILayout.Space(12);
-
-            // ─── Review request ───
-            DrawBoxSection(
-                "\u2B50  Leave us a review!",
-                "If you find the Unity MCP useful, we'd really appreciate a star or review on " +
-                "GitHub. It helps other developers discover the project and motivates us to keep " +
-                "building awesome tools for the community.",
-                "Star on GitHub \u2197",
-                "https://github.com/AnkleBreaker-Studio/unity-mcp-plugin"
-            );
-
-            EditorGUILayout.Space(10);
-
-            // ─── Premium MCPs ───
-            DrawBoxSection(
-                "\u26A1  Premium MCP Library",
-                "Want even more power? We offer a curated library of premium MCPs for just " +
-                "<b>$15/month</b> through GitHub Sponsors (Backer tier). You'll get access to our " +
-                "<b>Discord MCP</b>, <b>Jira MCP</b>, <b>Git & GitHub MCP</b>, <b>LinkedIn MCP</b>, " +
-                "<b>Plastic SCM MCP</b>, and more as we keep building.\n\n" +
-                "Each one is crafted with the same care as this open-source plugin.",
-                "Become a Sponsor \u2197",
-                "https://github.com/sponsors/AnkleBreaker-Studio"
-            );
-
-            EditorGUILayout.Space(10);
-
-            // ─── Open source encouragement ───
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.Space(4);
-
-            prevColor = GUI.contentColor;
-            GUI.contentColor = HeartRed;
-            EditorGUILayout.LabelField("\u2764  Support open source", _headingStyle);
-            GUI.contentColor = prevColor;
-
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField(
-                "Even if premium MCPs aren't for you, your support means the world to us. " +
-                "A star, a kind word, a bug report, a contribution \u2014 every little bit " +
-                "encourages us to keep making more tools and giving back to the community.\n\n" +
-                "Thank you for being part of this journey with us!",
-                _bodyStyle);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.EndVertical();
-
-            EditorGUILayout.Space(12);
-
-            // ─── Links row ───
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Studio \u2197", _linkButtonStyle))
-                Application.OpenURL("https://www.anklebreaker-studio.com");
-            if (GUILayout.Button("Consulting \u2197", _linkButtonStyle))
-                Application.OpenURL("https://www.anklebreaker-consulting.com");
-            if (GUILayout.Button("Discord \u2197", _linkButtonStyle))
-                Application.OpenURL("https://discord.gg/jrgNeUn6Ft");
-            EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space(16);
             DrawSeparator();
@@ -255,30 +165,6 @@ namespace UnityMCP.Editor
             EditorGUILayout.Space(8);
 
             EditorGUILayout.EndScrollView();
-        }
-
-        // ─── Helpers ───
-
-        private void DrawBoxSection(string heading, string body, string buttonLabel, string url)
-        {
-            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField(heading, _headingStyle);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField(body, _bodyStyle);
-            EditorGUILayout.Space(6);
-
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
-            if (GUILayout.Button(buttonLabel, _accentButtonStyle, GUILayout.Width(220)))
-            {
-                Application.OpenURL(url);
-            }
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(4);
-            EditorGUILayout.EndVertical();
         }
 
         private void DrawSeparator()

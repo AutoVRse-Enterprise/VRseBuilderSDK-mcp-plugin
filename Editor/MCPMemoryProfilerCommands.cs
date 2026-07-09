@@ -374,9 +374,9 @@ namespace UnityMCP.Editor
                     Action<string, bool> callback = (path, success) =>
                     {
                         if (success)
-                            Debug.Log($"[AB-UMCP] Memory snapshot saved to: {path}");
+                            Debug.Log($"[VRSE-UMCP] Memory snapshot saved to: {path}");
                         else
-                            Debug.LogWarning($"[AB-UMCP] Memory snapshot failed: {path}");
+                            Debug.LogWarning($"[VRSE-UMCP] Memory snapshot failed: {path}");
                     };
 
                     var parameters = simpleOverload.GetParameters();
