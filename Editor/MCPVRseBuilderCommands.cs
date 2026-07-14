@@ -420,8 +420,7 @@ namespace UnityMCP.Editor
                 { "moduleCount", roomManagerConfig.experiences != null ? roomManagerConfig.experiences.Length : 0 },
                 { "photonAppSettings", roomManagerConfig.photonAppSettings },
                 { "loginAccessSettings", roomManagerConfig.loginAccessSettings },
-                { "buildSettings", roomManagerConfig.buildSettings },
-                { "ttsSettings", roomManagerConfig.ttsSettings }
+                { "buildSettings", roomManagerConfig.buildSettings }
             };
         }
 
