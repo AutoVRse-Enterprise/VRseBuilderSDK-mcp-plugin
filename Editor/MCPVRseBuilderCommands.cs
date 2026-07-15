@@ -2,16 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+#if VRSE_BACKEND_ENABLED
 using System.Net.Http;
-using System.Reflection;
 using System.Text;
+#endif
+using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+#if VRSE_BACKEND_ENABLED
 using VRseBuilder.Backend.Editor.Auth;
+#endif
 using VRseBuilder.Core.Framework;
 using VRseBuilder.Core.Systems.TextToSpeech;
 using VRseBuilder.Tools.Editor;
@@ -22,18 +26,38 @@ namespace UnityMCP.Editor
     public static class MCPVRseBuilderCommands
     {
         private const string SelectedProjectKey = "VRSEBUILDER_LAST_SELECTED_PROJECT";
+#if VRSE_BACKEND_ENABLED
+        private const bool BackendEnabled = true;
+#else
+        private const bool BackendEnabled = false;
+#endif
+#if !VRSE_BACKEND_ENABLED
+        private const string BackendDisabledMessage = "VRse backend support is disabled. Add VRSE_BACKEND_ENABLED to scripting define symbols to enable backend tools.";
+#endif
+#if VRSE_BACKEND_ENABLED
         private static readonly HttpClient HttpClient = new HttpClient();
+#endif
 
         public static object GetStatus(Dictionary<string, object> args)
         {
             Scene activeScene = SceneManager.GetActiveScene();
             string selectedProject = GetSelectedProjectName();
+#if VRSE_BACKEND_ENABLED
+            bool loggedIn = AuthUtility.IsLoggedIn();
+            string userName = AuthUtility.GetUserName();
+            string baseUrl = AuthUtility.GetBaseUrl();
+#else
+            bool loggedIn = false;
+            string userName = null;
+            string baseUrl = null;
+#endif
 
             return new Dictionary<string, object>
             {
-                { "loggedIn", AuthUtility.IsLoggedIn() },
-                { "userName", AuthUtility.GetUserName() },
-                { "baseUrl", AuthUtility.GetBaseUrl() },
+                { "backendEnabled", BackendEnabled },
+                { "loggedIn", loggedIn },
+                { "userName", userName },
+                { "baseUrl", baseUrl },
                 { "selectedProject", selectedProject },
                 { "activeScene", new Dictionary<string, object>
                     {
@@ -48,6 +72,13 @@ namespace UnityMCP.Editor
 
         public static object Login(Dictionary<string, object> args)
         {
+#if !VRSE_BACKEND_ENABLED
+            return new Dictionary<string, object>
+            {
+                { "error", BackendDisabledMessage },
+                { "backendEnabled", false }
+            };
+#else
             string username = args.ContainsKey("username") ? args["username"]?.ToString()?.Trim() : string.Empty;
             string password = args.ContainsKey("password") ? args["password"]?.ToString() ?? string.Empty : string.Empty;
 
@@ -79,14 +110,20 @@ namespace UnityMCP.Editor
             {
                 return new { error = $"Login failed: {ex.Message}" };
             }
+#endif
         }
 
         public static object ListProjects(Dictionary<string, object> args)
         {
             var accessibleProjects = new List<object>();
             string accessibleProjectsError = null;
+            bool loggedIn = false;
+            string userName = null;
 
-            if (AuthUtility.IsLoggedIn())
+#if VRSE_BACKEND_ENABLED
+            loggedIn = AuthUtility.IsLoggedIn();
+            userName = AuthUtility.GetUserName();
+            if (loggedIn)
             {
                 try
                 {
@@ -110,6 +147,9 @@ namespace UnityMCP.Editor
                     accessibleProjectsError = ex.Message;
                 }
             }
+#else
+            accessibleProjectsError = BackendDisabledMessage;
+#endif
 
             var localProjects = new List<object>();
             string studioProjectsRoot = Path.Combine(Application.dataPath, "StudioProjects");
@@ -130,8 +170,9 @@ namespace UnityMCP.Editor
 
             return new Dictionary<string, object>
             {
-                { "loggedIn", AuthUtility.IsLoggedIn() },
-                { "userName", AuthUtility.GetUserName() },
+                { "backendEnabled", BackendEnabled },
+                { "loggedIn", loggedIn },
+                { "userName", userName },
                 { "selectedProject", GetSelectedProjectName() },
                 { "accessibleProjects", accessibleProjects },
                 { "accessibleProjectsError", accessibleProjectsError },
@@ -203,8 +244,11 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(projectName))
                 return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
 
-            AccessModulesResponse remoteResponse = null;
             string remoteError = null;
+            bool remoteSourceAvailable = false;
+            var remoteModules = new List<object>();
+#if VRSE_BACKEND_ENABLED
+            AccessModulesResponse remoteResponse = null;
             if (AuthUtility.IsLoggedIn())
             {
                 try
@@ -216,11 +260,13 @@ namespace UnityMCP.Editor
                     remoteError = ex.Message;
                 }
             }
+#else
+            remoteError = BackendDisabledMessage;
+#endif
 
+#if VRSE_BACKEND_ENABLED
             AccessProject remoteProject = remoteResponse?.projects?.FirstOrDefault(project => string.Equals(project.name, projectName, StringComparison.OrdinalIgnoreCase));
-            TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig);
-
-            var remoteModules = new List<object>();
+            remoteSourceAvailable = remoteProject != null;
             if (remoteProject != null && remoteProject.modules != null)
             {
                 foreach (AccessModule module in remoteProject.modules)
@@ -251,6 +297,9 @@ namespace UnityMCP.Editor
                     });
                 }
             }
+#endif
+
+            TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig);
 
             var configModules = new List<object>();
             if (roomManagerConfig != null && roomManagerConfig.experiences != null)
@@ -289,7 +338,7 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "projectName", projectName },
-                { "remoteSourceAvailable", remoteProject != null },
+                { "remoteSourceAvailable", remoteSourceAvailable },
                 { "remoteSourceError", remoteError },
                 { "configSourceAvailable", roomManagerConfig != null },
                 { "remoteModules", remoteModules },
@@ -2533,6 +2582,9 @@ namespace UnityMCP.Editor
 
         private static string ResolveExperienceJsonFileUrl(string projectName, Dictionary<string, object> args)
         {
+#if !VRSE_BACKEND_ENABLED
+            return null;
+#else
             if (!AuthUtility.IsLoggedIn())
                 return null;
 
@@ -2573,6 +2625,7 @@ namespace UnityMCP.Editor
             {
                 return null;
             }
+#endif
         }
 
         private static List<object> BuildValidationIssues(Story story, Dictionary<Moment, Dictionary<string, List<string>>> validationResult)
@@ -3091,6 +3144,7 @@ namespace UnityMCP.Editor
             return trainingMatch ?? module.ExperienceDataList.FirstOrDefault();
         }
 
+#if VRSE_BACKEND_ENABLED
         private static AccessModulesResponse FetchAccessModules()
         {
             string token = AuthUtility.GetAccessToken();
@@ -3162,8 +3216,6 @@ namespace UnityMCP.Editor
             }
         }
 
-
-
         [Serializable]
         private class JwtPayload
         {
@@ -3227,6 +3279,7 @@ namespace UnityMCP.Editor
             public string type;
             public string jsonFileUrl;
         }
+#endif
 
         // ══════════════════════════════════════════════
         // TOOL: vrse/create-rotator-from-mesh/analyze

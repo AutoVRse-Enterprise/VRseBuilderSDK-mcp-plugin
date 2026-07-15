@@ -1,3 +1,4 @@
+#if INFINITY_WORKSHOP_ENABLED
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -782,3 +783,4 @@ namespace UnityMCP.Editor
         }
     }
 }
+#endif
