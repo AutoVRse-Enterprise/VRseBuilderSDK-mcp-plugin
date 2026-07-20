@@ -13,20 +13,22 @@ namespace UnityMCP.Editor
     {
         private Vector2 _scrollPosition;
         private bool _settingsFoldout = false;
-        private bool _agentsFoldout = true;
-        private bool _categoriesFoldout = true;
-        private bool _queueFoldout = true;
-        private bool _contextFoldout = true;
-        private bool _agentConfigurationFoldout = false;
+        private bool _agentsFoldout = false;
+        private bool _categoriesFoldout = false;
+        private bool _queueFoldout = false;
+        private bool _contextFoldout = false;
+        private bool _agentConfigurationFoldout = true;
         private bool _testsFoldout = true;
-        private bool _recentActionsFoldout = true;
+        private bool _recentActionsFoldout = false;
         private string _expandedTestCategory = null;
         private System.Diagnostics.Process _cloneProcess;
         private string _cloneTargetPath;
         private string _cloneStatus;
         private string _agentConfigStatus;
+        private string _skillInstallStatus;
         private bool _cloneFailed;
         private bool _agentConfigFailed;
+        private bool _skillInstallFailed;
         private bool _advancedServerFoldout;
         private bool _configPreviewFoldout;
         private bool _customServerSetupFoldout;
@@ -42,11 +44,11 @@ namespace UnityMCP.Editor
         private const string CloudMcpRegistry = "https://npm.autovrse.app";
         private const string CloudMcpPackage = "unity-mcp-server";
 
-        private static readonly Color ColorGreen  = new Color(0.2f, 0.8f, 0.2f);
-        private static readonly Color ColorRed    = new Color(0.9f, 0.2f, 0.2f);
+        private static readonly Color ColorGreen = new Color(0.2f, 0.8f, 0.2f);
+        private static readonly Color ColorRed = new Color(0.9f, 0.2f, 0.2f);
         private static readonly Color ColorYellow = new Color(0.9f, 0.8f, 0.1f);
-        private static readonly Color ColorGrey   = new Color(0.5f, 0.5f, 0.5f);
-        private static readonly Color ColorBlue   = new Color(0.4f, 0.7f, 1.0f);
+        private static readonly Color ColorGrey = new Color(0.5f, 0.5f, 0.5f);
+        private static readonly Color ColorBlue = new Color(0.4f, 0.7f, 1.0f);
 
         private GUIStyle _headerStyle;
         private GUIStyle _subHeaderStyle;
@@ -447,6 +449,8 @@ namespace UnityMCP.Editor
             EditorGUILayout.Space(6);
             DrawAgentConfigInstall(serverLocated, entryPointLocated, agentConfigLocated, agentConfigured);
             EditorGUILayout.Space(4);
+            DrawAgentSkills();
+            EditorGUILayout.Space(4);
             DrawAgentTroubleshooting();
             EditorGUILayout.EndVertical();
 
@@ -675,6 +679,129 @@ namespace UnityMCP.Editor
 
             if (!string.IsNullOrEmpty(_agentConfigStatus))
                 EditorGUILayout.HelpBox(_agentConfigStatus, _agentConfigFailed ? MessageType.Warning : MessageType.Info);
+        }
+
+        private void DrawAgentSkills()
+        {
+            EditorGUILayout.LabelField("Skills", EditorStyles.boldLabel);
+            var skills = GetPackagedSkills();
+            if (skills.Count == 0)
+            {
+                EditorGUILayout.HelpBox("No packaged skills were found in the VRseBuilder Unity MCP package.", MessageType.None);
+                return;
+            }
+
+            var selectedSkillIds = new HashSet<string>(MCPSettingsManager.SelectedSkillIds);
+            bool selectionChanged = false;
+            foreach (PackagedSkill skill in skills)
+            {
+                bool selected = EditorGUILayout.ToggleLeft(skill.Name, selectedSkillIds.Contains(skill.Id));
+                if (selected == selectedSkillIds.Contains(skill.Id))
+                    continue;
+
+                selectionChanged = true;
+                if (selected)
+                    selectedSkillIds.Add(skill.Id);
+                else
+                    selectedSkillIds.Remove(skill.Id);
+            }
+
+            if (selectionChanged)
+                MCPSettingsManager.SelectedSkillIds = new List<string>(selectedSkillIds).ToArray();
+
+            string destination = GetAgentSkillsDirectory(MCPSettingsManager.AgentClient);
+            EditorGUILayout.LabelField("Install location", destination, EditorStyles.miniLabel);
+            GUI.enabled = selectedSkillIds.Count > 0;
+            if (GUILayout.Button("Install Selected Skills", GUILayout.Height(22)))
+                InstallSelectedSkills(skills, selectedSkillIds, destination);
+            GUI.enabled = true;
+
+            if (!string.IsNullOrEmpty(_skillInstallStatus))
+                EditorGUILayout.HelpBox(_skillInstallStatus, _skillInstallFailed ? MessageType.Warning : MessageType.Info);
+        }
+
+        private static List<PackagedSkill> GetPackagedSkills()
+        {
+            var skills = new List<PackagedSkill>();
+            string packagePath = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(MCPDashboardWindow).Assembly)?.assetPath;
+            if (string.IsNullOrEmpty(packagePath))
+                return skills;
+
+            string skillsPath = System.IO.Path.Combine(packagePath, "skills");
+            if (!System.IO.Directory.Exists(skillsPath))
+                return skills;
+
+            foreach (string directory in System.IO.Directory.GetDirectories(skillsPath))
+            {
+                string skillPath = System.IO.Path.Combine(directory, "SKILL.md");
+                if (System.IO.File.Exists(skillPath))
+                    skills.Add(new PackagedSkill(System.IO.Path.GetFileName(directory), directory));
+            }
+
+            return skills;
+        }
+
+        private static string GetAgentSkillsDirectory(string agentClient)
+        {
+            string projectRoot = GetProjectRoot();
+            switch (agentClient)
+            {
+                case "Claude Code":
+                    return System.IO.Path.Combine(projectRoot, ".claude", "skills");
+                case "Cursor":
+                    return System.IO.Path.Combine(projectRoot, ".cursor", "skills");
+                case "OpenCode":
+                    return System.IO.Path.Combine(projectRoot, ".opencode", "skills");
+                default:
+                    return System.IO.Path.Combine(projectRoot, ".agents", "skills");
+            }
+        }
+
+        private void InstallSelectedSkills(List<PackagedSkill> skills, HashSet<string> selectedSkillIds, string destination)
+        {
+            try
+            {
+                int installedCount = 0;
+                foreach (PackagedSkill skill in skills)
+                {
+                    if (!selectedSkillIds.Contains(skill.Id))
+                        continue;
+
+                    CopyDirectory(skill.SourcePath, System.IO.Path.Combine(destination, skill.Id));
+                    installedCount++;
+                }
+
+                _skillInstallStatus = $"Installed {installedCount} skill{(installedCount == 1 ? "" : "s")} for {MCPSettingsManager.AgentClient}. Restart the agent to load them.";
+                _skillInstallFailed = false;
+            }
+            catch (System.Exception exception)
+            {
+                _skillInstallStatus = "Could not install skills: " + exception.Message;
+                _skillInstallFailed = true;
+            }
+        }
+
+        private static void CopyDirectory(string source, string destination)
+        {
+            System.IO.Directory.CreateDirectory(destination);
+            foreach (string file in System.IO.Directory.GetFiles(source))
+                System.IO.File.Copy(file, System.IO.Path.Combine(destination, System.IO.Path.GetFileName(file)), true);
+            foreach (string directory in System.IO.Directory.GetDirectories(source))
+                CopyDirectory(directory, System.IO.Path.Combine(destination, System.IO.Path.GetFileName(directory)));
+        }
+
+        private sealed class PackagedSkill
+        {
+            public PackagedSkill(string id, string sourcePath)
+            {
+                Id = id;
+                Name = id.Replace("-", " ");
+                SourcePath = sourcePath;
+            }
+
+            public string Id { get; }
+            public string Name { get; }
+            public string SourcePath { get; }
         }
 
         private void DrawAgentTroubleshooting()
@@ -1297,8 +1424,8 @@ namespace UnityMCP.Editor
                 switch (r.Status)
                 {
                     case "Completed": dotColor = ColorGreen; break;
-                    case "Failed":    dotColor = ColorRed;   break;
-                    default:          dotColor = ColorYellow; break;
+                    case "Failed": dotColor = ColorRed; break;
+                    default: dotColor = ColorYellow; break;
                 }
                 GUI.color = dotColor;
                 GUILayout.Label("\u25CF", _dotStyle, GUILayout.Width(22));
@@ -1489,9 +1616,9 @@ namespace UnityMCP.Editor
 
             switch (result.Status)
             {
-                case MCPTestResult.TestStatus.Passed:  return ColorGreen;
+                case MCPTestResult.TestStatus.Passed: return ColorGreen;
                 case MCPTestResult.TestStatus.Warning: return ColorYellow;
-                case MCPTestResult.TestStatus.Failed:  return ColorRed;
+                case MCPTestResult.TestStatus.Failed: return ColorRed;
                 default: return ColorGrey;
             }
         }

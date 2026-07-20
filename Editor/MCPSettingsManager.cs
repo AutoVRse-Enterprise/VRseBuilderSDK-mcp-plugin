@@ -105,6 +105,17 @@ namespace UnityMCP.Editor
             set => EditorPrefs.SetString(Prefix + "AgentConfigPath", value);
         }
 
+        /// <summary>Packaged skill IDs selected for installation into the configured agent.</summary>
+        public static string[] SelectedSkillIds
+        {
+            get
+            {
+                string value = EditorPrefs.GetString(Prefix + "SelectedSkillIds", "");
+                return string.IsNullOrEmpty(value) ? new string[0] : value.Split('|');
+            }
+            set => EditorPrefs.SetString(Prefix + "SelectedSkillIds", string.Join("|", value ?? new string[0]));
+        }
+
         // ─── Project Context ───
 
         public static bool ContextEnabled
@@ -204,6 +215,7 @@ namespace UnityMCP.Editor
             McpServerCommand = "node";
             McpServerEntryPoint = "src/index.js";
             AgentConfigPath = "";
+            SelectedSkillIds = new string[0];
             ContextEnabled = true;
             ContextPath = "Assets/MCP/Context";
             ActionHistoryPersistence = false;
