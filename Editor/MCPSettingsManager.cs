@@ -47,6 +47,64 @@ namespace UnityMCP.Editor
             set => EditorPrefs.SetBool(Prefix + "AutoStart", value);
         }
 
+        // ─── AI Agent Configuration ───
+
+        /// <summary>The client selected in the dashboard's AI agent setup section.</summary>
+        public static string AgentClient
+        {
+            get => EditorPrefs.GetString(Prefix + "AgentClient", "OpenCode");
+            set => EditorPrefs.SetString(Prefix + "AgentClient", value);
+        }
+
+        /// <summary>The identity the selected client should provide in its X-Agent-Id header.</summary>
+        public static string AgentId
+        {
+            get => EditorPrefs.GetString(Prefix + "AgentId", "opencode");
+            set => EditorPrefs.SetString(Prefix + "AgentId", value);
+        }
+
+        /// <summary>Git repository URL for the companion MCP server.</summary>
+        public static string McpServerRepository
+        {
+            get => EditorPrefs.GetString(Prefix + "McpServerRepository", "");
+            set => EditorPrefs.SetString(Prefix + "McpServerRepository", value);
+        }
+
+        /// <summary>Whether agents launch a custom local server or the AutoVRse cloud registry package.</summary>
+        public static string McpServerSource
+        {
+            get => EditorPrefs.GetString(Prefix + "McpServerSource", "Custom");
+            set => EditorPrefs.SetString(Prefix + "McpServerSource", value);
+        }
+
+        /// <summary>Local directory containing the companion MCP server package.</summary>
+        public static string McpServerPath
+        {
+            get => EditorPrefs.GetString(Prefix + "McpServerPath", "");
+            set => EditorPrefs.SetString(Prefix + "McpServerPath", value);
+        }
+
+        /// <summary>Command used by agent clients to launch the companion MCP server.</summary>
+        public static string McpServerCommand
+        {
+            get => EditorPrefs.GetString(Prefix + "McpServerCommand", "node");
+            set => EditorPrefs.SetString(Prefix + "McpServerCommand", value);
+        }
+
+        /// <summary>Server entry point relative to McpServerPath, unless absolute.</summary>
+        public static string McpServerEntryPoint
+        {
+            get => EditorPrefs.GetString(Prefix + "McpServerEntryPoint", "src/index.js");
+            set => EditorPrefs.SetString(Prefix + "McpServerEntryPoint", value);
+        }
+
+        /// <summary>Existing agent JSON configuration file to update with this MCP server.</summary>
+        public static string AgentConfigPath
+        {
+            get => EditorPrefs.GetString(Prefix + "AgentConfigPath", "");
+            set => EditorPrefs.SetString(Prefix + "AgentConfigPath", value);
+        }
+
         // ─── Project Context ───
 
         public static bool ContextEnabled
@@ -138,6 +196,14 @@ namespace UnityMCP.Editor
         {
             Port = 7890;
             AutoStart = true;
+            AgentClient = "OpenCode";
+            AgentId = "opencode";
+            McpServerSource = "Custom";
+            McpServerRepository = "";
+            McpServerPath = "";
+            McpServerCommand = "node";
+            McpServerEntryPoint = "src/index.js";
+            AgentConfigPath = "";
             ContextEnabled = true;
             ContextPath = "Assets/MCP/Context";
             ActionHistoryPersistence = false;

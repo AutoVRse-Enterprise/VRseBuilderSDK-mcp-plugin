@@ -86,6 +86,8 @@ Open **Window > VRseBuilder Unity MCP** to access:
 - Start / Stop / Restart controls
 - Per-category feature toggles (enable/disable any of the 30+ categories)
 - Port and auto-start settings
+- AI agent setup: clone or locate the companion MCP server, automatically find the selected agent's config file, then create or update its VRseBuilder MCP entry. OpenCode uses its global `~/.config/opencode/opencode.json` by default.
+- MCP server source selection: use a custom cloned/local server, or launch the Cloud package with `npx -y --registry=https://npm.autovrse.app unity-mcp-server`.
 - Active agent session monitoring
 
 ## Requirements
