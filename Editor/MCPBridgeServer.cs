@@ -376,8 +376,10 @@ namespace UnityMCP.Editor
                 "vrse/status",
                 "vrse/login",
                 "vrse/list-projects",
+                "vrse/create-project",
                 "vrse/select-project",
                 "vrse/list-modules",
+                "vrse/create-menu-scene",
                 "vrse/open-menu-scene",
                 "vrse/open-module",
                 "vrse/open-room-manager-config",
@@ -865,10 +867,14 @@ namespace UnityMCP.Editor
                     return MCPVRseBuilderCommands.Login(ParseJson(body));
                 case "vrse/list-projects":
                     return MCPVRseBuilderCommands.ListProjects(ParseJson(body));
+                case "vrse/create-project":
+                    return MCPVRseBuilderCommands.CreateProject(ParseJson(body));
                 case "vrse/select-project":
                     return MCPVRseBuilderCommands.SelectProject(ParseJson(body));
                 case "vrse/list-modules":
                     return MCPVRseBuilderCommands.ListModules(ParseJson(body));
+                case "vrse/create-menu-scene":
+                    return MCPVRseBuilderCommands.CreateMenuScene(ParseJson(body));
                 case "vrse/open-menu-scene":
                     return MCPVRseBuilderCommands.OpenMenuScene(ParseJson(body));
                 case "vrse/open-module":

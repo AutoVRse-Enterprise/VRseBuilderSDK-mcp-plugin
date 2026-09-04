@@ -152,6 +152,7 @@ namespace UnityMCP.Editor
 #endif
 
             var localProjects = new List<object>();
+            var ignoredLocalProjectFolders = new List<object>();
             string studioProjectsRoot = Path.Combine(Application.dataPath, "StudioProjects");
             if (Directory.Exists(studioProjectsRoot))
             {
@@ -159,11 +160,21 @@ namespace UnityMCP.Editor
                 {
                     string name = Path.GetFileName(directory);
                     bool hasConfig = TryGetRoomManagerConfig(name, out RoomManagerConfig config);
+                    if (!hasConfig)
+                    {
+                        ignoredLocalProjectFolders.Add(new Dictionary<string, object>
+                        {
+                            { "name", name },
+                            { "reason", "RoomManagerConfig asset not found" }
+                        });
+                        continue;
+                    }
+
                     localProjects.Add(new Dictionary<string, object>
                     {
                         { "name", name },
-                        { "hasRoomManagerConfig", hasConfig },
-                        { "hasMenuScene", hasConfig && !string.IsNullOrEmpty(config.MainMenuScene) && File.Exists(config.MainMenuScene) }
+                        { "hasRoomManagerConfig", true },
+                        { "hasMenuScene", !string.IsNullOrEmpty(config.MainMenuScene) && File.Exists(config.MainMenuScene) }
                     });
                 }
             }
@@ -176,7 +187,55 @@ namespace UnityMCP.Editor
                 { "selectedProject", GetSelectedProjectName() },
                 { "accessibleProjects", accessibleProjects },
                 { "accessibleProjectsError", accessibleProjectsError },
-                { "localProjects", localProjects }
+                { "localProjects", localProjects },
+                { "ignoredLocalProjectFolders", ignoredLocalProjectFolders }
+            };
+        }
+
+        public static object CreateProject(Dictionary<string, object> args)
+        {
+            string name = GetStringArg(args, "name");
+            bool confirm = GetBoolArg(args, "confirm", false);
+
+            if (!confirm)
+                return new { error = "Creating a project writes assets. Retry with confirm=true.", name };
+
+            if (string.IsNullOrWhiteSpace(name))
+                return new { error = "name is required." };
+
+            name = name.Trim();
+            if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || name.Contains("/") || name.Contains("\\") || name == "." || name == "..")
+                return new { error = "name must be a single valid folder name.", name };
+
+            string projectPath = $"Assets/StudioProjects/{name}";
+            if (AssetDatabase.IsValidFolder(projectPath))
+                return new { error = "A project folder with that name already exists.", name, projectPath };
+
+            RoomManagerConfig config;
+            try
+            {
+                config = new VRseProjectWindowController().CreateProject(name);
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Project creation failed: {ex.Message}", name, projectPath };
+            }
+
+            if (config == null)
+                return new { error = "The VRseBuilder SDK did not create a RoomManagerConfig.", name, projectPath };
+
+            AssetDatabase.Refresh();
+            EditorPrefs.SetString(SelectedProjectKey, name);
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "name", name },
+                { "projectPath", projectPath },
+                { "roomManagerConfig", AssetDatabase.GetAssetPath(config) },
+                { "projectConfig", $"{projectPath}/ProjectSettings/ProjectConfig_{name}.asset" },
+                { "brandManagerConfig", $"{projectPath}/ProjectSettings/BrandManagerConfig_{name}.asset" },
+                { "selectedProject", name }
             };
         }
 
@@ -371,6 +430,113 @@ namespace UnityMCP.Editor
             };
         }
 
+        public static object CreateMenuScene(Dictionary<string, object> args)
+        {
+            string projectName = ResolveProjectName(args);
+            if (string.IsNullOrEmpty(projectName))
+                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+
+            if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
+                return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
+
+            bool overwrite = GetBoolArg(args, "overwrite", false);
+            bool applySettings = GetBoolArg(args, "applySettings", true);
+            const string targetFolder = "Assets/VRseBuilder/MenuScene";
+            const string targetPath = targetFolder + "/MenuGlassUI.unity";
+            const string sourcePath = "Packages/com.autovrse.vrsebuilder.core/Core/Runtime/MainMenu/Scenes/MenuGlassUI.unity";
+            const string managedFolder = targetFolder + "/";
+
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(sourcePath) == null)
+                return new { error = $"Could not find packaged menu scene: {sourcePath}" };
+
+            bool hasAssignedScene = !string.IsNullOrEmpty(roomManagerConfig.MainMenuScene) &&
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(roomManagerConfig.MainMenuScene) != null;
+            if (hasAssignedScene && !overwrite)
+            {
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "projectName", projectName },
+                    { "menuScenePath", roomManagerConfig.MainMenuScene },
+                    { "alreadyConfigured", true },
+                    { "copied", false },
+                    { "assigned", false },
+                    { "message", "A valid menu scene is already configured. Pass overwrite=true only if you intentionally want to replace the managed VRseBuilder menu scene." }
+                };
+            }
+
+            if (hasAssignedScene && overwrite && !roomManagerConfig.MainMenuScene.StartsWith(managedFolder, StringComparison.OrdinalIgnoreCase))
+            {
+                return new
+                {
+                    error = "A custom/external menu scene is already configured. Refusing to overwrite it. Clear MainMenuScene or reassign manually if you want to use the default managed menu scene.",
+                    projectName,
+                    menuScenePath = roomManagerConfig.MainMenuScene
+                };
+            }
+
+            bool copied = false;
+            bool assigned = false;
+            string effectiveTargetPath = hasAssignedScene ? roomManagerConfig.MainMenuScene : targetPath;
+            bool alreadyExisted = AssetDatabase.LoadAssetAtPath<SceneAsset>(effectiveTargetPath) != null;
+
+            try
+            {
+                if (!alreadyExisted)
+                {
+                    Directory.CreateDirectory(targetFolder);
+                    AssetDatabase.Refresh();
+                    if (!AssetDatabase.CopyAsset(sourcePath, effectiveTargetPath))
+                        return new { error = $"Could not copy the menu scene to {effectiveTargetPath}.", projectName };
+                    copied = true;
+                }
+                else if (overwrite)
+                {
+                    string projectRoot = Path.GetDirectoryName(Application.dataPath);
+                    string absoluteSource = Path.Combine(projectRoot, sourcePath).Replace("/", Path.DirectorySeparatorChar.ToString());
+                    string absoluteTarget = Path.Combine(projectRoot, effectiveTargetPath).Replace("/", Path.DirectorySeparatorChar.ToString());
+                    File.Copy(absoluteSource, absoluteTarget, true);
+                    AssetDatabase.ImportAsset(effectiveTargetPath, ImportAssetOptions.ForceUpdate);
+                    copied = true;
+                }
+
+                AssetImporter importer = AssetImporter.GetAtPath(effectiveTargetPath);
+                if (importer != null)
+                {
+                    importer.userData = "VRseBuilderMenuScene:{\"menuSceneVersion\":\"0.1\"}";
+                    importer.SaveAndReimport();
+                }
+
+                if (!string.Equals(roomManagerConfig.MainMenuScene, effectiveTargetPath, StringComparison.OrdinalIgnoreCase))
+                {
+                    roomManagerConfig.MainMenuScene = effectiveTargetPath;
+                    EditorUtility.SetDirty(roomManagerConfig);
+                    AssetDatabase.SaveAssets();
+                    assigned = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                return new { error = $"Menu scene creation failed: {ex.Message}", projectName, sourcePath, targetPath };
+            }
+
+            object applySettingsResult = applySettings
+                ? VRseProjectConfigAutoApply.AutoApplyAllSettingsOnProjectChange(projectName)
+                : null;
+
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "projectName", projectName },
+                { "sourcePath", sourcePath },
+                { "menuScenePath", effectiveTargetPath },
+                { "alreadyExisted", alreadyExisted },
+                { "copied", copied },
+                { "assigned", assigned },
+                { "applySettingsResult", applySettingsResult }
+            };
+        }
+
         public static object OpenModule(Dictionary<string, object> args)
         {
             string projectName = ResolveProjectName(args);
@@ -545,21 +711,32 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(jsonFileUrl))
                 jsonFileUrl = ResolveExperienceJsonFileUrl(projectName, args);
 
-            if (string.IsNullOrEmpty(jsonFileUrl))
-                return new { error = "jsonFileUrl is required, or the experience must be resolvable from the logged-in backend project." };
-
-            if (!Uri.TryCreate(jsonFileUrl, UriKind.Absolute, out Uri jsonUri) ||
-                (jsonUri.Scheme != Uri.UriSchemeHttp && jsonUri.Scheme != Uri.UriSchemeHttps))
+            if (!string.IsNullOrEmpty(jsonFileUrl) &&
+                (!Uri.TryCreate(jsonFileUrl, UriKind.Absolute, out Uri jsonUri) ||
+                 (jsonUri.Scheme != Uri.UriSchemeHttp && jsonUri.Scheme != Uri.UriSchemeHttps)))
             {
-                return new { error = "jsonFileUrl must be an absolute http or https URL." };
+                return new { error = "jsonFileUrl must be an absolute http or https URL when supplied." };
             }
+
+            // No cloud URL is a supported local-first workflow. The SDK creates a blank story JSON.
+            if (string.IsNullOrEmpty(moduleId)) moduleId = Guid.NewGuid().ToString("N");
+            if (string.IsNullOrEmpty(experienceId)) experienceId = Guid.NewGuid().ToString("N");
 
             ModuleData.ExperienceType experienceType = ResolveExperienceType(args);
             var controller = new VRseProjectWindowController();
 
+            // The SDK controller still defaults to its pre-UPM template location. When installed
+            // as a package, point it at the equivalent template in the embedded core package.
+            string packagedTemplatePath = "Packages/com.autovrse.vrsebuilder.core/Core/Runtime/Scenes/TemplateScene/VrseBuilderTemplateScene.unity";
+            if (File.Exists(packagedTemplatePath))
+            {
+                var templateField = typeof(VRseProjectWindowController).GetField("templateDevScenePath", BindingFlags.Instance | BindingFlags.NonPublic);
+                templateField?.SetValue(controller, packagedTemplatePath);
+            }
+
             try
             {
-                controller.CreateExperienceDevScene(projectName, moduleName, experienceName, jsonFileUrl, moduleId, experienceId, experienceType);
+                controller.CreateExperienceDevScene(projectName, moduleName, experienceName, jsonFileUrl, moduleId, experienceId, experienceType, openArtSceneAfterCreate: false, interactive: false);
             }
             catch (Exception ex)
             {
@@ -577,6 +754,7 @@ namespace UnityMCP.Editor
                 { "success", true },
                 { "projectName", projectName },
                 { "jsonFileUrl", jsonFileUrl },
+                { "storySource", string.IsNullOrEmpty(jsonFileUrl) ? "local-empty" : "remote" },
                 { "module", BuildModulePayload(module, moduleId, moduleName) },
                 { "experience", BuildExperiencePayload(experience, experienceId, experienceName, experienceType) },
                 { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) },
