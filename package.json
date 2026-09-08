@@ -1,8 +1,8 @@
 {
   "name": "com.autovrse.vrsebuilder.unity-mcp",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "displayName": "VRseBuilder Unity MCP",
-  "description": "MCP (Model Context Protocol) bridge plugin for Unity Editor. Enables AI assistants like Claude to control Unity Editor via a local HTTP API — manage scenes, GameObjects, components, assets, builds, and more.",
+  "description": "MCP (Model Context Protocol) bridge plugin for Unity Editor. Powered by AnkleBreaker MCP. Enables AI assistants like Claude to control Unity Editor via a local HTTP API \u2014 manage scenes, GameObjects, components, assets, builds, and more.",
   "unity": "2021.3",
   "unityRelease": "0f1",
   "keywords": [
@@ -15,7 +15,6 @@
   ],
   "author": {
     "name": "AutoVRse",
-    "email": "",
     "url": "https://github.com/AutoVRse-Enterprise"
   },
   "repository": {

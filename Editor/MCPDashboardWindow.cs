@@ -51,6 +51,7 @@ namespace UnityMCP.Editor
         private static readonly Color ColorBlue = new Color(0.4f, 0.7f, 1.0f);
 
         private GUIStyle _headerStyle;
+        private GUIStyle _captionStyle;
         private GUIStyle _subHeaderStyle;
         private GUIStyle _dotStyle;
         private bool _stylesInitialized;
@@ -70,6 +71,12 @@ namespace UnityMCP.Editor
             {
                 fontSize = 16,
                 fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+            };
+
+            _captionStyle = new GUIStyle(EditorStyles.miniLabel)
+            {
+                alignment = TextAnchor.MiddleCenter,
             };
 
             _subHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
@@ -134,11 +141,10 @@ namespace UnityMCP.Editor
 
         private void DrawHeader()
         {
-            EditorGUILayout.BeginHorizontal();
-            GUILayout.FlexibleSpace();
+            EditorGUILayout.BeginVertical();
             EditorGUILayout.LabelField("VRseBuilder Unity MCP", _headerStyle, GUILayout.Height(28));
-            GUILayout.FlexibleSpace();
-            EditorGUILayout.EndHorizontal();
+            EditorGUILayout.LabelField("Powered by AnkleBreaker MCP", _captionStyle);
+            EditorGUILayout.EndVertical();
         }
 
         // ─── Connection Status ───
@@ -1758,7 +1764,7 @@ namespace UnityMCP.Editor
         private void DrawVersionInfo()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Plugin Version: 2.27.0", GUILayout.Width(155));
+            EditorGUILayout.LabelField("Plugin Version: 0.0.4", GUILayout.Width(155));
             GUILayout.FlexibleSpace();
 
             if (GUILayout.Button("Check for Updates", GUILayout.Width(130)))
