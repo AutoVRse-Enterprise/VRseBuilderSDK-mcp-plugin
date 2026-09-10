@@ -120,6 +120,12 @@ a node kind or its option/data shape; always look it up first (step 1 below).
 - **Editing without saving.** All `story-add-*`/`story-update-node`/`story-remove-*` calls
   mutate the in-memory `StoryCreator` only — always finish an editing session with
   `vrse/story-save` (after `vrse/story-validate`).
+- **`onWrong` for a choice that should still let the story continue.** `onWrong` means the
+  Moment does NOT complete — it's for a genuine mistake the player must retry. If you're
+  wiring a decision with several acceptable-but-different outcomes (e.g. "pick a response"),
+  put every option in `onRight` (separate `triggerActionSets`, `mode: "Any"`) with different
+  actions per choice, not some of them in `onWrong` — otherwise a choice meant as "valid but
+  suboptimal" will silently block progress. See `vrse-level-design` for the full pattern.
 
 For generating an entire story from an external document instead of editing node-by-node, use
 **`vrse-story-from-input`**. For creating the scene objects a story's actions/triggers
