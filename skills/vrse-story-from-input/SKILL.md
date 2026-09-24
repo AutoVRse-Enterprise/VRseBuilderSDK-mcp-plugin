@@ -18,6 +18,11 @@ Convert an SOP / PDF / doc / prompt into a VRseBuilder **story JSON** (Chapters 
 typed actions), using the correct pipeline tools. The deliverable is the **approved,
 validated story JSON**.
 
+This skill assumes a Project/Module/Experience is already selected, with a Dev Scene and Art
+Scene. If that isn't true yet — e.g. `vrse/status` shows nothing selected, or the user is
+asking to start something new — run **`vrse-project-module-experience`** first, then come back
+here.
+
 ## The one hard rule — approval gate
 
 **NEVER call `vrse_generate_story` (or write final JSON) until the user has seen the
@@ -45,6 +50,14 @@ ask them to copy it into the repo or paste the contents.
 Once you have text, note anything the story generator will need that the document can't
 supply on its own — module name, project name, art scene, dev scene, and the target story
 JSON output path. Ask the user for any you don't have; don't invent scene paths.
+
+Also form a quick view of the experience's **shape** — is this a gated procedure with a
+right/wrong distinction (most SOP-derived content), or something looser (exploration, a
+branching decision scenario, a demo)? That determines whether the outline you draft in Phase 2
+should include the full training scaffolding (checklist, warnings, guidance arrows, an
+MCQ+report ending) or a lighter structure — see **`vrse-level-design`** for the concrete
+difference and when each applies. Don't default to the full training shape just because it's
+the richer-looking option.
 
 Also ask, up front, **whether the art/scene is ready** — i.e. the art scene exists at that
 path and contains the objects the story will reference. This flow does **not** require ready

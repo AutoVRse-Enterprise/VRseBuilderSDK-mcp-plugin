@@ -127,4 +127,7 @@ and *why* each step exists.
 
 Once a Module/Experience exists and its dev scene is open, hand off to
 **`vrse-story-editing`** to build the Story, and **`vrse-interactables`** to prep the art
-scene's grabbable/touchable/placepoint objects the story will reference.
+scene's grabbable/touchable/placepoint objects the story will reference. If the module is a
+procedural/training experience (or it's unclear what shape it should be), check
+**`vrse-level-design`** first for scene-organization and scaffolding conventions before either
+of those.
