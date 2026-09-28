@@ -31,7 +31,10 @@ namespace UnityMCP.Editor
 
             var go = MCPGameObjectCommands.FindGameObject(args);
             if (go == null)
-                return new { error = "GameObject not found. Provide assetPath or path/instanceId." };
+                return new
+                {
+                    error = "GameObject not found. Provide assetPath or path/instanceId.",
+                };
 
             var status = PrefabUtility.GetPrefabInstanceStatus(go);
             if (status == PrefabInstanceStatus.NotAPrefab)
@@ -63,12 +66,14 @@ namespace UnityMCP.Editor
                     var overrides = new List<Dictionary<string, object>>();
                     foreach (var mod in modifications)
                     {
-                        overrides.Add(new Dictionary<string, object>
-                        {
-                            { "target", mod.target != null ? mod.target.name : "null" },
-                            { "propertyPath", mod.propertyPath },
-                            { "value", mod.value },
-                        });
+                        overrides.Add(
+                            new Dictionary<string, object>
+                            {
+                                { "target", mod.target != null ? mod.target.name : "null" },
+                                { "propertyPath", mod.propertyPath },
+                                { "value", mod.value },
+                            }
+                        );
                     }
                     result["overrides"] = overrides;
                     result["overrideCount"] = overrides.Count;
@@ -96,7 +101,8 @@ namespace UnityMCP.Editor
                 var asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
                 if (asset != null)
                 {
-                    bool isVariant = PrefabUtility.GetPrefabAssetType(asset) == PrefabAssetType.Variant;
+                    bool isVariant =
+                        PrefabUtility.GetPrefabAssetType(asset) == PrefabAssetType.Variant;
                     result["isVariant"] = isVariant;
                     if (isVariant)
                     {
@@ -115,8 +121,12 @@ namespace UnityMCP.Editor
         /// </summary>
         public static object CreateVariant(Dictionary<string, object> args)
         {
-            string basePath = args.ContainsKey("basePrefabPath") ? args["basePrefabPath"].ToString() : "";
-            string variantPath = args.ContainsKey("variantPath") ? args["variantPath"].ToString() : "";
+            string basePath = args.ContainsKey("basePrefabPath")
+                ? args["basePrefabPath"].ToString()
+                : "";
+            string variantPath = args.ContainsKey("variantPath")
+                ? args["variantPath"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(basePath))
                 return new { error = "basePrefabPath is required" };
@@ -160,7 +170,12 @@ namespace UnityMCP.Editor
             string assetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go);
             PrefabUtility.ApplyPrefabInstance(go, InteractionMode.AutomatedAction);
 
-            return new { success = true, gameObject = go.name, appliedTo = assetPath };
+            return new
+            {
+                success = true,
+                gameObject = go.name,
+                appliedTo = assetPath,
+            };
         }
 
         /// <summary>
@@ -178,7 +193,12 @@ namespace UnityMCP.Editor
 
             PrefabUtility.RevertPrefabInstance(go, InteractionMode.AutomatedAction);
 
-            return new { success = true, gameObject = go.name, message = "All overrides reverted" };
+            return new
+            {
+                success = true,
+                gameObject = go.name,
+                message = "All overrides reverted",
+            };
         }
 
         /// <summary>
@@ -190,14 +210,28 @@ namespace UnityMCP.Editor
             if (go == null)
                 return new { error = "GameObject not found" };
 
-            bool completely = args.ContainsKey("completely") && Convert.ToBoolean(args["completely"]);
+            bool completely =
+                args.ContainsKey("completely") && Convert.ToBoolean(args["completely"]);
 
             if (completely)
-                PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+                PrefabUtility.UnpackPrefabInstance(
+                    go,
+                    PrefabUnpackMode.Completely,
+                    InteractionMode.AutomatedAction
+                );
             else
-                PrefabUtility.UnpackPrefabInstance(go, PrefabUnpackMode.OutermostRoot, InteractionMode.AutomatedAction);
+                PrefabUtility.UnpackPrefabInstance(
+                    go,
+                    PrefabUnpackMode.OutermostRoot,
+                    InteractionMode.AutomatedAction
+                );
 
-            return new { success = true, gameObject = go.name, mode = completely ? "Completely" : "OutermostRoot" };
+            return new
+            {
+                success = true,
+                gameObject = go.name,
+                mode = completely ? "Completely" : "OutermostRoot",
+            };
         }
 
         /// <summary>
@@ -207,12 +241,21 @@ namespace UnityMCP.Editor
         public static object SetObjectReference(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            string componentType = args.ContainsKey("componentType") ? args["componentType"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
-            string referencePath = args.ContainsKey("referencePath") ? args["referencePath"].ToString() : "";
-            string referenceGameObject = args.ContainsKey("referenceGameObject") ? args["referenceGameObject"].ToString() : "";
+            string componentType = args.ContainsKey("componentType")
+                ? args["componentType"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
+            string referencePath = args.ContainsKey("referencePath")
+                ? args["referencePath"].ToString()
+                : "";
+            string referenceGameObject = args.ContainsKey("referenceGameObject")
+                ? args["referenceGameObject"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
@@ -224,14 +267,16 @@ namespace UnityMCP.Editor
             if (!string.IsNullOrEmpty(componentType))
             {
                 type = FindType(componentType);
-                if (type != null) component = go.GetComponent(type);
+                if (type != null)
+                    component = go.GetComponent(type);
             }
             else
             {
                 // Search all components for this property
                 foreach (var comp in go.GetComponents<Component>())
                 {
-                    if (comp == null) continue;
+                    if (comp == null)
+                        continue;
                     var so = new SerializedObject(comp);
                     if (so.FindProperty(propertyName) != null)
                     {
@@ -242,7 +287,10 @@ namespace UnityMCP.Editor
             }
 
             if (component == null)
-                return new { error = $"Component '{componentType}' not found on {go.name}, or no component has property '{propertyName}'" };
+                return new
+                {
+                    error = $"Component '{componentType}' not found on {go.name}, or no component has property '{propertyName}'",
+                };
 
             var serialized = new SerializedObject(component);
             var prop = serialized.FindProperty(propertyName);
@@ -250,7 +298,10 @@ namespace UnityMCP.Editor
                 return new { error = $"Property '{propertyName}' not found" };
 
             if (prop.propertyType != SerializedPropertyType.ObjectReference)
-                return new { error = $"Property '{propertyName}' is not an ObjectReference (type: {prop.propertyType})" };
+                return new
+                {
+                    error = $"Property '{propertyName}' is not an ObjectReference (type: {prop.propertyType})",
+                };
 
             // Resolve the reference
             UnityEngine.Object targetRef = null;
@@ -287,7 +338,13 @@ namespace UnityMCP.Editor
                 // Set to null (clear reference)
                 prop.objectReferenceValue = null;
                 serialized.ApplyModifiedProperties();
-                return new { success = true, gameObject = go.name, property = propertyName, reference = "null (cleared)" };
+                return new
+                {
+                    success = true,
+                    gameObject = go.name,
+                    property = propertyName,
+                    reference = "null (cleared)",
+                };
             }
 
             prop.objectReferenceValue = targetRef;
@@ -313,7 +370,9 @@ namespace UnityMCP.Editor
             if (go == null)
                 return new { error = "GameObject not found" };
 
-            string newName = args.ContainsKey("newName") ? args["newName"].ToString() : go.name + " (Copy)";
+            string newName = args.ContainsKey("newName")
+                ? args["newName"].ToString()
+                : go.name + " (Copy)";
 
             var duplicate = UnityEngine.Object.Instantiate(go);
             duplicate.name = newName;
@@ -338,13 +397,19 @@ namespace UnityMCP.Editor
         public static object SetActive(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             bool active = args.ContainsKey("active") ? Convert.ToBoolean(args["active"]) : true;
             Undo.RecordObject(go, "Set Active");
             go.SetActive(active);
 
-            return new { success = true, gameObject = go.name, active };
+            return new
+            {
+                success = true,
+                gameObject = go.name,
+                active,
+            };
         }
 
         /// <summary>
@@ -353,15 +418,20 @@ namespace UnityMCP.Editor
         public static object Reparent(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             string parentPath = args.ContainsKey("newParent") ? args["newParent"].ToString() : "";
-            bool worldPositionStays = !args.ContainsKey("worldPositionStays") || Convert.ToBoolean(args["worldPositionStays"]);
+            bool worldPositionStays =
+                !args.ContainsKey("worldPositionStays")
+                || Convert.ToBoolean(args["worldPositionStays"]);
 
-            Undo.SetTransformParent(go.transform,
+            Undo.SetTransformParent(
+                go.transform,
                 string.IsNullOrEmpty(parentPath) ? null : GameObject.Find(parentPath)?.transform,
                 worldPositionStays,
-                "Reparent");
+                "Reparent"
+            );
 
             return new Dictionary<string, object>
             {
@@ -394,15 +464,19 @@ namespace UnityMCP.Editor
         private static Type FindType(string name)
         {
             Type t = Type.GetType($"UnityEngine.{name}, UnityEngine");
-            if (t != null) return t;
+            if (t != null)
+                return t;
             t = Type.GetType($"UnityEngine.{name}, UnityEngine.CoreModule");
-            if (t != null) return t;
+            if (t != null)
+                return t;
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 t = assembly.GetType(name);
-                if (t != null) return t;
+                if (t != null)
+                    return t;
                 t = assembly.GetType($"UnityEngine.{name}");
-                if (t != null) return t;
+                if (t != null)
+                    return t;
             }
             return null;
         }

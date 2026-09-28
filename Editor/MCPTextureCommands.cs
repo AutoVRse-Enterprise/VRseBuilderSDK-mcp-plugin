@@ -82,7 +82,13 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("textureType"))
             {
-                if (Enum.TryParse<TextureImporterType>(args["textureType"].ToString(), true, out var texType))
+                if (
+                    Enum.TryParse<TextureImporterType>(
+                        args["textureType"].ToString(),
+                        true,
+                        out var texType
+                    )
+                )
                 {
                     importer.textureType = texType;
                     updated.Add("textureType");
@@ -133,7 +139,13 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("textureCompression"))
             {
-                if (Enum.TryParse<TextureImporterCompression>(args["textureCompression"].ToString(), true, out var comp))
+                if (
+                    Enum.TryParse<TextureImporterCompression>(
+                        args["textureCompression"].ToString(),
+                        true,
+                        out var comp
+                    )
+                )
                 {
                     importer.textureCompression = comp;
                     updated.Add("textureCompression");
@@ -160,7 +172,9 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("spriteMode"))
             {
-                if (Enum.TryParse<SpriteImportMode>(args["spriteMode"].ToString(), true, out var sm))
+                if (
+                    Enum.TryParse<SpriteImportMode>(args["spriteMode"].ToString(), true, out var sm)
+                )
                 {
                     importer.spriteImportMode = sm;
                     updated.Add("spriteMode");
@@ -169,7 +183,13 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("npotScale"))
             {
-                if (Enum.TryParse<TextureImporterNPOTScale>(args["npotScale"].ToString(), true, out var npot))
+                if (
+                    Enum.TryParse<TextureImporterNPOTScale>(
+                        args["npotScale"].ToString(),
+                        true,
+                        out var npot
+                    )
+                )
                 {
                     importer.npotScale = npot;
                     updated.Add("npotScale");
@@ -199,11 +219,7 @@ namespace UnityMCP.Editor
 
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
 
-            return new Dictionary<string, object>
-            {
-                { "success", true },
-                { "path", path },
-            };
+            return new Dictionary<string, object> { { "success", true }, { "path", path } };
         }
 
         // ─── Set Texture as Sprite ───

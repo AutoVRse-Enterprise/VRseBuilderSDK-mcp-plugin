@@ -72,7 +72,8 @@ namespace UnityMCP.Editor
         }
 
         /// <summary>Get a copy of the structured action log.</summary>
-        public List<MCPActionRecord> GetStructuredLog() => new List<MCPActionRecord>(_structuredLog);
+        public List<MCPActionRecord> GetStructuredLog() =>
+            new List<MCPActionRecord>(_structuredLog);
 
         /// <summary>
         /// Increment the count of queued requests for this agent.

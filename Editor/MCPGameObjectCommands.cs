@@ -10,7 +10,9 @@ namespace UnityMCP.Editor
         public static object Create(Dictionary<string, object> args)
         {
             string name = args.ContainsKey("name") ? args["name"].ToString() : "New GameObject";
-            string primitiveType = args.ContainsKey("primitiveType") ? args["primitiveType"].ToString() : "Empty";
+            string primitiveType = args.ContainsKey("primitiveType")
+                ? args["primitiveType"].ToString()
+                : "Empty";
 
             GameObject go;
             if (primitiveType == "Empty" || string.IsNullOrEmpty(primitiveType))
@@ -31,16 +33,23 @@ namespace UnityMCP.Editor
             if (args.ContainsKey("parent"))
             {
                 var parent = GameObject.Find(args["parent"].ToString());
-                if (parent != null) go.transform.SetParent(parent.transform);
+                if (parent != null)
+                    go.transform.SetParent(parent.transform);
             }
 
             // Set transform
             if (args.ContainsKey("position"))
-                go.transform.position = DictToVector3(args["position"] as Dictionary<string, object>);
+                go.transform.position = DictToVector3(
+                    args["position"] as Dictionary<string, object>
+                );
             if (args.ContainsKey("rotation"))
-                go.transform.eulerAngles = DictToVector3(args["rotation"] as Dictionary<string, object>);
+                go.transform.eulerAngles = DictToVector3(
+                    args["rotation"] as Dictionary<string, object>
+                );
             if (args.ContainsKey("scale"))
-                go.transform.localScale = DictToVector3(args["scale"] as Dictionary<string, object>);
+                go.transform.localScale = DictToVector3(
+                    args["scale"] as Dictionary<string, object>
+                );
 
             Undo.RegisterCreatedObjectUndo(go, $"Create {name}");
 
@@ -56,7 +65,8 @@ namespace UnityMCP.Editor
         public static object Delete(Dictionary<string, object> args)
         {
             var go = FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             string name = go.name;
             Undo.DestroyObjectImmediate(go);
@@ -66,18 +76,22 @@ namespace UnityMCP.Editor
         public static object GetInfo(Dictionary<string, object> args)
         {
             var go = FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             var components = new List<Dictionary<string, object>>();
             foreach (var comp in go.GetComponents<Component>())
             {
-                if (comp == null) continue;
-                components.Add(new Dictionary<string, object>
-                {
-                    { "type", comp.GetType().Name },
-                    { "fullType", comp.GetType().FullName },
-                    { "enabled", comp is Behaviour b ? (object)b.enabled : true },
-                });
+                if (comp == null)
+                    continue;
+                components.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "type", comp.GetType().Name },
+                        { "fullType", comp.GetType().FullName },
+                        { "enabled", comp is Behaviour b ? (object)b.enabled : true },
+                    }
+                );
             }
 
             var children = new List<string>();
@@ -111,7 +125,8 @@ namespace UnityMCP.Editor
         public static object SetTransform(Dictionary<string, object> args)
         {
             var go = FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             bool local = args.ContainsKey("local") && (bool)args["local"];
             Undo.RecordObject(go.transform, "Set Transform");
@@ -119,20 +134,26 @@ namespace UnityMCP.Editor
             if (args.ContainsKey("position"))
             {
                 var v = DictToVector3(args["position"] as Dictionary<string, object>);
-                if (local) go.transform.localPosition = v;
-                else go.transform.position = v;
+                if (local)
+                    go.transform.localPosition = v;
+                else
+                    go.transform.position = v;
             }
 
             if (args.ContainsKey("rotation"))
             {
                 var v = DictToVector3(args["rotation"] as Dictionary<string, object>);
-                if (local) go.transform.localEulerAngles = v;
-                else go.transform.eulerAngles = v;
+                if (local)
+                    go.transform.localEulerAngles = v;
+                else
+                    go.transform.eulerAngles = v;
             }
 
             if (args.ContainsKey("scale"))
             {
-                go.transform.localScale = DictToVector3(args["scale"] as Dictionary<string, object>);
+                go.transform.localScale = DictToVector3(
+                    args["scale"] as Dictionary<string, object>
+                );
             }
 
             return new Dictionary<string, object>
@@ -157,10 +178,13 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("path") || args.ContainsKey("gameObjectPath"))
             {
-                string path = args.ContainsKey("path") ? args["path"].ToString() : args["gameObjectPath"].ToString();
+                string path = args.ContainsKey("path")
+                    ? args["path"].ToString()
+                    : args["gameObjectPath"].ToString();
                 // Try direct find first
                 var go = GameObject.Find(path);
-                if (go != null) return go;
+                if (go != null)
+                    return go;
 
                 // Try searching by name if full path fails
                 var allObjects = UnityEngine.Object.FindObjectsOfType<GameObject>();
@@ -188,7 +212,8 @@ namespace UnityMCP.Editor
 
         public static Vector3 DictToVector3(Dictionary<string, object> dict)
         {
-            if (dict == null) return Vector3.zero;
+            if (dict == null)
+                return Vector3.zero;
             float x = dict.ContainsKey("x") ? Convert.ToSingle(dict["x"]) : 0;
             float y = dict.ContainsKey("y") ? Convert.ToSingle(dict["y"]) : 0;
             float z = dict.ContainsKey("z") ? Convert.ToSingle(dict["z"]) : 0;
@@ -197,7 +222,12 @@ namespace UnityMCP.Editor
 
         public static Dictionary<string, object> Vector3ToDict(Vector3 v)
         {
-            return new Dictionary<string, object> { { "x", v.x }, { "y", v.y }, { "z", v.z } };
+            return new Dictionary<string, object>
+            {
+                { "x", v.x },
+                { "y", v.y },
+                { "z", v.z },
+            };
         }
     }
 }

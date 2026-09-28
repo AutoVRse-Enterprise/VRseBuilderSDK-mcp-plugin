@@ -22,12 +22,16 @@ namespace UnityMCP.Editor
         {
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             if (string.IsNullOrEmpty(path))
-                return new { error = "path is required (e.g. 'Assets/Scripts/Runtime/MyGame.Runtime.asmdef')" };
+                return new
+                {
+                    error = "path is required (e.g. 'Assets/Scripts/Runtime/MyGame.Runtime.asmdef')",
+                };
 
             if (!path.EndsWith(".asmdef"))
                 path += ".asmdef";
 
-            string asmName = args.ContainsKey("name") ? args["name"].ToString()
+            string asmName = args.ContainsKey("name")
+                ? args["name"].ToString()
                 : Path.GetFileNameWithoutExtension(path);
 
             // Ensure directory exists
@@ -35,13 +39,19 @@ namespace UnityMCP.Editor
 
             // Check if file already exists
             if (File.Exists(path))
-                return new { error = $"Assembly definition already exists at '{path}'. Use asmdef/info to inspect or asmdef/update to modify it." };
+                return new
+                {
+                    error = $"Assembly definition already exists at '{path}'. Use asmdef/info to inspect or asmdef/update to modify it.",
+                };
 
             // Build the asmdef JSON
             var asmdef = new Dictionary<string, object>
             {
                 { "name", asmName },
-                { "rootNamespace", args.ContainsKey("rootNamespace") ? args["rootNamespace"].ToString() : "" },
+                {
+                    "rootNamespace",
+                    args.ContainsKey("rootNamespace") ? args["rootNamespace"].ToString() : ""
+                },
                 { "references", BuildStringList(args, "references") },
                 { "includePlatforms", BuildStringList(args, "includePlatforms") },
                 { "excludePlatforms", BuildStringList(args, "excludePlatforms") },
@@ -51,7 +61,7 @@ namespace UnityMCP.Editor
                 { "autoReferenced", GetBool(args, "autoReferenced", true) },
                 { "defineConstraints", BuildStringList(args, "defineConstraints") },
                 { "versionDefines", new List<object>() },
-                { "noEngineReferences", GetBool(args, "noEngineReferences", false) }
+                { "noEngineReferences", GetBool(args, "noEngineReferences", false) },
             };
 
             string json = FormatAsmdefJson(asmdef);
@@ -63,7 +73,7 @@ namespace UnityMCP.Editor
                 success = true,
                 path = path,
                 name = asmName,
-                message = $"Assembly definition '{asmName}' created at '{path}'"
+                message = $"Assembly definition '{asmName}' created at '{path}'",
             };
         }
 
@@ -115,17 +125,32 @@ namespace UnityMCP.Editor
                     var asmdef = MiniJson.Deserialize(json) as Dictionary<string, object>;
                     if (asmdef != null)
                     {
-                        results.Add(new Dictionary<string, object>
-                        {
-                            { "path", assetPath },
-                            { "name", asmdef.ContainsKey("name") ? asmdef["name"] : "" },
-                            { "rootNamespace", asmdef.ContainsKey("rootNamespace") ? asmdef["rootNamespace"] : "" },
-                            { "referenceCount", asmdef.ContainsKey("references") && asmdef["references"] is List<object> refs ? refs.Count : 0 },
-                            { "platforms", GetPlatformSummary(asmdef) }
-                        });
+                        results.Add(
+                            new Dictionary<string, object>
+                            {
+                                { "path", assetPath },
+                                { "name", asmdef.ContainsKey("name") ? asmdef["name"] : "" },
+                                {
+                                    "rootNamespace",
+                                    asmdef.ContainsKey("rootNamespace")
+                                        ? asmdef["rootNamespace"]
+                                        : ""
+                                },
+                                {
+                                    "referenceCount",
+                                    asmdef.ContainsKey("references")
+                                    && asmdef["references"] is List<object> refs
+                                        ? refs.Count
+                                        : 0
+                                },
+                                { "platforms", GetPlatformSummary(asmdef) },
+                            }
+                        );
                     }
                 }
-                catch { /* skip unreadable files */ }
+                catch
+                { /* skip unreadable files */
+                }
             }
 
             // Optionally include Packages
@@ -141,17 +166,32 @@ namespace UnityMCP.Editor
                         var asmdef = MiniJson.Deserialize(json) as Dictionary<string, object>;
                         if (asmdef != null)
                         {
-                            results.Add(new Dictionary<string, object>
-                            {
-                                { "path", assetPath },
-                                { "name", asmdef.ContainsKey("name") ? asmdef["name"] : "" },
-                                { "rootNamespace", asmdef.ContainsKey("rootNamespace") ? asmdef["rootNamespace"] : "" },
-                                { "referenceCount", asmdef.ContainsKey("references") && asmdef["references"] is List<object> refs ? refs.Count : 0 },
-                                { "platforms", GetPlatformSummary(asmdef) }
-                            });
+                            results.Add(
+                                new Dictionary<string, object>
+                                {
+                                    { "path", assetPath },
+                                    { "name", asmdef.ContainsKey("name") ? asmdef["name"] : "" },
+                                    {
+                                        "rootNamespace",
+                                        asmdef.ContainsKey("rootNamespace")
+                                            ? asmdef["rootNamespace"]
+                                            : ""
+                                    },
+                                    {
+                                        "referenceCount",
+                                        asmdef.ContainsKey("references")
+                                        && asmdef["references"] is List<object> refs
+                                            ? refs.Count
+                                            : 0
+                                    },
+                                    { "platforms", GetPlatformSummary(asmdef) },
+                                }
+                            );
                         }
                     }
-                    catch { /* skip unreadable files */ }
+                    catch
+                    { /* skip unreadable files */
+                    }
                 }
             }
 
@@ -182,9 +222,10 @@ namespace UnityMCP.Editor
             if (asmdef == null)
                 return new { error = "Failed to parse assembly definition JSON" };
 
-            var existingRefs = asmdef.ContainsKey("references") && asmdef["references"] is List<object> list
-                ? list.Select(r => r.ToString()).ToList()
-                : new List<string>();
+            var existingRefs =
+                asmdef.ContainsKey("references") && asmdef["references"] is List<object> list
+                    ? list.Select(r => r.ToString()).ToList()
+                    : new List<string>();
 
             var added = new List<string>();
             var skipped = new List<string>();
@@ -217,7 +258,7 @@ namespace UnityMCP.Editor
                 path = path,
                 added = added,
                 skipped = skipped,
-                totalReferences = existingRefs.Count
+                totalReferences = existingRefs.Count,
             };
         }
 
@@ -244,17 +285,19 @@ namespace UnityMCP.Editor
             if (asmdef == null)
                 return new { error = "Failed to parse assembly definition JSON" };
 
-            var existingRefs = asmdef.ContainsKey("references") && asmdef["references"] is List<object> list
-                ? list.Select(r => r.ToString()).ToList()
-                : new List<string>();
+            var existingRefs =
+                asmdef.ContainsKey("references") && asmdef["references"] is List<object> list
+                    ? list.Select(r => r.ToString()).ToList()
+                    : new List<string>();
 
             var removed = new List<string>();
             foreach (string refToRemove in refsToRemove)
             {
                 // Try to match by name or GUID
                 string match = existingRefs.FirstOrDefault(r =>
-                    r.Equals(refToRemove, StringComparison.OrdinalIgnoreCase) ||
-                    r.Contains(refToRemove));
+                    r.Equals(refToRemove, StringComparison.OrdinalIgnoreCase)
+                    || r.Contains(refToRemove)
+                );
 
                 if (match != null)
                 {
@@ -274,7 +317,7 @@ namespace UnityMCP.Editor
                 success = true,
                 path = path,
                 removed = removed,
-                totalReferences = existingRefs.Count
+                totalReferences = existingRefs.Count,
             };
         }
 
@@ -298,10 +341,14 @@ namespace UnityMCP.Editor
                 return new { error = "Failed to parse assembly definition JSON" };
 
             if (args.ContainsKey("includePlatforms"))
-                asmdef["includePlatforms"] = BuildStringList(args, "includePlatforms").Cast<object>().ToList();
+                asmdef["includePlatforms"] = BuildStringList(args, "includePlatforms")
+                    .Cast<object>()
+                    .ToList();
 
             if (args.ContainsKey("excludePlatforms"))
-                asmdef["excludePlatforms"] = BuildStringList(args, "excludePlatforms").Cast<object>().ToList();
+                asmdef["excludePlatforms"] = BuildStringList(args, "excludePlatforms")
+                    .Cast<object>()
+                    .ToList();
 
             json = FormatAsmdefJson(asmdef);
             File.WriteAllText(path, json);
@@ -311,8 +358,12 @@ namespace UnityMCP.Editor
             {
                 success = true,
                 path = path,
-                includePlatforms = asmdef.ContainsKey("includePlatforms") ? asmdef["includePlatforms"] : new List<object>(),
-                excludePlatforms = asmdef.ContainsKey("excludePlatforms") ? asmdef["excludePlatforms"] : new List<object>()
+                includePlatforms = asmdef.ContainsKey("includePlatforms")
+                    ? asmdef["includePlatforms"]
+                    : new List<object>(),
+                excludePlatforms = asmdef.ContainsKey("excludePlatforms")
+                    ? asmdef["excludePlatforms"]
+                    : new List<object>(),
             };
         }
 
@@ -349,7 +400,13 @@ namespace UnityMCP.Editor
             }
 
             // Bool properties
-            string[] boolProps = { "allowUnsafeCode", "overrideReferences", "autoReferenced", "noEngineReferences" };
+            string[] boolProps =
+            {
+                "allowUnsafeCode",
+                "overrideReferences",
+                "autoReferenced",
+                "noEngineReferences",
+            };
             foreach (string prop in boolProps)
             {
                 if (args.ContainsKey(prop))
@@ -378,7 +435,10 @@ namespace UnityMCP.Editor
             }
 
             if (updated.Count == 0)
-                return new { error = "No settings to update. Provide at least one of: name, rootNamespace, allowUnsafeCode, overrideReferences, autoReferenced, noEngineReferences, defineConstraints, precompiledReferences, versionDefines" };
+                return new
+                {
+                    error = "No settings to update. Provide at least one of: name, rootNamespace, allowUnsafeCode, overrideReferences, autoReferenced, noEngineReferences, defineConstraints, precompiledReferences, versionDefines",
+                };
 
             json = FormatAsmdefJson(asmdef);
             File.WriteAllText(path, json);
@@ -389,7 +449,7 @@ namespace UnityMCP.Editor
                 success = true,
                 path = path,
                 updatedProperties = updated,
-                message = $"Updated {updated.Count} properties on '{Path.GetFileNameWithoutExtension(path)}'"
+                message = $"Updated {updated.Count} properties on '{Path.GetFileNameWithoutExtension(path)}'",
             };
         }
 
@@ -403,14 +463,22 @@ namespace UnityMCP.Editor
         {
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             if (string.IsNullOrEmpty(path))
-                return new { error = "path is required (e.g. 'Assets/Plugins/MyPlugin/MyGame.Runtime.asmref')" };
+                return new
+                {
+                    error = "path is required (e.g. 'Assets/Plugins/MyPlugin/MyGame.Runtime.asmref')",
+                };
 
             if (!path.EndsWith(".asmref"))
                 path += ".asmref";
 
-            string targetAssembly = args.ContainsKey("reference") ? args["reference"].ToString() : "";
+            string targetAssembly = args.ContainsKey("reference")
+                ? args["reference"].ToString()
+                : "";
             if (string.IsNullOrEmpty(targetAssembly))
-                return new { error = "reference is required (name of the assembly definition to reference, e.g. 'MyGame.Runtime')" };
+                return new
+                {
+                    error = "reference is required (name of the assembly definition to reference, e.g. 'MyGame.Runtime')",
+                };
 
             EnsureDirectoryExists(path);
 
@@ -420,10 +488,7 @@ namespace UnityMCP.Editor
             // Resolve to GUID format
             string resolvedRef = ResolveAssemblyReference(targetAssembly);
 
-            var asmref = new Dictionary<string, object>
-            {
-                { "reference", resolvedRef }
-            };
+            var asmref = new Dictionary<string, object> { { "reference", resolvedRef } };
 
             string json = MiniJson.Serialize(asmref);
             // Pretty-print manually
@@ -437,7 +502,7 @@ namespace UnityMCP.Editor
                 success = true,
                 path = path,
                 reference = resolvedRef,
-                message = $"Assembly reference created at '{path}' pointing to '{targetAssembly}'"
+                message = $"Assembly reference created at '{path}' pointing to '{targetAssembly}'",
             };
         }
 
@@ -462,7 +527,8 @@ namespace UnityMCP.Editor
 
         private static List<string> BuildStringList(Dictionary<string, object> args, string key)
         {
-            if (!args.ContainsKey(key)) return new List<string>();
+            if (!args.ContainsKey(key))
+                return new List<string>();
             if (args[key] is List<object> list)
                 return list.Select(item => item.ToString()).ToList();
             if (args[key] is string s && !string.IsNullOrEmpty(s))
@@ -472,10 +538,13 @@ namespace UnityMCP.Editor
 
         private static bool GetBool(Dictionary<string, object> args, string key, bool defaultValue)
         {
-            if (!args.ContainsKey(key)) return defaultValue;
+            if (!args.ContainsKey(key))
+                return defaultValue;
             var val = args[key];
-            if (val is bool b) return b;
-            if (val is string s) return s.ToLowerInvariant() == "true";
+            if (val is bool b)
+                return b;
+            if (val is string s)
+                return s.ToLowerInvariant() == "true";
             return defaultValue;
         }
 
@@ -498,13 +567,20 @@ namespace UnityMCP.Editor
                 {
                     string json = File.ReadAllText(assetPath);
                     var asmdef = MiniJson.Deserialize(json) as Dictionary<string, object>;
-                    if (asmdef != null && asmdef.ContainsKey("name") &&
-                        asmdef["name"].ToString().Equals(nameOrGuid, StringComparison.OrdinalIgnoreCase))
+                    if (
+                        asmdef != null
+                        && asmdef.ContainsKey("name")
+                        && asmdef["name"]
+                            .ToString()
+                            .Equals(nameOrGuid, StringComparison.OrdinalIgnoreCase)
+                    )
                     {
                         return "GUID:" + guid;
                     }
                 }
-                catch { /* skip */ }
+                catch
+                { /* skip */
+                }
             }
 
             // Fallback: return name as-is (Unity supports name references too)
@@ -513,10 +589,16 @@ namespace UnityMCP.Editor
 
         private static string GetPlatformSummary(Dictionary<string, object> asmdef)
         {
-            var include = asmdef.ContainsKey("includePlatforms") && asmdef["includePlatforms"] is List<object> inc
-                ? inc : new List<object>();
-            var exclude = asmdef.ContainsKey("excludePlatforms") && asmdef["excludePlatforms"] is List<object> exc
-                ? exc : new List<object>();
+            var include =
+                asmdef.ContainsKey("includePlatforms")
+                && asmdef["includePlatforms"] is List<object> inc
+                    ? inc
+                    : new List<object>();
+            var exclude =
+                asmdef.ContainsKey("excludePlatforms")
+                && asmdef["excludePlatforms"] is List<object> exc
+                    ? exc
+                    : new List<object>();
 
             if (include.Count > 0)
                 return "Include: " + string.Join(", ", include);
@@ -560,7 +642,8 @@ namespace UnityMCP.Editor
                         sb.Append(c);
                         // Check if next meaningful char is } or ] (empty container)
                         int peek = i + 1;
-                        while (peek < compact.Length && compact[peek] == ' ') peek++;
+                        while (peek < compact.Length && compact[peek] == ' ')
+                            peek++;
                         if (peek < compact.Length && (compact[peek] == '}' || compact[peek] == ']'))
                         {
                             // Empty container — keep on same line

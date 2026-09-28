@@ -38,12 +38,20 @@ namespace UnityMCP.Editor
                     return new { success = true, action = "play" };
                 case "pause":
                     EditorApplication.isPaused = !EditorApplication.isPaused;
-                    return new { success = true, action = "pause", isPaused = EditorApplication.isPaused };
+                    return new
+                    {
+                        success = true,
+                        action = "pause",
+                        isPaused = EditorApplication.isPaused,
+                    };
                 case "stop":
                     EditorApplication.isPlaying = false;
                     return new { success = true, action = "stop" };
                 default:
-                    return new { error = $"Unknown action: {action}. Use 'play', 'pause', or 'stop'." };
+                    return new
+                    {
+                        error = $"Unknown action: {action}. Use 'play', 'pause', or 'stop'.",
+                    };
             }
         }
 
@@ -82,14 +90,17 @@ namespace UnityMCP.Editor
         /// </summary>
         private static bool TryLoadRoslyn()
         {
-            if (_roslynProbed) return _roslynCSharpAsm != null && _roslynCoreAsm != null;
+            if (_roslynProbed)
+                return _roslynCSharpAsm != null && _roslynCoreAsm != null;
             _roslynProbed = true;
 
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 string name = asm.GetName().Name;
-                if (name == "Microsoft.CodeAnalysis.CSharp") _roslynCSharpAsm = asm;
-                else if (name == "Microsoft.CodeAnalysis") _roslynCoreAsm = asm;
+                if (name == "Microsoft.CodeAnalysis.CSharp")
+                    _roslynCSharpAsm = asm;
+                else if (name == "Microsoft.CodeAnalysis")
+                    _roslynCoreAsm = asm;
             }
 
             // If not already loaded, try to find and load them from the Unity editor directory
@@ -99,32 +110,81 @@ namespace UnityMCP.Editor
                 string managedDir = Path.Combine(editorDir, "Data", "Managed");
                 string toolsDir = Path.Combine(editorDir, "Data", "Tools", "Roslyn");
                 // Mono-compatible Roslyn assemblies (preferred for Unity's Mono runtime)
-                string monoDir = Path.Combine(editorDir, "Data", "MonoBleedingEdge", "lib", "mono", "4.5");
-                string msbuildRoslynDir = Path.Combine(editorDir, "Data", "MonoBleedingEdge", "lib", "mono", "msbuild", "Current", "bin", "Roslyn");
+                string monoDir = Path.Combine(
+                    editorDir,
+                    "Data",
+                    "MonoBleedingEdge",
+                    "lib",
+                    "mono",
+                    "4.5"
+                );
+                string msbuildRoslynDir = Path.Combine(
+                    editorDir,
+                    "Data",
+                    "MonoBleedingEdge",
+                    "lib",
+                    "mono",
+                    "msbuild",
+                    "Current",
+                    "bin",
+                    "Roslyn"
+                );
                 // ApiUpdater has full Roslyn assemblies
-                string apiUpdaterDir = Path.Combine(editorDir, "Data", "Tools", "BuildPipeline", "Compilation", "ApiUpdater");
+                string apiUpdaterDir = Path.Combine(
+                    editorDir,
+                    "Data",
+                    "Tools",
+                    "BuildPipeline",
+                    "Compilation",
+                    "ApiUpdater"
+                );
                 // DotNetSdkRoslyn contains .NET Core assemblies — may fail on Mono, tried last
                 string sdkRoslynDir = Path.Combine(editorDir, "Data", "DotNetSdkRoslyn");
 
-                foreach (var searchDir in new[] { managedDir, toolsDir, monoDir, msbuildRoslynDir, apiUpdaterDir, sdkRoslynDir, editorDir })
+                foreach (
+                    var searchDir in new[]
+                    {
+                        managedDir,
+                        toolsDir,
+                        monoDir,
+                        msbuildRoslynDir,
+                        apiUpdaterDir,
+                        sdkRoslynDir,
+                        editorDir,
+                    }
+                )
                 {
-                    if (!Directory.Exists(searchDir)) continue;
+                    if (!Directory.Exists(searchDir))
+                        continue;
                     if (_roslynCoreAsm == null)
                     {
                         string corePath = Path.Combine(searchDir, "Microsoft.CodeAnalysis.dll");
                         if (File.Exists(corePath))
                         {
-                            try { _roslynCoreAsm = Assembly.LoadFrom(corePath); }
-                            catch { /* .NET Core assemblies fail on Mono — skip */ }
+                            try
+                            {
+                                _roslynCoreAsm = Assembly.LoadFrom(corePath);
+                            }
+                            catch
+                            { /* .NET Core assemblies fail on Mono — skip */
+                            }
                         }
                     }
                     if (_roslynCSharpAsm == null)
                     {
-                        string csharpPath = Path.Combine(searchDir, "Microsoft.CodeAnalysis.CSharp.dll");
+                        string csharpPath = Path.Combine(
+                            searchDir,
+                            "Microsoft.CodeAnalysis.CSharp.dll"
+                        );
                         if (File.Exists(csharpPath))
                         {
-                            try { _roslynCSharpAsm = Assembly.LoadFrom(csharpPath); }
-                            catch { /* .NET Core assemblies fail on Mono — skip */ }
+                            try
+                            {
+                                _roslynCSharpAsm = Assembly.LoadFrom(csharpPath);
+                            }
+                            catch
+                            { /* .NET Core assemblies fail on Mono — skip */
+                            }
                         }
                     }
                 }
@@ -139,17 +199,26 @@ namespace UnityMCP.Editor
         private static object GetMetadataReferencesReflection()
         {
             // MetadataReference.CreateFromFile(string) is in Microsoft.CodeAnalysis
-            var metadataRefType = _roslynCoreAsm.GetType("Microsoft.CodeAnalysis.MetadataReference");
-            var createFromFile = metadataRefType.GetMethod("CreateFromFile",
+            var metadataRefType = _roslynCoreAsm.GetType(
+                "Microsoft.CodeAnalysis.MetadataReference"
+            );
+            var createFromFile = metadataRefType.GetMethod(
+                "CreateFromFile",
                 BindingFlags.Public | BindingFlags.Static,
-                null, new[] { typeof(string) }, null);
+                null,
+                new[] { typeof(string) },
+                null
+            );
 
             // Fallback: find CreateFromFile with string as first param (may have optional params)
             if (createFromFile == null)
             {
-                foreach (var m in metadataRefType.GetMethods(BindingFlags.Public | BindingFlags.Static))
+                foreach (
+                    var m in metadataRefType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                )
                 {
-                    if (m.Name != "CreateFromFile") continue;
+                    if (m.Name != "CreateFromFile")
+                        continue;
                     var pars = m.GetParameters();
                     if (pars.Length >= 1 && pars[0].ParameterType == typeof(string))
                     {
@@ -173,7 +242,11 @@ namespace UnityMCP.Editor
                     if (addedPaths.Contains(assembly.Location))
                         continue;
                     string asmName = assembly.GetName().Name;
-                    if (asmName.Contains(".Tests") || asmName.Contains("NUnit") || asmName.Contains("Moq"))
+                    if (
+                        asmName.Contains(".Tests")
+                        || asmName.Contains("NUnit")
+                        || asmName.Contains("Moq")
+                    )
                         continue;
 
                     addedPaths.Add(assembly.Location);
@@ -200,14 +273,18 @@ namespace UnityMCP.Editor
             {
                 return new Dictionary<string, object>
                 {
-                    { "error", "Roslyn (Microsoft.CodeAnalysis) is not available in this Unity version. ExecuteCode requires Roslyn for dynamic compilation." },
+                    {
+                        "error",
+                        "Roslyn (Microsoft.CodeAnalysis) is not available in this Unity version. ExecuteCode requires Roslyn for dynamic compilation."
+                    },
                 };
             }
 
             try
             {
                 // Wrap user code in a static method so it can use 'return' to send data back
-                string fullCode = @"
+                string fullCode =
+                    @"
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -219,7 +296,9 @@ public static class MCPDynamicCode
 {
     public static object Execute()
     {
-        " + code + @"
+        "
+                    + code
+                    + @"
         return null;
     }
 }";
@@ -230,17 +309,28 @@ public static class MCPDynamicCode
                 // Roslyn resolves type forwarding correctly.
 
                 // CSharpSyntaxTree.ParseText(string)
-                var syntaxTreeType = _roslynCSharpAsm.GetType("Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree");
-                var parseText = syntaxTreeType.GetMethod("ParseText",
+                var syntaxTreeType = _roslynCSharpAsm.GetType(
+                    "Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree"
+                );
+                var parseText = syntaxTreeType.GetMethod(
+                    "ParseText",
                     BindingFlags.Public | BindingFlags.Static,
-                    null, new[] { typeof(string) }, null);
+                    null,
+                    new[] { typeof(string) },
+                    null
+                );
 
                 // Fallback: ParseText may have more parameters; find the best match
                 if (parseText == null)
                 {
-                    foreach (var m in syntaxTreeType.GetMethods(BindingFlags.Public | BindingFlags.Static))
+                    foreach (
+                        var m in syntaxTreeType.GetMethods(
+                            BindingFlags.Public | BindingFlags.Static
+                        )
+                    )
                     {
-                        if (m.Name != "ParseText") continue;
+                        if (m.Name != "ParseText")
+                            continue;
                         var pars = m.GetParameters();
                         if (pars.Length >= 1 && pars[0].ParameterType == typeof(string))
                         {
@@ -271,7 +361,9 @@ public static class MCPDynamicCode
                 var dllOutputKind = Enum.Parse(outputKindType, "DynamicallyLinkedLibrary");
 
                 // CSharpCompilationOptions(OutputKind, ...)
-                var compilationOptionsType = _roslynCSharpAsm.GetType("Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions");
+                var compilationOptionsType = _roslynCSharpAsm.GetType(
+                    "Microsoft.CodeAnalysis.CSharp.CSharpCompilationOptions"
+                );
                 object compilationOptions;
                 {
                     // Find constructor: CSharpCompilationOptions(OutputKind outputKind, ...)
@@ -300,11 +392,16 @@ public static class MCPDynamicCode
                 }
 
                 // CSharpCompilation.Create(string, IEnumerable<SyntaxTree>, IEnumerable<MetadataReference>, CSharpCompilationOptions)
-                var compilationType = _roslynCSharpAsm.GetType("Microsoft.CodeAnalysis.CSharp.CSharpCompilation");
+                var compilationType = _roslynCSharpAsm.GetType(
+                    "Microsoft.CodeAnalysis.CSharp.CSharpCompilation"
+                );
                 MethodInfo createMethod = null;
-                foreach (var m in compilationType.GetMethods(BindingFlags.Public | BindingFlags.Static))
+                foreach (
+                    var m in compilationType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                )
                 {
-                    if (m.Name != "Create") continue;
+                    if (m.Name != "Create")
+                        continue;
                     var pars = m.GetParameters();
                     if (pars.Length == 4 && pars[0].ParameterType == typeof(string))
                     {
@@ -314,33 +411,49 @@ public static class MCPDynamicCode
                 }
 
                 // Wrap syntaxTree in array
-                var syntaxTreeBaseType = _roslynCoreAsm.GetType("Microsoft.CodeAnalysis.SyntaxTree");
+                var syntaxTreeBaseType = _roslynCoreAsm.GetType(
+                    "Microsoft.CodeAnalysis.SyntaxTree"
+                );
                 var syntaxTreeArray = Array.CreateInstance(syntaxTreeBaseType, 1);
                 syntaxTreeArray.SetValue(syntaxTree, 0);
 
-                var compilation = createMethod.Invoke(null, new object[]
-                {
-                    Path.GetFileNameWithoutExtension(outputPath),
-                    syntaxTreeArray,
-                    references,
-                    compilationOptions
-                });
+                var compilation = createMethod.Invoke(
+                    null,
+                    new object[]
+                    {
+                        Path.GetFileNameWithoutExtension(outputPath),
+                        syntaxTreeArray,
+                        references,
+                        compilationOptions,
+                    }
+                );
 
                 // compilation.Emit(string outputPath)
                 // Use the stream overload: Emit(Stream)
                 object emitResult;
                 using (var stream = new FileStream(outputPath, FileMode.Create))
                 {
-                    var emitMethod = compilation.GetType().GetMethod("Emit",
-                        BindingFlags.Public | BindingFlags.Instance,
-                        null, new[] { typeof(Stream) }, null);
+                    var emitMethod = compilation
+                        .GetType()
+                        .GetMethod(
+                            "Emit",
+                            BindingFlags.Public | BindingFlags.Instance,
+                            null,
+                            new[] { typeof(Stream) },
+                            null
+                        );
 
                     // Fallback: find Emit with Stream as first param
                     if (emitMethod == null)
                     {
-                        foreach (var m in compilation.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance))
+                        foreach (
+                            var m in compilation
+                                .GetType()
+                                .GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                        )
                         {
-                            if (m.Name != "Emit") continue;
+                            if (m.Name != "Emit")
+                                continue;
                             var pars = m.GetParameters();
                             if (pars.Length >= 1 && pars[0].ParameterType == typeof(Stream))
                             {
@@ -361,37 +474,51 @@ public static class MCPDynamicCode
                 }
 
                 // Check emitResult.Success
-                bool success = (bool)emitResult.GetType().GetProperty("Success").GetValue(emitResult);
+                bool success = (bool)
+                    emitResult.GetType().GetProperty("Success").GetValue(emitResult);
 
                 if (!success)
                 {
                     // Get Diagnostics
-                    var diagnostics = (System.Collections.IEnumerable)emitResult.GetType()
-                        .GetProperty("Diagnostics").GetValue(emitResult);
+                    var diagnostics = (System.Collections.IEnumerable)
+                        emitResult.GetType().GetProperty("Diagnostics").GetValue(emitResult);
 
-                    var diagnosticSeverityType = _roslynCoreAsm.GetType("Microsoft.CodeAnalysis.DiagnosticSeverity");
+                    var diagnosticSeverityType = _roslynCoreAsm.GetType(
+                        "Microsoft.CodeAnalysis.DiagnosticSeverity"
+                    );
                     var errorSeverity = Enum.Parse(diagnosticSeverityType, "Error");
 
                     var errors = new List<string>();
                     foreach (var diag in diagnostics)
                     {
                         var severity = diag.GetType().GetProperty("Severity").GetValue(diag);
-                        if (!severity.Equals(errorSeverity)) continue;
+                        if (!severity.Equals(errorSeverity))
+                            continue;
 
                         var location = diag.GetType().GetProperty("Location").GetValue(diag);
-                        var lineSpan = location.GetType().GetMethod("GetMappedLineSpan").Invoke(location, null);
-                        var startPos = lineSpan.GetType().GetProperty("StartLinePosition").GetValue(lineSpan);
+                        var lineSpan = location
+                            .GetType()
+                            .GetMethod("GetMappedLineSpan")
+                            .Invoke(location, null);
+                        var startPos = lineSpan
+                            .GetType()
+                            .GetProperty("StartLinePosition")
+                            .GetValue(lineSpan);
                         int line = (int)startPos.GetType().GetProperty("Line").GetValue(startPos);
                         string message;
                         try
                         {
                             // GetMessage has signature GetMessage(IFormatProvider = null)
                             var getMsg = diag.GetType().GetMethod("GetMessage");
-                            message = getMsg != null
-                                ? (string)getMsg.Invoke(diag, new object[] { null })
-                                : diag.ToString();
+                            message =
+                                getMsg != null
+                                    ? (string)getMsg.Invoke(diag, new object[] { null })
+                                    : diag.ToString();
                         }
-                        catch { message = diag.ToString(); }
+                        catch
+                        {
+                            message = diag.ToString();
+                        }
 
                         errors.Add($"Line {line + 1}: {message}");
                     }
@@ -411,13 +538,21 @@ public static class MCPDynamicCode
                 var result = method.Invoke(null, null);
 
                 // Cleanup temp dll (best effort)
-                try { File.Delete(outputPath); } catch { }
+                try
+                {
+                    File.Delete(outputPath);
+                }
+                catch { }
 
                 return SerializeResult(result);
             }
             catch (TargetInvocationException ex)
             {
-                return new { error = ex.InnerException?.Message ?? ex.Message, stackTrace = ex.InnerException?.StackTrace ?? ex.StackTrace };
+                return new
+                {
+                    error = ex.InnerException?.Message ?? ex.Message,
+                    stackTrace = ex.InnerException?.StackTrace ?? ex.StackTrace,
+                };
             }
             catch (Exception ex)
             {
@@ -436,17 +571,53 @@ public static class MCPDynamicCode
                 return new { success = true, result = (object)null };
 
             // Primitives and strings
-            if (result is string || result is int || result is float || result is double
-                || result is bool || result is long || result is decimal)
+            if (
+                result is string
+                || result is int
+                || result is float
+                || result is double
+                || result is bool
+                || result is long
+                || result is decimal
+            )
                 return new Dictionary<string, object> { { "success", true }, { "result", result } };
 
             // Unity Vector types
             if (result is Vector2 v2)
-                return new Dictionary<string, object> { { "success", true }, { "result", new { x = v2.x, y = v2.y } } };
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "result", new { x = v2.x, y = v2.y } },
+                };
             if (result is Vector3 v3)
-                return new Dictionary<string, object> { { "success", true }, { "result", new { x = v3.x, y = v3.y, z = v3.z } } };
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    {
+                        "result",
+                        new
+                        {
+                            x = v3.x,
+                            y = v3.y,
+                            z = v3.z,
+                        }
+                    },
+                };
             if (result is Color col)
-                return new Dictionary<string, object> { { "success", true }, { "result", new { r = col.r, g = col.g, b = col.b, a = col.a } } };
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    {
+                        "result",
+                        new
+                        {
+                            r = col.r,
+                            g = col.g,
+                            b = col.b,
+                            a = col.a,
+                        }
+                    },
+                };
 
             // Dictionaries
             if (result is System.Collections.IDictionary dict)
@@ -458,7 +629,12 @@ public static class MCPDynamicCode
                 var items = new List<object>();
                 foreach (var item in list)
                     items.Add(item?.ToString());
-                return new Dictionary<string, object> { { "success", true }, { "result", items }, { "count", items.Count } };
+                return new Dictionary<string, object>
+                {
+                    { "success", true },
+                    { "result", items },
+                    { "count", items.Count },
+                };
             }
 
             // Anonymous types and complex objects - serialize via reflection
@@ -473,10 +649,20 @@ public static class MCPDynamicCode
                         var obj = new Dictionary<string, object>();
                         foreach (var prop in props)
                         {
-                            try { obj[prop.Name] = prop.GetValue(result)?.ToString(); }
-                            catch { obj[prop.Name] = "<error>"; }
+                            try
+                            {
+                                obj[prop.Name] = prop.GetValue(result)?.ToString();
+                            }
+                            catch
+                            {
+                                obj[prop.Name] = "<error>";
+                            }
                         }
-                        return new Dictionary<string, object> { { "success", true }, { "result", obj } };
+                        return new Dictionary<string, object>
+                        {
+                            { "success", true },
+                            { "result", obj },
+                        };
                     }
                 }
                 catch { }

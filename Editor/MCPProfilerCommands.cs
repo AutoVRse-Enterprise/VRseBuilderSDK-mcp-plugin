@@ -27,18 +27,25 @@ namespace UnityMCP.Editor
 
         private static void ResolveFDTypes()
         {
-            if (_fdTypesResolved) return;
+            if (_fdTypesResolved)
+                return;
             _fdTypesResolved = true;
 
-            _fdUtilType = Type.GetType(
-                "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerUtility, UnityEditor.CoreModule")
+            _fdUtilType =
+                Type.GetType(
+                    "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerUtility, UnityEditor.CoreModule"
+                )
                 ?? Type.GetType(
-                "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerUtility, UnityEditor");
+                    "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerUtility, UnityEditor"
+                );
 
-            _fdEventDataType = Type.GetType(
-                "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerEventData, UnityEditor.CoreModule")
+            _fdEventDataType =
+                Type.GetType(
+                    "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerEventData, UnityEditor.CoreModule"
+                )
                 ?? Type.GetType(
-                "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerEventData, UnityEditor");
+                    "UnityEditorInternal.FrameDebuggerInternal.FrameDebuggerEventData, UnityEditor"
+                );
         }
 
         // ─── Profiler Control ───
@@ -82,22 +89,43 @@ namespace UnityMCP.Editor
                 var result = new Dictionary<string, object>();
 
                 // Use reflection to read all static properties safely
-                string[] intProps = {
-                    "batches", "drawCalls", "indirectDrawCalls",
-                    "dynamicBatchedDrawCalls", "staticBatchedDrawCalls", "instancedBatchedDrawCalls",
-                    "dynamicBatches", "staticBatches", "instancedBatches",
-                    "setPassCalls", "triangles", "vertices",
-                    "shadowCasters", "renderTextureChanges",
-                    "renderTextureCount", "renderTextureBytes",
-                    "usedTextureMemorySize", "usedTextureCount",
-                    "vboTotal", "vboTotalBytes", "vboUploads", "vboUploadBytes",
-                    "ibUploads", "ibUploadBytes",
-                    "visibleSkinnedMeshes", "animationComponentsPlaying", "animatorComponentsPlaying"
+                string[] intProps =
+                {
+                    "batches",
+                    "drawCalls",
+                    "indirectDrawCalls",
+                    "dynamicBatchedDrawCalls",
+                    "staticBatchedDrawCalls",
+                    "instancedBatchedDrawCalls",
+                    "dynamicBatches",
+                    "staticBatches",
+                    "instancedBatches",
+                    "setPassCalls",
+                    "triangles",
+                    "vertices",
+                    "shadowCasters",
+                    "renderTextureChanges",
+                    "renderTextureCount",
+                    "renderTextureBytes",
+                    "usedTextureMemorySize",
+                    "usedTextureCount",
+                    "vboTotal",
+                    "vboTotalBytes",
+                    "vboUploads",
+                    "vboUploadBytes",
+                    "ibUploads",
+                    "ibUploadBytes",
+                    "visibleSkinnedMeshes",
+                    "animationComponentsPlaying",
+                    "animatorComponentsPlaying",
                 };
 
                 foreach (string propName in intProps)
                 {
-                    var prop = statsType.GetProperty(propName, BindingFlags.Public | BindingFlags.Static);
+                    var prop = statsType.GetProperty(
+                        propName,
+                        BindingFlags.Public | BindingFlags.Static
+                    );
                     if (prop != null)
                         result[propName] = prop.GetValue(null);
                 }
@@ -106,25 +134,35 @@ namespace UnityMCP.Editor
                 string[] floatProps = { "frameTime", "renderTime" };
                 foreach (string propName in floatProps)
                 {
-                    var prop = statsType.GetProperty(propName, BindingFlags.Public | BindingFlags.Static);
+                    var prop = statsType.GetProperty(
+                        propName,
+                        BindingFlags.Public | BindingFlags.Static
+                    );
                     if (prop != null)
                         result[propName] = prop.GetValue(null);
                 }
 
                 // String properties
-                var screenRes = statsType.GetProperty("screenRes", BindingFlags.Public | BindingFlags.Static);
+                var screenRes = statsType.GetProperty(
+                    "screenRes",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 if (screenRes != null)
                     result["screenResolution"] = screenRes.GetValue(null);
 
                 result["isPlaying"] = EditorApplication.isPlaying;
                 if (!EditorApplication.isPlaying)
-                    result["note"] = "Stats are most meaningful during Play mode. Enter play mode for accurate rendering data.";
+                    result["note"] =
+                        "Stats are most meaningful during Play mode. Enter play mode for accurate rendering data.";
 
                 return result;
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", "Failed to read UnityStats: " + ex.Message } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "Failed to read UnityStats: " + ex.Message },
+                };
             }
         }
 
@@ -150,7 +188,10 @@ namespace UnityMCP.Editor
                 { "totalUnusedReservedMB", Math.Round(totalUnused / (1024.0 * 1024.0), 2) },
                 { "monoUsedMB", Math.Round(monoUsed / (1024.0 * 1024.0), 2) },
                 { "monoHeapMB", Math.Round(monoHeap / (1024.0 * 1024.0), 2) },
-                { "monoFragmentationPercent", monoHeap > 0 ? Math.Round((1.0 - (double)monoUsed / monoHeap) * 100, 1) : 0 },
+                {
+                    "monoFragmentationPercent",
+                    monoHeap > 0 ? Math.Round((1.0 - (double)monoUsed / monoHeap) * 100, 1) : 0
+                },
                 { "gfxDriverMB", Math.Round(gfxDriver / (1024.0 * 1024.0), 2) },
                 { "tempAllocatorMB", Math.Round(tempAlloc / (1024.0 * 1024.0), 2) },
                 { "totalAllocatedBytes", totalAllocated },
@@ -170,7 +211,10 @@ namespace UnityMCP.Editor
         public static object GetFrameData(Dictionary<string, object> args)
         {
             if (!ProfilerDriver.enabled)
-                return new Dictionary<string, object> { { "error", "Profiler is not enabled. Call profiler/enable first." } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "Profiler is not enabled. Call profiler/enable first." },
+                };
 
             int frameIndex = args.ContainsKey("frameIndex")
                 ? Convert.ToInt32(args["frameIndex"])
@@ -180,19 +224,23 @@ namespace UnityMCP.Editor
                 ? Convert.ToInt32(args["threadIndex"])
                 : 0; // 0 = Main Thread
 
-            int maxItems = args.ContainsKey("maxItems")
-                ? Convert.ToInt32(args["maxItems"])
-                : 30;
+            int maxItems = args.ContainsKey("maxItems") ? Convert.ToInt32(args["maxItems"]) : 30;
 
             float minTimeMs = args.ContainsKey("minTimeMs")
                 ? Convert.ToSingle(args["minTimeMs"])
                 : 0.0f;
 
-            if (frameIndex < ProfilerDriver.firstFrameIndex || frameIndex > ProfilerDriver.lastFrameIndex)
+            if (
+                frameIndex < ProfilerDriver.firstFrameIndex
+                || frameIndex > ProfilerDriver.lastFrameIndex
+            )
             {
                 return new Dictionary<string, object>
                 {
-                    { "error", $"Frame {frameIndex} out of range [{ProfilerDriver.firstFrameIndex}, {ProfilerDriver.lastFrameIndex}]" },
+                    {
+                        "error",
+                        $"Frame {frameIndex} out of range [{ProfilerDriver.firstFrameIndex}, {ProfilerDriver.lastFrameIndex}]"
+                    },
                     { "firstFrame", ProfilerDriver.firstFrameIndex },
                     { "lastFrame", ProfilerDriver.lastFrameIndex },
                 };
@@ -201,14 +249,24 @@ namespace UnityMCP.Editor
             try
             {
                 // Sort by total time descending for most useful view
-                using (var frameData = ProfilerDriver.GetHierarchyFrameDataView(
-                    frameIndex, threadIndex,
-                    HierarchyFrameDataView.ViewModes.MergeSamplesWithTheSameName,
-                    HierarchyFrameDataView.columnTotalTime,
-                    false))
+                using (
+                    var frameData = ProfilerDriver.GetHierarchyFrameDataView(
+                        frameIndex,
+                        threadIndex,
+                        HierarchyFrameDataView.ViewModes.MergeSamplesWithTheSameName,
+                        HierarchyFrameDataView.columnTotalTime,
+                        false
+                    )
+                )
                 {
                     if (!frameData.valid)
-                        return new Dictionary<string, object> { { "error", $"No valid data for frame {frameIndex}, thread {threadIndex}" } };
+                        return new Dictionary<string, object>
+                        {
+                            {
+                                "error",
+                                $"No valid data for frame {frameIndex}, thread {threadIndex}"
+                            },
+                        };
 
                     var items = new List<Dictionary<string, object>>();
                     int rootId = frameData.GetRootItemID();
@@ -237,26 +295,48 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", "Failed to read frame data: " + ex.Message } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "Failed to read frame data: " + ex.Message },
+                };
             }
         }
 
-        private static void CollectItems(HierarchyFrameDataView frameData, List<int> itemIds,
-            List<Dictionary<string, object>> output, int maxItems, float minTimeMs, int depth, int maxDepth)
+        private static void CollectItems(
+            HierarchyFrameDataView frameData,
+            List<int> itemIds,
+            List<Dictionary<string, object>> output,
+            int maxItems,
+            float minTimeMs,
+            int depth,
+            int maxDepth
+        )
         {
-            if (depth > maxDepth) return;
+            if (depth > maxDepth)
+                return;
 
             foreach (int id in itemIds)
             {
-                if (output.Count >= maxItems) break;
+                if (output.Count >= maxItems)
+                    break;
 
-                float totalTime = frameData.GetItemColumnDataAsFloat(id, HierarchyFrameDataView.columnTotalTime);
-                float selfTime = frameData.GetItemColumnDataAsFloat(id, HierarchyFrameDataView.columnSelfTime);
+                float totalTime = frameData.GetItemColumnDataAsFloat(
+                    id,
+                    HierarchyFrameDataView.columnTotalTime
+                );
+                float selfTime = frameData.GetItemColumnDataAsFloat(
+                    id,
+                    HierarchyFrameDataView.columnSelfTime
+                );
 
-                if (totalTime < minTimeMs && depth > 0) continue;
+                if (totalTime < minTimeMs && depth > 0)
+                    continue;
 
                 string calls = frameData.GetItemColumnData(id, HierarchyFrameDataView.columnCalls);
-                string gcAlloc = frameData.GetItemColumnData(id, HierarchyFrameDataView.columnGcMemory);
+                string gcAlloc = frameData.GetItemColumnData(
+                    id,
+                    HierarchyFrameDataView.columnGcMemory
+                );
 
                 var item = new Dictionary<string, object>
                 {
@@ -275,7 +355,15 @@ namespace UnityMCP.Editor
                 {
                     var children = new List<int>();
                     frameData.GetItemChildren(id, children);
-                    CollectItems(frameData, children, output, maxItems, minTimeMs, depth + 1, maxDepth);
+                    CollectItems(
+                        frameData,
+                        children,
+                        output,
+                        maxItems,
+                        minTimeMs,
+                        depth + 1,
+                        maxDepth
+                    );
                 }
             }
         }
@@ -289,16 +377,28 @@ namespace UnityMCP.Editor
         {
             ResolveFDTypes();
             if (_fdUtilType == null)
-                return new Dictionary<string, object> { { "error", "FrameDebuggerUtility type not found. This Unity version may not support Frame Debugger via API." } };
+                return new Dictionary<string, object>
+                {
+                    {
+                        "error",
+                        "FrameDebuggerUtility type not found. This Unity version may not support Frame Debugger via API."
+                    },
+                };
 
             bool enable = !args.ContainsKey("enabled") || GetBool(args, "enabled", true);
 
             try
             {
                 // SetEnabled(bool enabled, int remotePlayerGUID)
-                var setEnabled = _fdUtilType.GetMethod("SetEnabled", BindingFlags.Public | BindingFlags.Static);
+                var setEnabled = _fdUtilType.GetMethod(
+                    "SetEnabled",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 if (setEnabled == null)
-                    return new Dictionary<string, object> { { "error", "SetEnabled method not found on FrameDebuggerUtility" } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "SetEnabled method not found on FrameDebuggerUtility" },
+                    };
 
                 setEnabled.Invoke(null, new object[] { enable, 0 });
 
@@ -308,8 +408,10 @@ namespace UnityMCP.Editor
 
                 // Also open/close the window
                 if (enable)
-                    EditorWindow.GetWindow(Type.GetType("UnityEditor.FrameDebuggerWindow, UnityEditor.CoreModule")
-                        ?? Type.GetType("UnityEditor.FrameDebuggerWindow, UnityEditor"));
+                    EditorWindow.GetWindow(
+                        Type.GetType("UnityEditor.FrameDebuggerWindow, UnityEditor.CoreModule")
+                            ?? Type.GetType("UnityEditor.FrameDebuggerWindow, UnityEditor")
+                    );
 
                 return new Dictionary<string, object>
                 {
@@ -321,7 +423,10 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", "Failed to control Frame Debugger: " + ex.Message } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "Failed to control Frame Debugger: " + ex.Message },
+                };
             }
         }
 
@@ -335,13 +440,19 @@ namespace UnityMCP.Editor
         {
             ResolveFDTypes();
             if (_fdUtilType == null)
-                return new Dictionary<string, object> { { "error", "FrameDebuggerUtility type not found." } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "FrameDebuggerUtility type not found." },
+                };
 
             int count = GetFDStaticInt("count");
             if (count <= 0)
                 return new Dictionary<string, object>
                 {
-                    { "error", "No frame debugger events. Make sure the Frame Debugger is enabled (call debugger/enable) and the game has rendered at least one frame." },
+                    {
+                        "error",
+                        "No frame debugger events. Make sure the Frame Debugger is enabled (call debugger/enable) and the game has rendered at least one frame."
+                    },
                     { "eventCount", 0 },
                 };
 
@@ -352,13 +463,22 @@ namespace UnityMCP.Editor
             try
             {
                 // GetFrameEvents() returns FrameDebuggerEvent[]
-                var getEvents = _fdUtilType.GetMethod("GetFrameEvents", BindingFlags.Public | BindingFlags.Static);
+                var getEvents = _fdUtilType.GetMethod(
+                    "GetFrameEvents",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 if (getEvents == null)
-                    return new Dictionary<string, object> { { "error", "GetFrameEvents method not found." } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "GetFrameEvents method not found." },
+                    };
 
                 var eventsArray = getEvents.Invoke(null, null) as Array;
                 if (eventsArray == null)
-                    return new Dictionary<string, object> { { "error", "GetFrameEvents returned null." } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "GetFrameEvents returned null." },
+                    };
 
                 var events = new List<Dictionary<string, object>>();
                 int evtCount = Math.Min(eventsArray.Length, maxEvents);
@@ -396,7 +516,10 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", "Failed to get frame events: " + ex.Message } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "Failed to get frame events: " + ex.Message },
+                };
             }
         }
 
@@ -410,13 +533,21 @@ namespace UnityMCP.Editor
         {
             ResolveFDTypes();
             if (_fdUtilType == null || _fdEventDataType == null)
-                return new Dictionary<string, object> { { "error", "Frame Debugger types not found." } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "Frame Debugger types not found." },
+                };
 
-            int index = args.ContainsKey("index") ? Convert.ToInt32(args["index"]) : GetFDStaticInt("limit");
+            int index = args.ContainsKey("index")
+                ? Convert.ToInt32(args["index"])
+                : GetFDStaticInt("limit");
             int count = GetFDStaticInt("count");
 
             if (index < 0 || index >= count)
-                return new Dictionary<string, object> { { "error", $"Event index {index} out of range [0, {count - 1}]" } };
+                return new Dictionary<string, object>
+                {
+                    { "error", $"Event index {index} out of range [0, {count - 1}]" },
+                };
 
             try
             {
@@ -427,15 +558,23 @@ namespace UnityMCP.Editor
                 var eventData = Activator.CreateInstance(_fdEventDataType);
 
                 // GetFrameEventData(int index, FrameDebuggerEventData data) -> bool
-                var getEventData = _fdUtilType.GetMethod("GetFrameEventData",
-                    BindingFlags.Public | BindingFlags.Static);
+                var getEventData = _fdUtilType.GetMethod(
+                    "GetFrameEventData",
+                    BindingFlags.Public | BindingFlags.Static
+                );
 
                 if (getEventData == null)
-                    return new Dictionary<string, object> { { "error", "GetFrameEventData method not found." } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "GetFrameEventData method not found." },
+                    };
 
                 bool success = (bool)getEventData.Invoke(null, new object[] { index, eventData });
                 if (!success)
-                    return new Dictionary<string, object> { { "error", $"Failed to get data for event {index}" } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", $"Failed to get data for event {index}" },
+                    };
 
                 // Extract fields via reflection
                 var result = new Dictionary<string, object>
@@ -469,8 +608,10 @@ namespace UnityMCP.Editor
                 // Resolve batch break cause string
                 try
                 {
-                    var getBatchBreak = _fdUtilType.GetMethod("GetBatchBreakCauseStrings",
-                        BindingFlags.Public | BindingFlags.Static);
+                    var getBatchBreak = _fdUtilType.GetMethod(
+                        "GetBatchBreakCauseStrings",
+                        BindingFlags.Public | BindingFlags.Static
+                    );
                     if (getBatchBreak != null)
                     {
                         var causes = getBatchBreak.Invoke(null, null) as string[];
@@ -501,7 +642,10 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", "Failed to get event details: " + ex.Message } };
+                return new Dictionary<string, object>
+                {
+                    { "error", "Failed to get event details: " + ex.Message },
+                };
             }
         }
 
@@ -517,10 +661,13 @@ namespace UnityMCP.Editor
             var suggestions = new List<string>();
 
             // 1. Memory
-            long totalAllocMB = UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / (1024 * 1024);
+            long totalAllocMB =
+                UnityEngine.Profiling.Profiler.GetTotalAllocatedMemoryLong() / (1024 * 1024);
             long monoUsedMB = UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong() / (1024 * 1024);
             long monoHeapMB = UnityEngine.Profiling.Profiler.GetMonoHeapSizeLong() / (1024 * 1024);
-            long gfxMB = UnityEngine.Profiling.Profiler.GetAllocatedMemoryForGraphicsDriver() / (1024 * 1024);
+            long gfxMB =
+                UnityEngine.Profiling.Profiler.GetAllocatedMemoryForGraphicsDriver()
+                / (1024 * 1024);
 
             result["memory"] = new Dictionary<string, object>
             {
@@ -531,10 +678,14 @@ namespace UnityMCP.Editor
             };
 
             if (monoHeapMB > 0 && (double)monoUsedMB / monoHeapMB < 0.5)
-                suggestions.Add($"High Mono heap fragmentation: {monoUsedMB}MB used of {monoHeapMB}MB heap ({Math.Round((double)monoUsedMB / monoHeapMB * 100)}% utilization). Consider reducing allocations to allow the heap to shrink.");
+                suggestions.Add(
+                    $"High Mono heap fragmentation: {monoUsedMB}MB used of {monoHeapMB}MB heap ({Math.Round((double)monoUsedMB / monoHeapMB * 100)}% utilization). Consider reducing allocations to allow the heap to shrink."
+                );
 
             if (gfxMB > 512)
-                suggestions.Add($"High GPU memory usage ({gfxMB}MB). Review texture sizes, compression settings, and render texture usage.");
+                suggestions.Add(
+                    $"High GPU memory usage ({gfxMB}MB). Review texture sizes, compression settings, and render texture usage."
+                );
 
             // 2. Rendering stats (if in play mode)
             if (EditorApplication.isPlaying)
@@ -542,14 +693,44 @@ namespace UnityMCP.Editor
                 try
                 {
                     var statsType = typeof(UnityEditor.UnityStats);
-                    int batches = (int)statsType.GetProperty("batches", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    int drawCalls = (int)statsType.GetProperty("drawCalls", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    int setPass = (int)statsType.GetProperty("setPassCalls", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    int tris = (int)statsType.GetProperty("triangles", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    int verts = (int)statsType.GetProperty("vertices", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    int dynBatched = (int)statsType.GetProperty("dynamicBatchedDrawCalls", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    int staticBatched = (int)statsType.GetProperty("staticBatchedDrawCalls", BindingFlags.Public | BindingFlags.Static).GetValue(null);
-                    float frameTime = (float)statsType.GetProperty("frameTime", BindingFlags.Public | BindingFlags.Static).GetValue(null);
+                    int batches = (int)
+                        statsType
+                            .GetProperty("batches", BindingFlags.Public | BindingFlags.Static)
+                            .GetValue(null);
+                    int drawCalls = (int)
+                        statsType
+                            .GetProperty("drawCalls", BindingFlags.Public | BindingFlags.Static)
+                            .GetValue(null);
+                    int setPass = (int)
+                        statsType
+                            .GetProperty("setPassCalls", BindingFlags.Public | BindingFlags.Static)
+                            .GetValue(null);
+                    int tris = (int)
+                        statsType
+                            .GetProperty("triangles", BindingFlags.Public | BindingFlags.Static)
+                            .GetValue(null);
+                    int verts = (int)
+                        statsType
+                            .GetProperty("vertices", BindingFlags.Public | BindingFlags.Static)
+                            .GetValue(null);
+                    int dynBatched = (int)
+                        statsType
+                            .GetProperty(
+                                "dynamicBatchedDrawCalls",
+                                BindingFlags.Public | BindingFlags.Static
+                            )
+                            .GetValue(null);
+                    int staticBatched = (int)
+                        statsType
+                            .GetProperty(
+                                "staticBatchedDrawCalls",
+                                BindingFlags.Public | BindingFlags.Static
+                            )
+                            .GetValue(null);
+                    float frameTime = (float)
+                        statsType
+                            .GetProperty("frameTime", BindingFlags.Public | BindingFlags.Static)
+                            .GetValue(null);
 
                     result["rendering"] = new Dictionary<string, object>
                     {
@@ -565,13 +746,21 @@ namespace UnityMCP.Editor
                     };
 
                     if (setPass > 50)
-                        suggestions.Add($"High SetPass call count ({setPass}). Consider using fewer unique materials/shaders, enable GPU instancing, or use SRP Batcher.");
+                        suggestions.Add(
+                            $"High SetPass call count ({setPass}). Consider using fewer unique materials/shaders, enable GPU instancing, or use SRP Batcher."
+                        );
                     if (batches > 200)
-                        suggestions.Add($"High batch count ({batches}). Enable static/dynamic batching, GPU instancing, or combine meshes.");
+                        suggestions.Add(
+                            $"High batch count ({batches}). Enable static/dynamic batching, GPU instancing, or combine meshes."
+                        );
                     if (tris > 500000)
-                        suggestions.Add($"High triangle count ({tris}). Consider LOD groups, mesh simplification, or occlusion culling.");
+                        suggestions.Add(
+                            $"High triangle count ({tris}). Consider LOD groups, mesh simplification, or occlusion culling."
+                        );
                     if (dynBatched + staticBatched == 0 && drawCalls > 50)
-                        suggestions.Add("No batching detected. Enable Static Batching (mark objects as static) and Dynamic Batching in Player Settings.");
+                        suggestions.Add(
+                            "No batching detected. Enable Static Batching (mark objects as static) and Dynamic Batching in Player Settings."
+                        );
                 }
                 catch { }
             }
@@ -579,7 +768,7 @@ namespace UnityMCP.Editor
             {
                 result["rendering"] = new Dictionary<string, object>
                 {
-                    { "note", "Enter Play mode for rendering stats." }
+                    { "note", "Enter Play mode for rendering stats." },
                 };
             }
 
@@ -589,10 +778,15 @@ namespace UnityMCP.Editor
                 try
                 {
                     int frame = (int)ProfilerDriver.lastFrameIndex;
-                    using (var frameData = ProfilerDriver.GetHierarchyFrameDataView(
-                        frame, 0,
-                        HierarchyFrameDataView.ViewModes.MergeSamplesWithTheSameName,
-                        HierarchyFrameDataView.columnSelfTime, false))
+                    using (
+                        var frameData = ProfilerDriver.GetHierarchyFrameDataView(
+                            frame,
+                            0,
+                            HierarchyFrameDataView.ViewModes.MergeSamplesWithTheSameName,
+                            HierarchyFrameDataView.columnSelfTime,
+                            false
+                        )
+                    )
                     {
                         if (frameData.valid)
                         {
@@ -615,9 +809,13 @@ namespace UnityMCP.Editor
                             result["hotspots"] = hotspots;
 
                             if (frameData.frameTimeMs > 33.3)
-                                suggestions.Add($"Frame time {frameData.frameTimeMs:F1}ms exceeds 30fps budget (33.3ms). Check hotspots for optimization opportunities.");
+                                suggestions.Add(
+                                    $"Frame time {frameData.frameTimeMs:F1}ms exceeds 30fps budget (33.3ms). Check hotspots for optimization opportunities."
+                                );
                             if (frameData.frameGpuTimeMs > 16.6)
-                                suggestions.Add($"GPU frame time {frameData.frameGpuTimeMs:F1}ms is high. Consider reducing shader complexity, overdraw, or resolution.");
+                                suggestions.Add(
+                                    $"GPU frame time {frameData.frameGpuTimeMs:F1}ms is high. Consider reducing shader complexity, overdraw, or resolution."
+                                );
                         }
                     }
                 }
@@ -627,28 +825,45 @@ namespace UnityMCP.Editor
             {
                 result["profiler"] = new Dictionary<string, object>
                 {
-                    { "note", "Enable the profiler (profiler/enable) and run the game for CPU timing data." }
+                    {
+                        "note",
+                        "Enable the profiler (profiler/enable) and run the game for CPU timing data."
+                    },
                 };
             }
 
             // 4. Scene complexity
-            var allRenderers = UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+            var allRenderers = UnityEngine.Object.FindObjectsByType<Renderer>(
+                FindObjectsSortMode.None
+            );
             var allLights = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None);
-            int totalGameObjects = UnityEngine.Object.FindObjectsByType<Transform>(FindObjectsSortMode.None).Length;
+            int totalGameObjects = UnityEngine
+                .Object.FindObjectsByType<Transform>(FindObjectsSortMode.None)
+                .Length;
 
             result["sceneComplexity"] = new Dictionary<string, object>
             {
                 { "gameObjectCount", totalGameObjects },
                 { "rendererCount", allRenderers.Length },
                 { "lightCount", allLights.Length },
-                { "realtimeLights", allLights.Count(l => l.lightmapBakeType == LightmapBakeType.Realtime) },
-                { "bakedLights", allLights.Count(l => l.lightmapBakeType == LightmapBakeType.Baked) },
+                {
+                    "realtimeLights",
+                    allLights.Count(l => l.lightmapBakeType == LightmapBakeType.Realtime)
+                },
+                {
+                    "bakedLights",
+                    allLights.Count(l => l.lightmapBakeType == LightmapBakeType.Baked)
+                },
                 { "shadowCastingLights", allLights.Count(l => l.shadows != LightShadows.None) },
             };
 
-            int realtimeShadowLights = allLights.Count(l => l.shadows != LightShadows.None && l.lightmapBakeType == LightmapBakeType.Realtime);
+            int realtimeShadowLights = allLights.Count(l =>
+                l.shadows != LightShadows.None && l.lightmapBakeType == LightmapBakeType.Realtime
+            );
             if (realtimeShadowLights > 2)
-                suggestions.Add($"{realtimeShadowLights} realtime shadow-casting lights detected. Consider baking shadows or limiting realtime shadow lights for better performance.");
+                suggestions.Add(
+                    $"{realtimeShadowLights} realtime shadow-casting lights detected. Consider baking shadows or limiting realtime shadow lights for better performance."
+                );
 
             result["suggestions"] = suggestions;
             result["suggestionCount"] = suggestions.Count;
@@ -656,28 +871,53 @@ namespace UnityMCP.Editor
             return result;
         }
 
-        private static void CollectHotspots(HierarchyFrameDataView frameData, List<int> itemIds,
-            List<Dictionary<string, object>> output, int maxItems, int depth, int maxDepth)
+        private static void CollectHotspots(
+            HierarchyFrameDataView frameData,
+            List<int> itemIds,
+            List<Dictionary<string, object>> output,
+            int maxItems,
+            int depth,
+            int maxDepth
+        )
         {
-            if (depth > maxDepth) return;
+            if (depth > maxDepth)
+                return;
 
             foreach (int id in itemIds)
             {
-                if (output.Count >= maxItems) break;
+                if (output.Count >= maxItems)
+                    break;
 
-                float selfTime = frameData.GetItemColumnDataAsFloat(id, HierarchyFrameDataView.columnSelfTime);
-                float totalTime = frameData.GetItemColumnDataAsFloat(id, HierarchyFrameDataView.columnTotalTime);
+                float selfTime = frameData.GetItemColumnDataAsFloat(
+                    id,
+                    HierarchyFrameDataView.columnSelfTime
+                );
+                float totalTime = frameData.GetItemColumnDataAsFloat(
+                    id,
+                    HierarchyFrameDataView.columnTotalTime
+                );
 
                 if (selfTime > 0.1f) // Only items with > 0.1ms self time
                 {
-                    output.Add(new Dictionary<string, object>
-                    {
-                        { "name", frameData.GetItemName(id) },
-                        { "selfMs", Math.Round(selfTime, 3) },
-                        { "totalMs", Math.Round(totalTime, 3) },
-                        { "calls", frameData.GetItemColumnData(id, HierarchyFrameDataView.columnCalls) },
-                        { "gcAlloc", frameData.GetItemColumnData(id, HierarchyFrameDataView.columnGcMemory) },
-                    });
+                    output.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", frameData.GetItemName(id) },
+                            { "selfMs", Math.Round(selfTime, 3) },
+                            { "totalMs", Math.Round(totalTime, 3) },
+                            {
+                                "calls",
+                                frameData.GetItemColumnData(id, HierarchyFrameDataView.columnCalls)
+                            },
+                            {
+                                "gcAlloc",
+                                frameData.GetItemColumnData(
+                                    id,
+                                    HierarchyFrameDataView.columnGcMemory
+                                )
+                            },
+                        }
+                    );
                 }
 
                 if (frameData.HasItemChildren(id) && depth < maxDepth)
@@ -697,32 +937,53 @@ namespace UnityMCP.Editor
 
         private static int GetFDStaticInt(string propertyName)
         {
-            if (_fdUtilType == null) return -1;
-            var prop = _fdUtilType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Static);
-            if (prop == null) return -1;
+            if (_fdUtilType == null)
+                return -1;
+            var prop = _fdUtilType.GetProperty(
+                propertyName,
+                BindingFlags.Public | BindingFlags.Static
+            );
+            if (prop == null)
+                return -1;
             return (int)prop.GetValue(null);
         }
 
         private static void SetFDStaticInt(string propertyName, int value)
         {
-            if (_fdUtilType == null) return;
-            var prop = _fdUtilType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Static);
+            if (_fdUtilType == null)
+                return;
+            var prop = _fdUtilType.GetProperty(
+                propertyName,
+                BindingFlags.Public | BindingFlags.Static
+            );
             if (prop != null && prop.CanWrite)
                 prop.SetValue(null, value);
         }
 
         private static string GetFrameEventName(int index)
         {
-            if (_fdUtilType == null) return null;
+            if (_fdUtilType == null)
+                return null;
             try
             {
-                var method = _fdUtilType.GetMethod("GetFrameEventInfoName", BindingFlags.Public | BindingFlags.Static);
+                var method = _fdUtilType.GetMethod(
+                    "GetFrameEventInfoName",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 return method?.Invoke(null, new object[] { index }) as string;
             }
-            catch { return null; }
+            catch
+            {
+                return null;
+            }
         }
 
-        private static void ReadField(object obj, string fieldName, Dictionary<string, object> output, string outputKey)
+        private static void ReadField(
+            object obj,
+            string fieldName,
+            Dictionary<string, object> output,
+            string outputKey
+        )
         {
             try
             {
@@ -739,10 +1000,13 @@ namespace UnityMCP.Editor
 
         private static bool GetBool(Dictionary<string, object> args, string key, bool defaultValue)
         {
-            if (!args.ContainsKey(key)) return defaultValue;
+            if (!args.ContainsKey(key))
+                return defaultValue;
             var val = args[key];
-            if (val is bool b) return b;
-            if (val is string s) return s.ToLowerInvariant() == "true";
+            if (val is bool b)
+                return b;
+            if (val is string s)
+                return s.ToLowerInvariant() == "true";
             return defaultValue;
         }
     }

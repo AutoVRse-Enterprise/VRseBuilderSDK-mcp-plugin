@@ -27,14 +27,16 @@ namespace UnityMCP.Editor
             var packages = new List<Dictionary<string, object>>();
             foreach (var pkg in listRequest.Result)
             {
-                packages.Add(new Dictionary<string, object>
-                {
-                    { "name", pkg.name },
-                    { "displayName", pkg.displayName },
-                    { "version", pkg.version },
-                    { "source", pkg.source.ToString() },
-                    { "description", pkg.description ?? "" },
-                });
+                packages.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "name", pkg.name },
+                        { "displayName", pkg.displayName },
+                        { "version", pkg.version },
+                        { "source", pkg.source.ToString() },
+                        { "description", pkg.description ?? "" },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -50,7 +52,10 @@ namespace UnityMCP.Editor
         {
             string identifier = args.ContainsKey("identifier") ? args["identifier"].ToString() : "";
             if (string.IsNullOrEmpty(identifier))
-                return new { error = "identifier is required (e.g. 'com.unity.cinemachine' or 'com.unity.cinemachine@3.0.0')" };
+                return new
+                {
+                    error = "identifier is required (e.g. 'com.unity.cinemachine' or 'com.unity.cinemachine@3.0.0')",
+                };
 
             var addRequest = Client.Add(identifier);
             while (!addRequest.IsCompleted)
@@ -84,11 +89,7 @@ namespace UnityMCP.Editor
             if (removeRequest.Status == StatusCode.Failure)
                 return new { error = removeRequest.Error?.message ?? "Failed to remove package" };
 
-            return new Dictionary<string, object>
-            {
-                { "success", true },
-                { "removed", name },
-            };
+            return new Dictionary<string, object> { { "success", true }, { "removed", name } };
         }
 
         // ─── Search Package ───
@@ -109,13 +110,15 @@ namespace UnityMCP.Editor
             var results = new List<Dictionary<string, object>>();
             foreach (var pkg in searchRequest.Result)
             {
-                results.Add(new Dictionary<string, object>
-                {
-                    { "name", pkg.name },
-                    { "displayName", pkg.displayName },
-                    { "version", pkg.version },
-                    { "description", pkg.description ?? "" },
-                });
+                results.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "name", pkg.name },
+                        { "displayName", pkg.displayName },
+                        { "version", pkg.version },
+                        { "description", pkg.description ?? "" },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -159,7 +162,11 @@ namespace UnityMCP.Editor
                         { "category", pkg.category ?? "" },
                         { "documentationUrl", pkg.documentationUrl ?? "" },
                         { "compatibleVersions", versions },
-                        { "dependencies", pkg.dependencies?.Select(d => d.name + "@" + d.version).ToList() ?? new List<string>() },
+                        {
+                            "dependencies",
+                            pkg.dependencies?.Select(d => d.name + "@" + d.version).ToList()
+                                ?? new List<string>()
+                        },
                     };
                 }
             }

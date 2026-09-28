@@ -44,7 +44,11 @@ namespace UnityMCP.Editor
             // Small delay so the editor is fully loaded
             EditorApplication.delayCall += () =>
             {
-                var window = GetWindow<MCPWelcomeWindow>(true, "Welcome to VRseBuilder Unity MCP", true);
+                var window = GetWindow<MCPWelcomeWindow>(
+                    true,
+                    "Welcome to VRseBuilder Unity MCP",
+                    true
+                );
                 window.minSize = WindowSize;
                 window.maxSize = new Vector2(WindowSize.x + 60, WindowSize.y + 120);
                 window.ShowUtility();
@@ -63,7 +67,8 @@ namespace UnityMCP.Editor
 
         private void InitStyles()
         {
-            if (_stylesReady) return;
+            if (_stylesReady)
+                return;
 
             _titleStyle = new GUIStyle(EditorStyles.label)
             {
@@ -114,11 +119,10 @@ namespace UnityMCP.Editor
 
             var prevColor = GUI.contentColor;
             GUI.contentColor = SubtleGrey;
-            EditorGUILayout.LabelField("by AutoVRse", new GUIStyle(_bodyStyle)
-            {
-                alignment = TextAnchor.MiddleCenter,
-                fontSize = 11,
-            });
+            EditorGUILayout.LabelField(
+                "by AutoVRse",
+                new GUIStyle(_bodyStyle) { alignment = TextAnchor.MiddleCenter, fontSize = 11 }
+            );
             GUI.contentColor = prevColor;
 
             EditorGUILayout.Space(12);
@@ -129,16 +133,18 @@ namespace UnityMCP.Editor
             EditorGUILayout.LabelField("What is this?", _headingStyle);
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField(
-                "VRseBuilder Unity MCP bridges AI assistants directly into the Unity Editor — " +
-                "giving them access to tools that read, modify, and interact with your scenes, " +
-                "assets, scripts, and more.",
-                _bodyStyle);
+                "VRseBuilder Unity MCP bridges AI assistants directly into the Unity Editor — "
+                    + "giving them access to tools that read, modify, and interact with your scenes, "
+                    + "assets, scripts, and more.",
+                _bodyStyle
+            );
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField(
-                "Open <b>Window → VRseBuilder Unity MCP</b> to view the dashboard and confirm the " +
-                "bridge is running.",
-                _bodyStyle);
+                "Open <b>Window → VRseBuilder Unity MCP</b> to view the dashboard and confirm the "
+                    + "bridge is running.",
+                _bodyStyle
+            );
 
             EditorGUILayout.Space(16);
             DrawSeparator();
@@ -147,7 +153,13 @@ namespace UnityMCP.Editor
             // ─── Bottom buttons ───
             EditorGUILayout.BeginHorizontal();
 
-            if (GUILayout.Button("Don't show this again", EditorStyles.miniButton, GUILayout.Height(24)))
+            if (
+                GUILayout.Button(
+                    "Don't show this again",
+                    EditorStyles.miniButton,
+                    GUILayout.Height(24)
+                )
+            )
             {
                 EditorPrefs.SetBool(HideKey, true);
                 Close();

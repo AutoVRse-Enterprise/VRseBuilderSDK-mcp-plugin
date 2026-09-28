@@ -18,22 +18,38 @@ namespace UnityMCP.Editor
         {
             try
             {
-                var editorType = FindTypeAcrossAssemblies("VRseBuilder.Editor.MCPTools.GeneralUISetupEditor");
+                var editorType = FindTypeAcrossAssemblies(
+                    "VRseBuilder.Editor.MCPTools.GeneralUISetupEditor"
+                );
                 if (editorType == null)
-                    return new Dictionary<string, object> { { "error", "GeneralUISetupEditor not found" } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "GeneralUISetupEditor not found" },
+                    };
 
-                var method = editorType.GetMethod("Execute", BindingFlags.Public | BindingFlags.Static);
+                var method = editorType.GetMethod(
+                    "Execute",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 if (method == null)
-                    return new Dictionary<string, object> { { "error", "Execute method not found" } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "Execute method not found" },
+                    };
 
                 string body = MiniJson.Serialize(args);
                 string json = (string)method.Invoke(null, new object[] { body });
                 var parsed = MiniJson.Deserialize(json);
-                return parsed ?? new Dictionary<string, object> { { "error", "Execute returned null" } };
+                return parsed
+                    ?? new Dictionary<string, object> { { "error", "Execute returned null" } };
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", ex.Message }, { "stackTrace", ex.StackTrace } };
+                return new Dictionary<string, object>
+                {
+                    { "error", ex.Message },
+                    { "stackTrace", ex.StackTrace },
+                };
             }
         }
 
@@ -44,7 +60,8 @@ namespace UnityMCP.Editor
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 var t = asm.GetType(typeName);
-                if (t != null) return t;
+                if (t != null)
+                    return t;
             }
             return null;
         }

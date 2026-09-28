@@ -19,7 +19,10 @@ namespace UnityMCP.Editor
         {
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             if (string.IsNullOrEmpty(path))
-                return new { error = "path is required (e.g. 'Assets/Animations/PlayerController.controller')" };
+                return new
+                {
+                    error = "path is required (e.g. 'Assets/Animations/PlayerController.controller')",
+                };
 
             // Ensure directory exists
             string dir = Path.GetDirectoryName(path)?.Replace('\\', '/');
@@ -64,33 +67,55 @@ namespace UnityMCP.Editor
                 var states = new List<Dictionary<string, object>>();
                 foreach (var state in layer.stateMachine.states)
                 {
-                    states.Add(new Dictionary<string, object>
-                    {
-                        { "name", state.state.name },
-                        { "nameHash", state.state.nameHash },
-                        { "speed", state.state.speed },
-                        { "motion", state.state.motion != null ? state.state.motion.name : null },
-                        { "position", new Dictionary<string, object> { { "x", state.position.x }, { "y", state.position.y } } },
-                        { "isDefault", layer.stateMachine.defaultState == state.state },
-                        { "transitionCount", state.state.transitions.Length },
-                    });
+                    states.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", state.state.name },
+                            { "nameHash", state.state.nameHash },
+                            { "speed", state.state.speed },
+                            {
+                                "motion",
+                                state.state.motion != null ? state.state.motion.name : null
+                            },
+                            {
+                                "position",
+                                new Dictionary<string, object>
+                                {
+                                    { "x", state.position.x },
+                                    { "y", state.position.y },
+                                }
+                            },
+                            { "isDefault", layer.stateMachine.defaultState == state.state },
+                            { "transitionCount", state.state.transitions.Length },
+                        }
+                    );
                 }
 
                 var subStateMachines = new List<string>();
                 foreach (var sub in layer.stateMachine.stateMachines)
                     subStateMachines.Add(sub.stateMachine.name);
 
-                layers.Add(new Dictionary<string, object>
-                {
-                    { "name", layer.name },
-                    { "index", i },
-                    { "weight", layer.defaultWeight },
-                    { "blendingMode", layer.blendingMode.ToString() },
-                    { "states", states },
-                    { "subStateMachines", subStateMachines },
-                    { "defaultState", layer.stateMachine.defaultState != null ? layer.stateMachine.defaultState.name : null },
-                    { "anyStateTransitionCount", layer.stateMachine.anyStateTransitions.Length },
-                });
+                layers.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "name", layer.name },
+                        { "index", i },
+                        { "weight", layer.defaultWeight },
+                        { "blendingMode", layer.blendingMode.ToString() },
+                        { "states", states },
+                        { "subStateMachines", subStateMachines },
+                        {
+                            "defaultState",
+                            layer.stateMachine.defaultState != null
+                                ? layer.stateMachine.defaultState.name
+                                : null
+                        },
+                        {
+                            "anyStateTransitionCount",
+                            layer.stateMachine.anyStateTransitions.Length
+                        },
+                    }
+                );
             }
 
             var parameters = new List<Dictionary<string, object>>();
@@ -134,20 +159,29 @@ namespace UnityMCP.Editor
 
         public static object AddParameter(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
-            string paramName = args.ContainsKey("parameterName") ? args["parameterName"].ToString() : "";
-            string paramType = args.ContainsKey("parameterType") ? args["parameterType"].ToString() : "Float";
+            string paramName = args.ContainsKey("parameterName")
+                ? args["parameterName"].ToString()
+                : "";
+            string paramType = args.ContainsKey("parameterType")
+                ? args["parameterType"].ToString()
+                : "Float";
 
             if (string.IsNullOrEmpty(paramName))
                 return new { error = "parameterName is required" };
 
             AnimatorControllerParameterType type;
             if (!Enum.TryParse(paramType, true, out type))
-                return new { error = $"Invalid parameter type: {paramType}. Use Float, Int, Bool, or Trigger." };
+                return new
+                {
+                    error = $"Invalid parameter type: {paramType}. Use Float, Int, Bool, or Trigger.",
+                };
 
             controller.AddParameter(paramName, type);
 
@@ -174,17 +208,27 @@ namespace UnityMCP.Editor
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, controllerPath = path, parameterName = paramName, parameterType = paramType };
+            return new
+            {
+                success = true,
+                controllerPath = path,
+                parameterName = paramName,
+                parameterType = paramType,
+            };
         }
 
         public static object RemoveParameter(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
-            string paramName = args.ContainsKey("parameterName") ? args["parameterName"].ToString() : "";
+            string paramName = args.ContainsKey("parameterName")
+                ? args["parameterName"].ToString()
+                : "";
             if (string.IsNullOrEmpty(paramName))
                 return new { error = "parameterName is required" };
 
@@ -204,7 +248,9 @@ namespace UnityMCP.Editor
 
         public static object AddState(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
@@ -213,9 +259,14 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(stateName))
                 return new { error = "stateName is required" };
 
-            int layerIndex = args.ContainsKey("layerIndex") ? Convert.ToInt32(args["layerIndex"]) : 0;
+            int layerIndex = args.ContainsKey("layerIndex")
+                ? Convert.ToInt32(args["layerIndex"])
+                : 0;
             if (layerIndex >= controller.layers.Length)
-                return new { error = $"Layer index {layerIndex} out of range (count: {controller.layers.Length})" };
+                return new
+                {
+                    error = $"Layer index {layerIndex} out of range (count: {controller.layers.Length})",
+                };
 
             var stateMachine = controller.layers[layerIndex].stateMachine;
             var state = stateMachine.AddState(stateName);
@@ -229,7 +280,8 @@ namespace UnityMCP.Editor
             {
                 string clipPath = args["clipPath"].ToString();
                 var clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(clipPath);
-                if (clip != null) state.motion = clip;
+                if (clip != null)
+                    state.motion = clip;
             }
 
             // Set as default if requested
@@ -251,13 +303,17 @@ namespace UnityMCP.Editor
 
         public static object RemoveState(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
             string stateName = args.ContainsKey("stateName") ? args["stateName"].ToString() : "";
-            int layerIndex = args.ContainsKey("layerIndex") ? Convert.ToInt32(args["layerIndex"]) : 0;
+            int layerIndex = args.ContainsKey("layerIndex")
+                ? Convert.ToInt32(args["layerIndex"])
+                : 0;
 
             var stateMachine = controller.layers[layerIndex].stateMachine;
             var stateEntry = stateMachine.states.FirstOrDefault(s => s.state.name == stateName);
@@ -268,22 +324,36 @@ namespace UnityMCP.Editor
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, removed = stateName, layerIndex };
+            return new
+            {
+                success = true,
+                removed = stateName,
+                layerIndex,
+            };
         }
 
         // ─── Transitions ───
 
         public static object AddTransition(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
-            string sourceName = args.ContainsKey("sourceState") ? args["sourceState"].ToString() : "";
-            string destName = args.ContainsKey("destinationState") ? args["destinationState"].ToString() : "";
-            int layerIndex = args.ContainsKey("layerIndex") ? Convert.ToInt32(args["layerIndex"]) : 0;
-            bool fromAnyState = args.ContainsKey("fromAnyState") && Convert.ToBoolean(args["fromAnyState"]);
+            string sourceName = args.ContainsKey("sourceState")
+                ? args["sourceState"].ToString()
+                : "";
+            string destName = args.ContainsKey("destinationState")
+                ? args["destinationState"].ToString()
+                : "";
+            int layerIndex = args.ContainsKey("layerIndex")
+                ? Convert.ToInt32(args["layerIndex"])
+                : 0;
+            bool fromAnyState =
+                args.ContainsKey("fromAnyState") && Convert.ToBoolean(args["fromAnyState"]);
 
             var stateMachine = controller.layers[layerIndex].stateMachine;
 
@@ -307,7 +377,9 @@ namespace UnityMCP.Editor
                 if (string.IsNullOrEmpty(sourceName))
                     return new { error = "sourceState is required (or set fromAnyState to true)" };
 
-                var sourceEntry = stateMachine.states.FirstOrDefault(s => s.state.name == sourceName);
+                var sourceEntry = stateMachine.states.FirstOrDefault(s =>
+                    s.state.name == sourceName
+                );
                 if (sourceEntry.state == null)
                     return new { error = $"Source state '{sourceName}' not found" };
 
@@ -335,11 +407,16 @@ namespace UnityMCP.Editor
                     foreach (var condObj in conditions)
                     {
                         var cond = condObj as Dictionary<string, object>;
-                        if (cond == null) continue;
+                        if (cond == null)
+                            continue;
 
-                        string paramName = cond.ContainsKey("parameter") ? cond["parameter"].ToString() : "";
+                        string paramName = cond.ContainsKey("parameter")
+                            ? cond["parameter"].ToString()
+                            : "";
                         string modeStr = cond.ContainsKey("mode") ? cond["mode"].ToString() : "If";
-                        float threshold = cond.ContainsKey("threshold") ? Convert.ToSingle(cond["threshold"]) : 0f;
+                        float threshold = cond.ContainsKey("threshold")
+                            ? Convert.ToSingle(cond["threshold"])
+                            : 0f;
 
                         AnimatorConditionMode mode;
                         if (!Enum.TryParse(modeStr, true, out mode))
@@ -426,13 +503,15 @@ namespace UnityMCP.Editor
             foreach (var binding in bindings)
             {
                 var curve = AnimationUtility.GetEditorCurve(clip, binding);
-                curves.Add(new Dictionary<string, object>
-                {
-                    { "path", binding.path },
-                    { "propertyName", binding.propertyName },
-                    { "type", binding.type.Name },
-                    { "keyframeCount", curve.keys.Length },
-                });
+                curves.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "path", binding.path },
+                        { "propertyName", binding.propertyName },
+                        { "type", binding.type.Name },
+                        { "keyframeCount", curve.keys.Length },
+                    }
+                );
             }
 
             var settings = AnimationUtility.GetAnimationClipSettings(clip);
@@ -459,16 +538,21 @@ namespace UnityMCP.Editor
             if (clip == null)
                 return new { error = $"Animation clip not found at '{path}'" };
 
-            string relativePath = args.ContainsKey("relativePath") ? args["relativePath"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
+            string relativePath = args.ContainsKey("relativePath")
+                ? args["relativePath"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
             string typeName = args.ContainsKey("type") ? args["type"].ToString() : "Transform";
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
 
-            Type type = Type.GetType($"UnityEngine.{typeName}, UnityEngine") ??
-                        Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule") ??
-                        typeof(Transform);
+            Type type =
+                Type.GetType($"UnityEngine.{typeName}, UnityEngine")
+                ?? Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule")
+                ?? typeof(Transform);
 
             // Build keyframes
             var keyframes = new List<Keyframe>();
@@ -480,7 +564,8 @@ namespace UnityMCP.Editor
                     foreach (var kfObj in kfList)
                     {
                         var kf = kfObj as Dictionary<string, object>;
-                        if (kf == null) continue;
+                        if (kf == null)
+                            continue;
                         float time = kf.ContainsKey("time") ? Convert.ToSingle(kf["time"]) : 0f;
                         float value = kf.ContainsKey("value") ? Convert.ToSingle(kf["value"]) : 0f;
                         keyframes.Add(new Keyframe(time, value));
@@ -508,12 +593,16 @@ namespace UnityMCP.Editor
 
         public static object AddLayer(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
-            string layerName = args.ContainsKey("layerName") ? args["layerName"].ToString() : "New Layer";
+            string layerName = args.ContainsKey("layerName")
+                ? args["layerName"].ToString()
+                : "New Layer";
 
             controller.AddLayer(layerName);
 
@@ -528,7 +617,12 @@ namespace UnityMCP.Editor
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, layerName, layerIndex = controller.layers.Length - 1 };
+            return new
+            {
+                success = true,
+                layerName,
+                layerIndex = controller.layers.Length - 1,
+            };
         }
 
         // ─── Assign Controller to GameObject ───
@@ -536,10 +630,15 @@ namespace UnityMCP.Editor
         public static object AssignController(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            string controllerPath = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
-            var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(controllerPath);
+            string controllerPath = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
+            var controller = AssetDatabase.LoadAssetAtPath<RuntimeAnimatorController>(
+                controllerPath
+            );
             if (controller == null)
                 return new { error = $"Animator controller not found at '{controllerPath}'" };
 
@@ -567,8 +666,12 @@ namespace UnityMCP.Editor
             if (clip == null)
                 return new { error = $"Animation clip not found at '{path}'" };
 
-            string relativePath = args.ContainsKey("relativePath") ? args["relativePath"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
+            string relativePath = args.ContainsKey("relativePath")
+                ? args["relativePath"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
@@ -578,8 +681,7 @@ namespace UnityMCP.Editor
 
             foreach (var binding in bindings)
             {
-                if (binding.propertyName == propertyName &&
-                    binding.path == relativePath)
+                if (binding.propertyName == propertyName && binding.path == relativePath)
                 {
                     targetBinding = binding;
                     break;
@@ -587,7 +689,10 @@ namespace UnityMCP.Editor
             }
 
             if (!targetBinding.HasValue)
-                return new { error = $"Curve not found for property '{propertyName}' at path '{relativePath}'" };
+                return new
+                {
+                    error = $"Curve not found for property '{propertyName}' at path '{relativePath}'",
+                };
 
             var curve = AnimationUtility.GetEditorCurve(clip, targetBinding.Value);
             var keyframes = new List<Dictionary<string, object>>();
@@ -595,17 +700,19 @@ namespace UnityMCP.Editor
             for (int i = 0; i < curve.keys.Length; i++)
             {
                 var kf = curve.keys[i];
-                keyframes.Add(new Dictionary<string, object>
-                {
-                    { "index", i },
-                    { "time", kf.time },
-                    { "value", kf.value },
-                    { "inTangent", kf.inTangent },
-                    { "outTangent", kf.outTangent },
-                    { "inWeight", kf.inWeight },
-                    { "outWeight", kf.outWeight },
-                    { "weightedMode", kf.weightedMode.ToString() },
-                });
+                keyframes.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "index", i },
+                        { "time", kf.time },
+                        { "value", kf.value },
+                        { "inTangent", kf.inTangent },
+                        { "outTangent", kf.outTangent },
+                        { "inWeight", kf.inWeight },
+                        { "outWeight", kf.outWeight },
+                        { "weightedMode", kf.weightedMode.ToString() },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -626,16 +733,21 @@ namespace UnityMCP.Editor
             if (clip == null)
                 return new { error = $"Animation clip not found at '{path}'" };
 
-            string relativePath = args.ContainsKey("relativePath") ? args["relativePath"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
+            string relativePath = args.ContainsKey("relativePath")
+                ? args["relativePath"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
             string typeName = args.ContainsKey("type") ? args["type"].ToString() : "Transform";
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
 
-            Type type = Type.GetType($"UnityEngine.{typeName}, UnityEngine") ??
-                        Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule") ??
-                        typeof(Transform);
+            Type type =
+                Type.GetType($"UnityEngine.{typeName}, UnityEngine")
+                ?? Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule")
+                ?? typeof(Transform);
 
             // Use AnimationUtility.SetEditorCurve to remove individual curve bindings safely.
             // clip.SetCurve(path, type, prop, null) fails on compound properties like localPosition.x
@@ -644,7 +756,11 @@ namespace UnityMCP.Editor
             int removed = 0;
             foreach (var binding in bindings)
             {
-                if (binding.path == relativePath && binding.type == type && binding.propertyName == propertyName)
+                if (
+                    binding.path == relativePath
+                    && binding.type == type
+                    && binding.propertyName == propertyName
+                )
                 {
                     AnimationUtility.SetEditorCurve(clip, binding, null);
                     removed++;
@@ -654,14 +770,30 @@ namespace UnityMCP.Editor
             if (removed == 0)
             {
                 // Fallback: try SetCurve for non-compound properties
-                try { clip.SetCurve(relativePath, type, propertyName, null); removed = 1; }
-                catch { return new { error = $"Curve binding not found: path='{relativePath}' type='{typeName}' property='{propertyName}'" }; }
+                try
+                {
+                    clip.SetCurve(relativePath, type, propertyName, null);
+                    removed = 1;
+                }
+                catch
+                {
+                    return new
+                    {
+                        error = $"Curve binding not found: path='{relativePath}' type='{typeName}' property='{propertyName}'",
+                    };
+                }
             }
 
             EditorUtility.SetDirty(clip);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, clipPath = path, removedProperty = propertyName, removedCount = removed };
+            return new
+            {
+                success = true,
+                clipPath = path,
+                removedProperty = propertyName,
+                removedCount = removed,
+            };
         }
 
         public static object AddKeyframe(Dictionary<string, object> args)
@@ -671,8 +803,12 @@ namespace UnityMCP.Editor
             if (clip == null)
                 return new { error = $"Animation clip not found at '{path}'" };
 
-            string relativePath = args.ContainsKey("relativePath") ? args["relativePath"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
+            string relativePath = args.ContainsKey("relativePath")
+                ? args["relativePath"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
@@ -707,9 +843,10 @@ namespace UnityMCP.Editor
             {
                 // Create new curve binding
                 string typeName = args.ContainsKey("type") ? args["type"].ToString() : "Transform";
-                Type type = Type.GetType($"UnityEngine.{typeName}, UnityEngine") ??
-                            Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule") ??
-                            typeof(Transform);
+                Type type =
+                    Type.GetType($"UnityEngine.{typeName}, UnityEngine")
+                    ?? Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule")
+                    ?? typeof(Transform);
                 curveBinding = EditorCurveBinding.FloatCurve(relativePath, type, propertyName);
                 curve = new AnimationCurve();
             }
@@ -756,9 +893,15 @@ namespace UnityMCP.Editor
             if (clip == null)
                 return new { error = $"Animation clip not found at '{path}'" };
 
-            string relativePath = args.ContainsKey("relativePath") ? args["relativePath"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
-            int keyIndex = args.ContainsKey("keyframeIndex") ? Convert.ToInt32(args["keyframeIndex"]) : -1;
+            string relativePath = args.ContainsKey("relativePath")
+                ? args["relativePath"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
+            int keyIndex = args.ContainsKey("keyframeIndex")
+                ? Convert.ToInt32(args["keyframeIndex"])
+                : -1;
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
@@ -781,14 +924,22 @@ namespace UnityMCP.Editor
 
             var curve = AnimationUtility.GetEditorCurve(clip, targetBinding.Value);
             if (keyIndex >= curve.keys.Length)
-                return new { error = $"Keyframe index {keyIndex} out of range (count: {curve.keys.Length})" };
+                return new
+                {
+                    error = $"Keyframe index {keyIndex} out of range (count: {curve.keys.Length})",
+                };
 
             curve.RemoveKey(keyIndex);
             AnimationUtility.SetEditorCurve(clip, targetBinding.Value, curve);
             EditorUtility.SetDirty(clip);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, removedIndex = keyIndex, remainingKeyframes = curve.keys.Length };
+            return new
+            {
+                success = true,
+                removedIndex = keyIndex,
+                remainingKeyframes = curve.keys.Length,
+            };
         }
 
         // ─── Animation Events ───
@@ -838,13 +989,18 @@ namespace UnityMCP.Editor
             if (clip == null)
                 return new { error = $"Animation clip not found at '{path}'" };
 
-            int eventIndex = args.ContainsKey("eventIndex") ? Convert.ToInt32(args["eventIndex"]) : -1;
+            int eventIndex = args.ContainsKey("eventIndex")
+                ? Convert.ToInt32(args["eventIndex"])
+                : -1;
             if (eventIndex < 0)
                 return new { error = "eventIndex is required (0-based)" };
 
             var events = clip.events.ToList();
             if (eventIndex >= events.Count)
-                return new { error = $"Event index {eventIndex} out of range (count: {events.Count})" };
+                return new
+                {
+                    error = $"Event index {eventIndex} out of range (count: {events.Count})",
+                };
 
             string removedName = events[eventIndex].functionName;
             events.RemoveAt(eventIndex);
@@ -853,7 +1009,12 @@ namespace UnityMCP.Editor
             EditorUtility.SetDirty(clip);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, removedFunction = removedName, remainingEvents = clip.events.Length };
+            return new
+            {
+                success = true,
+                removedFunction = removedName,
+                remainingEvents = clip.events.Length,
+            };
         }
 
         public static object GetAnimationEvents(Dictionary<string, object> args)
@@ -867,15 +1028,17 @@ namespace UnityMCP.Editor
             for (int i = 0; i < clip.events.Length; i++)
             {
                 var evt = clip.events[i];
-                events.Add(new Dictionary<string, object>
-                {
-                    { "index", i },
-                    { "time", evt.time },
-                    { "functionName", evt.functionName },
-                    { "stringParameter", evt.stringParameter },
-                    { "intParameter", evt.intParameter },
-                    { "floatParameter", evt.floatParameter },
-                });
+                events.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "index", i },
+                        { "time", evt.time },
+                        { "functionName", evt.functionName },
+                        { "stringParameter", evt.stringParameter },
+                        { "intParameter", evt.intParameter },
+                        { "floatParameter", evt.floatParameter },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -908,7 +1071,9 @@ namespace UnityMCP.Editor
             if (args.ContainsKey("loopBlendPositionXZ"))
                 settings.loopBlendPositionXZ = Convert.ToBoolean(args["loopBlendPositionXZ"]);
             if (args.ContainsKey("keepOriginalOrientation"))
-                settings.keepOriginalOrientation = Convert.ToBoolean(args["keepOriginalOrientation"]);
+                settings.keepOriginalOrientation = Convert.ToBoolean(
+                    args["keepOriginalOrientation"]
+                );
             if (args.ContainsKey("keepOriginalPositionY"))
                 settings.keepOriginalPositionY = Convert.ToBoolean(args["keepOriginalPositionY"]);
             if (args.ContainsKey("keepOriginalPositionXZ"))
@@ -946,16 +1111,27 @@ namespace UnityMCP.Editor
 
         public static object RemoveTransition(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
-            string sourceName = args.ContainsKey("sourceState") ? args["sourceState"].ToString() : "";
-            string destName = args.ContainsKey("destinationState") ? args["destinationState"].ToString() : "";
-            int layerIndex = args.ContainsKey("layerIndex") ? Convert.ToInt32(args["layerIndex"]) : 0;
-            bool fromAnyState = args.ContainsKey("fromAnyState") && Convert.ToBoolean(args["fromAnyState"]);
-            int transitionIndex = args.ContainsKey("transitionIndex") ? Convert.ToInt32(args["transitionIndex"]) : -1;
+            string sourceName = args.ContainsKey("sourceState")
+                ? args["sourceState"].ToString()
+                : "";
+            string destName = args.ContainsKey("destinationState")
+                ? args["destinationState"].ToString()
+                : "";
+            int layerIndex = args.ContainsKey("layerIndex")
+                ? Convert.ToInt32(args["layerIndex"])
+                : 0;
+            bool fromAnyState =
+                args.ContainsKey("fromAnyState") && Convert.ToBoolean(args["fromAnyState"]);
+            int transitionIndex = args.ContainsKey("transitionIndex")
+                ? Convert.ToInt32(args["transitionIndex"])
+                : -1;
 
             var stateMachine = controller.layers[layerIndex].stateMachine;
 
@@ -970,7 +1146,9 @@ namespace UnityMCP.Editor
                 }
                 else if (!string.IsNullOrEmpty(destName))
                 {
-                    toRemove = transitions.FirstOrDefault(t => t.destinationState != null && t.destinationState.name == destName);
+                    toRemove = transitions.FirstOrDefault(t =>
+                        t.destinationState != null && t.destinationState.name == destName
+                    );
                 }
 
                 if (toRemove == null)
@@ -983,7 +1161,9 @@ namespace UnityMCP.Editor
                 if (string.IsNullOrEmpty(sourceName))
                     return new { error = "sourceState is required (or set fromAnyState to true)" };
 
-                var sourceEntry = stateMachine.states.FirstOrDefault(s => s.state.name == sourceName);
+                var sourceEntry = stateMachine.states.FirstOrDefault(s =>
+                    s.state.name == sourceName
+                );
                 if (sourceEntry.state == null)
                     return new { error = $"Source state '{sourceName}' not found" };
 
@@ -996,7 +1176,9 @@ namespace UnityMCP.Editor
                 }
                 else if (!string.IsNullOrEmpty(destName))
                 {
-                    toRemove = transitions.FirstOrDefault(t => t.destinationState != null && t.destinationState.name == destName);
+                    toRemove = transitions.FirstOrDefault(t =>
+                        t.destinationState != null && t.destinationState.name == destName
+                    );
                 }
 
                 if (toRemove == null)
@@ -1008,47 +1190,74 @@ namespace UnityMCP.Editor
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, source = fromAnyState ? "AnyState" : sourceName, destination = destName };
+            return new
+            {
+                success = true,
+                source = fromAnyState ? "AnyState" : sourceName,
+                destination = destName,
+            };
         }
 
         // ─── Layer Management ───
 
         public static object RemoveLayer(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
-            int layerIndex = args.ContainsKey("layerIndex") ? Convert.ToInt32(args["layerIndex"]) : -1;
+            int layerIndex = args.ContainsKey("layerIndex")
+                ? Convert.ToInt32(args["layerIndex"])
+                : -1;
             if (layerIndex < 0)
                 return new { error = "layerIndex is required" };
             if (layerIndex == 0)
                 return new { error = "Cannot remove the base layer (index 0)" };
             if (layerIndex >= controller.layers.Length)
-                return new { error = $"Layer index {layerIndex} out of range (count: {controller.layers.Length})" };
+                return new
+                {
+                    error = $"Layer index {layerIndex} out of range (count: {controller.layers.Length})",
+                };
 
             string removedName = controller.layers[layerIndex].name;
             controller.RemoveLayer(layerIndex);
             EditorUtility.SetDirty(controller);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, removedLayer = removedName, remainingLayers = controller.layers.Length };
+            return new
+            {
+                success = true,
+                removedLayer = removedName,
+                remainingLayers = controller.layers.Length,
+            };
         }
 
         // ─── Blend Trees ───
 
         public static object CreateBlendTree(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
-            string stateName = args.ContainsKey("stateName") ? args["stateName"].ToString() : "Blend Tree";
-            int layerIndex = args.ContainsKey("layerIndex") ? Convert.ToInt32(args["layerIndex"]) : 0;
-            string blendType = args.ContainsKey("blendType") ? args["blendType"].ToString() : "Simple1D";
-            string blendParameter = args.ContainsKey("blendParameter") ? args["blendParameter"].ToString() : "Blend";
+            string stateName = args.ContainsKey("stateName")
+                ? args["stateName"].ToString()
+                : "Blend Tree";
+            int layerIndex = args.ContainsKey("layerIndex")
+                ? Convert.ToInt32(args["layerIndex"])
+                : 0;
+            string blendType = args.ContainsKey("blendType")
+                ? args["blendType"].ToString()
+                : "Simple1D";
+            string blendParameter = args.ContainsKey("blendParameter")
+                ? args["blendParameter"].ToString()
+                : "Blend";
 
             if (layerIndex >= controller.layers.Length)
                 return new { error = $"Layer index {layerIndex} out of range" };
@@ -1074,11 +1283,16 @@ namespace UnityMCP.Editor
                     foreach (var motionObj in motions)
                     {
                         var m = motionObj as Dictionary<string, object>;
-                        if (m == null) continue;
+                        if (m == null)
+                            continue;
 
                         string clipPath = m.ContainsKey("clipPath") ? m["clipPath"].ToString() : "";
-                        float threshold = m.ContainsKey("threshold") ? Convert.ToSingle(m["threshold"]) : 0f;
-                        float timeScale = m.ContainsKey("timeScale") ? Convert.ToSingle(m["timeScale"]) : 1f;
+                        float threshold = m.ContainsKey("threshold")
+                            ? Convert.ToSingle(m["threshold"])
+                            : 0f;
+                        float timeScale = m.ContainsKey("timeScale")
+                            ? Convert.ToSingle(m["timeScale"])
+                            : 1f;
 
                         Motion motion = null;
                         if (!string.IsNullOrEmpty(clipPath))
@@ -1115,13 +1329,17 @@ namespace UnityMCP.Editor
 
         public static object GetBlendTreeInfo(Dictionary<string, object> args)
         {
-            string path = args.ContainsKey("controllerPath") ? args["controllerPath"].ToString() : "";
+            string path = args.ContainsKey("controllerPath")
+                ? args["controllerPath"].ToString()
+                : "";
             var controller = AssetDatabase.LoadAssetAtPath<AnimatorController>(path);
             if (controller == null)
                 return new { error = $"Animator controller not found at '{path}'" };
 
             string stateName = args.ContainsKey("stateName") ? args["stateName"].ToString() : "";
-            int layerIndex = args.ContainsKey("layerIndex") ? Convert.ToInt32(args["layerIndex"]) : 0;
+            int layerIndex = args.ContainsKey("layerIndex")
+                ? Convert.ToInt32(args["layerIndex"])
+                : 0;
 
             if (string.IsNullOrEmpty(stateName))
                 return new { error = "stateName is required" };
@@ -1139,16 +1357,28 @@ namespace UnityMCP.Editor
             for (int i = 0; i < blendTree.children.Length; i++)
             {
                 var child = blendTree.children[i];
-                children.Add(new Dictionary<string, object>
-                {
-                    { "index", i },
-                    { "motion", child.motion != null ? child.motion.name : null },
-                    { "motionPath", child.motion != null ? AssetDatabase.GetAssetPath(child.motion) : null },
-                    { "threshold", child.threshold },
-                    { "position", new Dictionary<string, object> { { "x", child.position.x }, { "y", child.position.y } } },
-                    { "timeScale", child.timeScale },
-                    { "isBlendTree", child.motion is BlendTree },
-                });
+                children.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "index", i },
+                        { "motion", child.motion != null ? child.motion.name : null },
+                        {
+                            "motionPath",
+                            child.motion != null ? AssetDatabase.GetAssetPath(child.motion) : null
+                        },
+                        { "threshold", child.threshold },
+                        {
+                            "position",
+                            new Dictionary<string, object>
+                            {
+                                { "x", child.position.x },
+                                { "y", child.position.y },
+                            }
+                        },
+                        { "timeScale", child.timeScale },
+                        { "isBlendTree", child.motion is BlendTree },
+                    }
+                );
             }
 
             return new Dictionary<string, object>

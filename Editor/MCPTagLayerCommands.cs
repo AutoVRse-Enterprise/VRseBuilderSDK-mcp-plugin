@@ -16,23 +16,21 @@ namespace UnityMCP.Editor
                 string name = LayerMask.LayerToName(i);
                 if (!string.IsNullOrEmpty(name))
                 {
-                    layers.Add(new Dictionary<string, object>
-                    {
-                        { "index", i },
-                        { "name", name },
-                    });
+                    layers.Add(new Dictionary<string, object> { { "index", i }, { "name", name } });
                 }
             }
 
             var sortingLayers = new List<Dictionary<string, object>>();
             foreach (var sl in SortingLayer.layers)
             {
-                sortingLayers.Add(new Dictionary<string, object>
-                {
-                    { "id", sl.id },
-                    { "name", sl.name },
-                    { "value", sl.value },
-                });
+                sortingLayers.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "id", sl.id },
+                        { "name", sl.name },
+                        { "value", sl.value },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -64,7 +62,8 @@ namespace UnityMCP.Editor
         public static object SetTag(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             string tag = args.ContainsKey("tag") ? args["tag"].ToString() : "";
             if (string.IsNullOrEmpty(tag))
@@ -73,13 +72,19 @@ namespace UnityMCP.Editor
             Undo.RecordObject(go, "Set Tag");
             go.tag = tag;
 
-            return new { success = true, gameObject = go.name, tag };
+            return new
+            {
+                success = true,
+                gameObject = go.name,
+                tag,
+            };
         }
 
         public static object SetLayer(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             int layer = -1;
             if (args.ContainsKey("layer"))
@@ -94,7 +99,8 @@ namespace UnityMCP.Editor
             if (layer < 0)
                 return new { error = "Valid layer index or layerName required" };
 
-            bool includeChildren = args.ContainsKey("includeChildren") && Convert.ToBoolean(args["includeChildren"]);
+            bool includeChildren =
+                args.ContainsKey("includeChildren") && Convert.ToBoolean(args["includeChildren"]);
 
             Undo.RecordObject(go, "Set Layer");
             go.layer = layer;
@@ -121,10 +127,14 @@ namespace UnityMCP.Editor
         public static object SetStatic(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            bool isStatic = args.ContainsKey("isStatic") ? Convert.ToBoolean(args["isStatic"]) : true;
-            bool includeChildren = args.ContainsKey("includeChildren") && Convert.ToBoolean(args["includeChildren"]);
+            bool isStatic = args.ContainsKey("isStatic")
+                ? Convert.ToBoolean(args["isStatic"])
+                : true;
+            bool includeChildren =
+                args.ContainsKey("includeChildren") && Convert.ToBoolean(args["includeChildren"]);
 
             Undo.RecordObject(go, "Set Static");
             go.isStatic = isStatic;
@@ -138,7 +148,13 @@ namespace UnityMCP.Editor
                 }
             }
 
-            return new { success = true, gameObject = go.name, isStatic, includeChildren };
+            return new
+            {
+                success = true,
+                gameObject = go.name,
+                isStatic,
+                includeChildren,
+            };
         }
     }
 }

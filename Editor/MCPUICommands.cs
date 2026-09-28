@@ -16,7 +16,9 @@ namespace UnityMCP.Editor
         public static object CreateCanvas(Dictionary<string, object> args)
         {
             string name = args.ContainsKey("name") ? args["name"].ToString() : "Canvas";
-            string renderMode = args.ContainsKey("renderMode") ? args["renderMode"].ToString().ToLower() : "overlay";
+            string renderMode = args.ContainsKey("renderMode")
+                ? args["renderMode"].ToString().ToLower()
+                : "overlay";
 
             var canvasGo = new GameObject(name);
             Undo.RegisterCreatedObjectUndo(canvasGo, "Create Canvas");
@@ -24,16 +26,25 @@ namespace UnityMCP.Editor
             var canvas = canvasGo.AddComponent<Canvas>();
             switch (renderMode)
             {
-                case "camera": canvas.renderMode = RenderMode.ScreenSpaceCamera; break;
-                case "world": canvas.renderMode = RenderMode.WorldSpace; break;
-                default: canvas.renderMode = RenderMode.ScreenSpaceOverlay; break;
+                case "camera":
+                    canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                    break;
+                case "world":
+                    canvas.renderMode = RenderMode.WorldSpace;
+                    break;
+                default:
+                    canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                    break;
             }
 
             canvasGo.AddComponent<CanvasScaler>();
             canvasGo.AddComponent<GraphicRaycaster>();
 
             // Ensure EventSystem exists
-            if (UnityEngine.Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>() == null)
+            if (
+                UnityEngine.Object.FindFirstObjectByType<UnityEngine.EventSystems.EventSystem>()
+                == null
+            )
             {
                 var esGo = new GameObject("EventSystem");
                 esGo.AddComponent<UnityEngine.EventSystems.EventSystem>();
@@ -56,7 +67,10 @@ namespace UnityMCP.Editor
         {
             string type = args.ContainsKey("type") ? args["type"].ToString().ToLower() : "";
             if (string.IsNullOrEmpty(type))
-                return new { error = "type is required (text, image, button, panel, slider, toggle, inputfield, dropdown, scrollview)" };
+                return new
+                {
+                    error = "type is required (text, image, button, panel, slider, toggle, inputfield, dropdown, scrollview)",
+                };
 
             string name = args.ContainsKey("name") ? args["name"].ToString() : type;
             string parent = args.ContainsKey("parent") ? args["parent"].ToString() : "";
@@ -106,7 +120,10 @@ namespace UnityMCP.Editor
                     go = CreateInputFieldElement(name);
                     break;
                 default:
-                    return new { error = $"Unknown UI type '{type}'. Use: text, image, button, panel, slider, toggle, inputfield" };
+                    return new
+                    {
+                        error = $"Unknown UI type '{type}'. Use: text, image, button, panel, slider, toggle, inputfield",
+                    };
             }
 
             go.transform.SetParent(parentTransform, false);
@@ -116,16 +133,26 @@ namespace UnityMCP.Editor
             var rt = go.GetComponent<RectTransform>();
             if (rt != null)
             {
-                if (args.ContainsKey("anchoredPosition") && args["anchoredPosition"] is Dictionary<string, object> posDict)
+                if (
+                    args.ContainsKey("anchoredPosition")
+                    && args["anchoredPosition"] is Dictionary<string, object> posDict
+                )
                 {
                     float x = posDict.ContainsKey("x") ? Convert.ToSingle(posDict["x"]) : 0;
                     float y = posDict.ContainsKey("y") ? Convert.ToSingle(posDict["y"]) : 0;
                     rt.anchoredPosition = new Vector2(x, y);
                 }
-                if (args.ContainsKey("sizeDelta") && args["sizeDelta"] is Dictionary<string, object> sizeDict)
+                if (
+                    args.ContainsKey("sizeDelta")
+                    && args["sizeDelta"] is Dictionary<string, object> sizeDict
+                )
                 {
-                    float w = sizeDict.ContainsKey("x") ? Convert.ToSingle(sizeDict["x"]) : rt.sizeDelta.x;
-                    float h = sizeDict.ContainsKey("y") ? Convert.ToSingle(sizeDict["y"]) : rt.sizeDelta.y;
+                    float w = sizeDict.ContainsKey("x")
+                        ? Convert.ToSingle(sizeDict["x"])
+                        : rt.sizeDelta.x;
+                    float h = sizeDict.ContainsKey("y")
+                        ? Convert.ToSingle(sizeDict["y"])
+                        : rt.sizeDelta.y;
                     rt.sizeDelta = new Vector2(w, h);
                 }
             }
@@ -144,25 +171,45 @@ namespace UnityMCP.Editor
 
         public static object GetUIInfo(Dictionary<string, object> args)
         {
-            var canvases = UnityEngine.Object.FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var canvases = UnityEngine.Object.FindObjectsByType<Canvas>(
+                FindObjectsInactive.Include,
+                FindObjectsSortMode.None
+            );
             var canvasInfos = new List<Dictionary<string, object>>();
 
             foreach (var canvas in canvases)
             {
                 int childCount = CountUIElements(canvas.transform);
-                canvasInfos.Add(new Dictionary<string, object>
-                {
-                    { "name", canvas.gameObject.name },
-                    { "renderMode", canvas.renderMode.ToString() },
-                    { "sortingOrder", canvas.sortingOrder },
-                    { "uiElementCount", childCount },
-                    { "instanceId", canvas.gameObject.GetInstanceID() },
-                });
+                canvasInfos.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "name", canvas.gameObject.name },
+                        { "renderMode", canvas.renderMode.ToString() },
+                        { "sortingOrder", canvas.sortingOrder },
+                        { "uiElementCount", childCount },
+                        { "instanceId", canvas.gameObject.GetInstanceID() },
+                    }
+                );
             }
 
-            int totalTexts = UnityEngine.Object.FindObjectsByType<Text>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length;
-            int totalImages = UnityEngine.Object.FindObjectsByType<Image>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length;
-            int totalButtons = UnityEngine.Object.FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length;
+            int totalTexts = UnityEngine
+                .Object.FindObjectsByType<Text>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None
+                )
+                .Length;
+            int totalImages = UnityEngine
+                .Object.FindObjectsByType<Image>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None
+                )
+                .Length;
+            int totalButtons = UnityEngine
+                .Object.FindObjectsByType<Button>(
+                    FindObjectsInactive.Include,
+                    FindObjectsSortMode.None
+                )
+                .Length;
 
             return new Dictionary<string, object>
             {
@@ -198,10 +245,18 @@ namespace UnityMCP.Editor
                 text.fontSize = Convert.ToInt32(args["fontSize"]);
             if (args.ContainsKey("color") && args["color"] is Dictionary<string, object> colorDict)
             {
-                float r = colorDict.ContainsKey("r") ? Convert.ToSingle(colorDict["r"]) : text.color.r;
-                float g = colorDict.ContainsKey("g") ? Convert.ToSingle(colorDict["g"]) : text.color.g;
-                float b = colorDict.ContainsKey("b") ? Convert.ToSingle(colorDict["b"]) : text.color.b;
-                float a = colorDict.ContainsKey("a") ? Convert.ToSingle(colorDict["a"]) : text.color.a;
+                float r = colorDict.ContainsKey("r")
+                    ? Convert.ToSingle(colorDict["r"])
+                    : text.color.r;
+                float g = colorDict.ContainsKey("g")
+                    ? Convert.ToSingle(colorDict["g"])
+                    : text.color.g;
+                float b = colorDict.ContainsKey("b")
+                    ? Convert.ToSingle(colorDict["b"])
+                    : text.color.b;
+                float a = colorDict.ContainsKey("a")
+                    ? Convert.ToSingle(colorDict["a"])
+                    : text.color.a;
                 text.color = new Color(r, g, b, a);
             }
             if (args.ContainsKey("alignment"))
@@ -209,15 +264,33 @@ namespace UnityMCP.Editor
                 string align = args["alignment"].ToString().ToLower();
                 switch (align)
                 {
-                    case "upperleft": text.alignment = TextAnchor.UpperLeft; break;
-                    case "uppercenter": text.alignment = TextAnchor.UpperCenter; break;
-                    case "upperright": text.alignment = TextAnchor.UpperRight; break;
-                    case "middleleft": text.alignment = TextAnchor.MiddleLeft; break;
-                    case "middlecenter": text.alignment = TextAnchor.MiddleCenter; break;
-                    case "middleright": text.alignment = TextAnchor.MiddleRight; break;
-                    case "lowerleft": text.alignment = TextAnchor.LowerLeft; break;
-                    case "lowercenter": text.alignment = TextAnchor.LowerCenter; break;
-                    case "lowerright": text.alignment = TextAnchor.LowerRight; break;
+                    case "upperleft":
+                        text.alignment = TextAnchor.UpperLeft;
+                        break;
+                    case "uppercenter":
+                        text.alignment = TextAnchor.UpperCenter;
+                        break;
+                    case "upperright":
+                        text.alignment = TextAnchor.UpperRight;
+                        break;
+                    case "middleleft":
+                        text.alignment = TextAnchor.MiddleLeft;
+                        break;
+                    case "middlecenter":
+                        text.alignment = TextAnchor.MiddleCenter;
+                        break;
+                    case "middleright":
+                        text.alignment = TextAnchor.MiddleRight;
+                        break;
+                    case "lowerleft":
+                        text.alignment = TextAnchor.LowerLeft;
+                        break;
+                    case "lowercenter":
+                        text.alignment = TextAnchor.LowerCenter;
+                        break;
+                    case "lowerright":
+                        text.alignment = TextAnchor.LowerRight;
+                        break;
                 }
             }
 
@@ -253,10 +326,18 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("color") && args["color"] is Dictionary<string, object> colorDict)
             {
-                float r = colorDict.ContainsKey("r") ? Convert.ToSingle(colorDict["r"]) : image.color.r;
-                float g = colorDict.ContainsKey("g") ? Convert.ToSingle(colorDict["g"]) : image.color.g;
-                float b = colorDict.ContainsKey("b") ? Convert.ToSingle(colorDict["b"]) : image.color.b;
-                float a = colorDict.ContainsKey("a") ? Convert.ToSingle(colorDict["a"]) : image.color.a;
+                float r = colorDict.ContainsKey("r")
+                    ? Convert.ToSingle(colorDict["r"])
+                    : image.color.r;
+                float g = colorDict.ContainsKey("g")
+                    ? Convert.ToSingle(colorDict["g"])
+                    : image.color.g;
+                float b = colorDict.ContainsKey("b")
+                    ? Convert.ToSingle(colorDict["b"])
+                    : image.color.b;
+                float a = colorDict.ContainsKey("a")
+                    ? Convert.ToSingle(colorDict["a"])
+                    : image.color.a;
                 image.color = new Color(r, g, b, a);
             }
 
@@ -273,10 +354,18 @@ namespace UnityMCP.Editor
                 string imgType = args["imageType"].ToString().ToLower();
                 switch (imgType)
                 {
-                    case "simple": image.type = Image.Type.Simple; break;
-                    case "sliced": image.type = Image.Type.Sliced; break;
-                    case "tiled": image.type = Image.Type.Tiled; break;
-                    case "filled": image.type = Image.Type.Filled; break;
+                    case "simple":
+                        image.type = Image.Type.Simple;
+                        break;
+                    case "sliced":
+                        image.type = Image.Type.Sliced;
+                        break;
+                    case "tiled":
+                        image.type = Image.Type.Tiled;
+                        break;
+                    case "filled":
+                        image.type = Image.Type.Filled;
+                        break;
                 }
             }
 

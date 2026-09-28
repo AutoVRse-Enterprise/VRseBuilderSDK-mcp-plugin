@@ -14,8 +14,8 @@ namespace UnityMCP.Editor
             string projectPath = Application.dataPath.Replace("/Assets", "");
 
             // Get scenes in build settings
-            var buildScenes = EditorBuildSettings.scenes
-                .Select(s => new Dictionary<string, object>
+            var buildScenes = EditorBuildSettings
+                .scenes.Select(s => new Dictionary<string, object>
                 {
                     { "path", s.path },
                     { "enabled", s.enabled },
@@ -55,8 +55,18 @@ namespace UnityMCP.Editor
                 { "platform", EditorUserBuildSettings.activeBuildTarget.ToString() },
                 { "renderPipeline", renderPipeline },
                 { "colorSpace", PlayerSettings.colorSpace.ToString() },
-                { "scriptingBackend", PlayerSettings.GetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup).ToString() },
-                { "apiCompatibility", PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup).ToString() },
+                {
+                    "scriptingBackend",
+                    PlayerSettings
+                        .GetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup)
+                        .ToString()
+                },
+                {
+                    "apiCompatibility",
+                    PlayerSettings
+                        .GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup)
+                        .ToString()
+                },
                 { "buildScenes", buildScenes },
                 { "totalAssetCount", allAssets.Length },
                 { "packagesManifest", packages },

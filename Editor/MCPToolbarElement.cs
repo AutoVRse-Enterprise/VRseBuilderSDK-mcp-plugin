@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-
 #if UNITY_6000_3_OR_NEWER
 using UnityEditor.Toolbars;
 #else
@@ -86,9 +85,12 @@ namespace UnityMCP.Editor
             get
             {
                 EnsureDotTextures();
-                if (!ServerRunning) return _redDot;
-                if (HasFailures) return _redDot;
-                if (HasWarnings) return _yellowDot;
+                if (!ServerRunning)
+                    return _redDot;
+                if (HasFailures)
+                    return _redDot;
+                if (HasWarnings)
+                    return _yellowDot;
                 return _greenDot;
             }
         }
@@ -145,28 +147,50 @@ namespace UnityMCP.Editor
 
         private static void PeriodicRefresh()
         {
-            if (EditorApplication.timeSinceStartup < _nextRefreshTime) return;
+            if (EditorApplication.timeSinceStartup < _nextRefreshTime)
+                return;
             _nextRefreshTime = EditorApplication.timeSinceStartup + 1.0;
 
             bool changed = false;
 
             bool running = MCPBridgeServer.IsRunning;
-            if (running != ServerRunning) { ServerRunning = running; changed = true; }
+            if (running != ServerRunning)
+            {
+                ServerRunning = running;
+                changed = true;
+            }
 
             int agents = MCPRequestQueue.ActiveSessionCount;
-            if (agents != ActiveAgents) { ActiveAgents = agents; changed = true; }
+            if (agents != ActiveAgents)
+            {
+                ActiveAgents = agents;
+                changed = true;
+            }
 
             bool failures = MCPSelfTest.HasFailures;
-            if (failures != HasFailures) { HasFailures = failures; changed = true; }
+            if (failures != HasFailures)
+            {
+                HasFailures = failures;
+                changed = true;
+            }
 
             bool warnings = MCPSelfTest.HasWarnings;
-            if (warnings != HasWarnings) { HasWarnings = warnings; changed = true; }
+            if (warnings != HasWarnings)
+            {
+                HasWarnings = warnings;
+                changed = true;
+            }
 
             if (changed)
             {
 #if UNITY_6000_3_OR_NEWER
-                try { MainToolbar.Refresh(kElementPath); }
-                catch { /* MainToolbar may not be ready yet */ }
+                try
+                {
+                    MainToolbar.Refresh(kElementPath);
+                }
+                catch
+                { /* MainToolbar may not be ready yet */
+                }
 #else
                 MCPToolbarFallback.RefreshMainToolbar();
 #endif
@@ -185,10 +209,16 @@ namespace UnityMCP.Editor
             {
                 int activePort = MCPBridgeServer.ActivePort;
                 string portMode = MCPSettingsManager.UseManualPort ? "" : " (auto)";
-                menu.AddDisabledItem(new GUIContent($"\u25CF  Running \u2014 Port {activePort}{portMode}"));
+                menu.AddDisabledItem(
+                    new GUIContent($"\u25CF  Running \u2014 Port {activePort}{portMode}")
+                );
 
                 if (MCPInstanceRegistry.IsParrelSyncClone())
-                    menu.AddDisabledItem(new GUIContent($"   ParrelSync Clone #{MCPInstanceRegistry.GetParrelSyncCloneIndex()}"));
+                    menu.AddDisabledItem(
+                        new GUIContent(
+                            $"   ParrelSync Clone #{MCPInstanceRegistry.GetParrelSyncCloneIndex()}"
+                        )
+                    );
             }
             else
             {
@@ -201,11 +231,15 @@ namespace UnityMCP.Editor
             if (running)
             {
                 menu.AddItem(new GUIContent("Stop Server"), false, () => MCPBridgeServer.Stop());
-                menu.AddItem(new GUIContent("Restart Server"), false, () =>
-                {
-                    MCPBridgeServer.Stop();
-                    EditorApplication.delayCall += () => MCPBridgeServer.Start();
-                });
+                menu.AddItem(
+                    new GUIContent("Restart Server"),
+                    false,
+                    () =>
+                    {
+                        MCPBridgeServer.Stop();
+                        EditorApplication.delayCall += () => MCPBridgeServer.Start();
+                    }
+                );
             }
             else
             {
@@ -222,8 +256,12 @@ namespace UnityMCP.Editor
                 var sessions = MCPRequestQueue.GetActiveSessions();
                 foreach (var session in sessions)
                 {
-                    string agentId = session.ContainsKey("agentId") ? session["agentId"].ToString() : "?";
-                    string action = session.ContainsKey("currentAction") ? session["currentAction"].ToString() : "idle";
+                    string agentId = session.ContainsKey("agentId")
+                        ? session["agentId"].ToString()
+                        : "?";
+                    string action = session.ContainsKey("currentAction")
+                        ? session["currentAction"].ToString()
+                        : "idle";
                     menu.AddDisabledItem(new GUIContent($"   {agentId}: {action}"));
                 }
             }
@@ -235,26 +273,38 @@ namespace UnityMCP.Editor
             menu.AddSeparator("");
 
             // Category toggles
-            menu.AddItem(new GUIContent("Categories/Enable All"), false, () =>
-            {
-                foreach (var cat in MCPSettingsManager.GetAllCategoryNames())
-                    MCPSettingsManager.SetCategoryEnabled(cat, true);
-            });
-            menu.AddItem(new GUIContent("Categories/Disable All"), false, () =>
-            {
-                foreach (var cat in MCPSettingsManager.GetAllCategoryNames())
-                    MCPSettingsManager.SetCategoryEnabled(cat, false);
-            });
+            menu.AddItem(
+                new GUIContent("Categories/Enable All"),
+                false,
+                () =>
+                {
+                    foreach (var cat in MCPSettingsManager.GetAllCategoryNames())
+                        MCPSettingsManager.SetCategoryEnabled(cat, true);
+                }
+            );
+            menu.AddItem(
+                new GUIContent("Categories/Disable All"),
+                false,
+                () =>
+                {
+                    foreach (var cat in MCPSettingsManager.GetAllCategoryNames())
+                        MCPSettingsManager.SetCategoryEnabled(cat, false);
+                }
+            );
             menu.AddSeparator("Categories/");
             foreach (var cat in MCPSettingsManager.GetAllCategoryNames())
             {
                 bool enabled = MCPSettingsManager.IsCategoryEnabled(cat);
                 string displayName = char.ToUpper(cat[0]) + cat.Substring(1);
                 string catCapture = cat;
-                menu.AddItem(new GUIContent($"Categories/{displayName}"), enabled, () =>
-                {
-                    MCPSettingsManager.SetCategoryEnabled(catCapture, !enabled);
-                });
+                menu.AddItem(
+                    new GUIContent($"Categories/{displayName}"),
+                    enabled,
+                    () =>
+                    {
+                        MCPSettingsManager.SetCategoryEnabled(catCapture, !enabled);
+                    }
+                );
             }
 
             menu.AddSeparator("");
@@ -282,29 +332,42 @@ namespace UnityMCP.Editor
             menu.AddItem(
                 new GUIContent("Settings/Auto-Start on Load"),
                 MCPSettingsManager.AutoStart,
-                () => MCPSettingsManager.AutoStart = !MCPSettingsManager.AutoStart);
+                () => MCPSettingsManager.AutoStart = !MCPSettingsManager.AutoStart
+            );
 
             menu.AddItem(
                 new GUIContent("Settings/Use Manual Port"),
                 MCPSettingsManager.UseManualPort,
-                () => MCPSettingsManager.UseManualPort = !MCPSettingsManager.UseManualPort);
+                () => MCPSettingsManager.UseManualPort = !MCPSettingsManager.UseManualPort
+            );
 
             menu.AddSeparator("");
 
             // Dashboard & Updates
-            menu.AddItem(new GUIContent("Open Dashboard..."), false, () => MCPDashboardWindow.ShowWindow());
-            menu.AddItem(new GUIContent("Check for Updates..."), false, () =>
-            {
-                MCPUpdateChecker.CheckForUpdates((hasUpdate, latestVersion) =>
+            menu.AddItem(
+                new GUIContent("Open Dashboard..."),
+                false,
+                () => MCPDashboardWindow.ShowWindow()
+            );
+            menu.AddItem(
+                new GUIContent("Check for Updates..."),
+                false,
+                () =>
                 {
-                    EditorUtility.DisplayDialog(
-                        hasUpdate ? "Update Available" : "Up to Date",
-                        hasUpdate
-                            ? $"A new version ({latestVersion}) is available.\nUpdate via Unity Package Manager."
-                            : "You are running the latest version.",
-                        "OK");
-                });
-            });
+                    MCPUpdateChecker.CheckForUpdates(
+                        (hasUpdate, latestVersion) =>
+                        {
+                            EditorUtility.DisplayDialog(
+                                hasUpdate ? "Update Available" : "Up to Date",
+                                hasUpdate
+                                    ? $"A new version ({latestVersion}) is available.\nUpdate via Unity Package Manager."
+                                    : "You are running the latest version.",
+                                "OK"
+                            );
+                        }
+                    );
+                }
+            );
 
             menu.DropDown(buttonRect);
         }
@@ -314,8 +377,7 @@ namespace UnityMCP.Editor
         // Unity 6000.3+: Single MainToolbarDropdown with status + menu
         // ═══════════════════════════════════════════════════════════════════
 
-        [MainToolbarElement(kElementPath,
-            defaultDockPosition = MainToolbarDockPosition.Right)]
+        [MainToolbarElement(kElementPath, defaultDockPosition = MainToolbarDockPosition.Right)]
         public static MainToolbarElement CreateMCPDropdown()
         {
             // Snapshot current state
@@ -324,10 +386,7 @@ namespace UnityMCP.Editor
             HasFailures = MCPSelfTest.HasFailures;
             HasWarnings = MCPSelfTest.HasWarnings;
 
-            var content = new MainToolbarContent(
-                StatusText,
-                CurrentDotIcon,
-                StatusTooltip);
+            var content = new MainToolbarContent(StatusText, CurrentDotIcon, StatusTooltip);
 
             return new MainToolbarDropdown(content, ShowMenu);
         }
@@ -368,7 +427,9 @@ namespace UnityMCP.Editor
             {
                 EditorApplication.update -= TryInject;
                 if (!_injected && _retryCount >= MaxRetries)
-                    Debug.Log("[VRSE-UMCP] Main toolbar injection not available on this Unity version. Use Unity 6000.3+ for native toolbar support.");
+                    Debug.Log(
+                        "[VRSE-UMCP] Main toolbar injection not available on this Unity version. Use Unity 6000.3+ for native toolbar support."
+                    );
                 return;
             }
             _retryCount++;
@@ -376,11 +437,15 @@ namespace UnityMCP.Editor
             try
             {
                 // Find the Toolbar instance (it's a ScriptableObject, NOT an EditorWindow)
-                var toolbarType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.Toolbar");
-                if (toolbarType == null) return;
+                var toolbarType = typeof(UnityEditor.Editor).Assembly.GetType(
+                    "UnityEditor.Toolbar"
+                );
+                if (toolbarType == null)
+                    return;
 
                 var toolbars = Resources.FindObjectsOfTypeAll(toolbarType);
-                if (toolbars == null || toolbars.Length == 0) return;
+                if (toolbars == null || toolbars.Length == 0)
+                    return;
 
                 var toolbar = toolbars[0];
 
@@ -390,11 +455,15 @@ namespace UnityMCP.Editor
                 VisualElement root = null;
 
                 // Try 1: m_Root field on GUIView base type
-                var guiViewType = typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.GUIView");
+                var guiViewType = typeof(UnityEditor.Editor).Assembly.GetType(
+                    "UnityEditor.GUIView"
+                );
                 if (guiViewType != null)
                 {
-                    var rootField = guiViewType.GetField("m_Root",
-                        BindingFlags.NonPublic | BindingFlags.Instance);
+                    var rootField = guiViewType.GetField(
+                        "m_Root",
+                        BindingFlags.NonPublic | BindingFlags.Instance
+                    );
                     if (rootField != null)
                         root = rootField.GetValue(toolbar) as VisualElement;
                 }
@@ -402,8 +471,10 @@ namespace UnityMCP.Editor
                 // Try 2: visualTree property (available on some Unity versions)
                 if (root == null && guiViewType != null)
                 {
-                    var visualTreeProp = guiViewType.GetProperty("visualTree",
-                        BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    var visualTreeProp = guiViewType.GetProperty(
+                        "visualTree",
+                        BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance
+                    );
                     if (visualTreeProp != null)
                         root = visualTreeProp.GetValue(toolbar) as VisualElement;
                 }
@@ -411,20 +482,25 @@ namespace UnityMCP.Editor
                 // Try 3: rootVisualElement property (older Unity versions)
                 if (root == null)
                 {
-                    var rootProp = toolbarType.GetProperty("rootVisualElement",
-                        BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    var rootProp = toolbarType.GetProperty(
+                        "rootVisualElement",
+                        BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance
+                    );
                     if (rootProp != null)
                         root = rootProp.GetValue(toolbar) as VisualElement;
                 }
 
-                if (root == null || root.childCount == 0) return;
+                if (root == null || root.childCount == 0)
+                    return;
 
                 // Find the right-align zone in the toolbar
-                var target = root.Q("ToolbarZoneRightAlign")
+                var target =
+                    root.Q("ToolbarZoneRightAlign")
                     ?? root.Q(className: "unity-editor-toolbar-container__zone")
                     ?? root.Q(className: "unity-toolbar-zone-align-right");
 
-                if (target == null) return;
+                if (target == null)
+                    return;
 
                 _mcpRoot = BuildElement();
                 target.Insert(0, _mcpRoot);
@@ -464,9 +540,11 @@ namespace UnityMCP.Editor
                 MCPToolbarElement.ShowMenu(menuRect);
             });
             container.RegisterCallback<MouseEnterEvent>(evt =>
-                container.style.backgroundColor = new Color(1f, 1f, 1f, 0.06f));
+                container.style.backgroundColor = new Color(1f, 1f, 1f, 0.06f)
+            );
             container.RegisterCallback<MouseLeaveEvent>(evt =>
-                container.style.backgroundColor = Color.clear);
+                container.style.backgroundColor = Color.clear
+            );
 
             // Colored status dot
             _statusDot = new VisualElement();
@@ -518,10 +596,12 @@ namespace UnityMCP.Editor
 
         internal static void RefreshMainToolbar()
         {
-            if (_mcpRoot == null || !_injected) return;
+            if (_mcpRoot == null || !_injected)
+                return;
 
             bool running = MCPToolbarElement.ServerRunning;
-            Color c = !running ? kStopped
+            Color c =
+                !running ? kStopped
                 : MCPToolbarElement.HasFailures ? kStopped
                 : MCPToolbarElement.HasWarnings ? kWarning
                 : kRunning;

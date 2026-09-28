@@ -64,9 +64,15 @@ namespace UnityMCP.Editor
         /// </summary>
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+            if (
+                state == PlayModeStateChange.EnteredPlayMode
+                || state == PlayModeStateChange.EnteredEditMode
+            )
             {
-                if (!_isRunning && (MCPSettingsManager.AutoStart || SessionState.GetBool(WasRunningKey, false)))
+                if (
+                    !_isRunning
+                    && (MCPSettingsManager.AutoStart || SessionState.GetBool(WasRunningKey, false))
+                )
                 {
                     Debug.Log("[MCP Bridge] Restarting server after Play Mode transition...");
                     Start();
@@ -97,7 +103,8 @@ namespace UnityMCP.Editor
 
         public static void Start()
         {
-            if (_isRunning) return;
+            if (_isRunning)
+                return;
 
             // Ensure console log capture is active before anything else
             MCPConsoleCommands.EnsureListening();
@@ -130,7 +137,7 @@ namespace UnityMCP.Editor
                 _listenerThread = new Thread(ListenLoop)
                 {
                     IsBackground = true,
-                    Name = "VRseBuilder Unity MCP Server"
+                    Name = "VRseBuilder Unity MCP Server",
                 };
                 _listenerThread.Start();
 
@@ -192,9 +199,18 @@ namespace UnityMCP.Editor
                     var context = _listener.GetContext();
                     ThreadPool.QueueUserWorkItem(_ => HandleRequest(context));
                 }
-                catch (HttpListenerException) when (!_isRunning) { break; }
-                catch (ThreadAbortException) { break; }
-                catch (ObjectDisposedException) { break; }
+                catch (HttpListenerException) when (!_isRunning)
+                {
+                    break;
+                }
+                catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException)
+                {
+                    break;
+                }
                 catch (Exception ex)
                 {
                     if (_isRunning)
@@ -223,7 +239,9 @@ namespace UnityMCP.Editor
                 string body = "";
                 if (request.HasEntityBody)
                 {
-                    using (var reader = new StreamReader(request.InputStream, request.ContentEncoding))
+                    using (
+                        var reader = new StreamReader(request.InputStream, request.ContentEncoding)
+                    )
                         body = reader.ReadToEnd();
                 }
 
@@ -260,8 +278,11 @@ namespace UnityMCP.Editor
                 }
 
                 // ═══ Legacy synchronous path (blocks until main thread processes) ═══
-                var result = MCPRequestQueue.ExecuteWithTracking(agentId, apiPath,
-                    () => ExecuteOnMainThread(() => RouteRequest(apiPath, request.HttpMethod, body)));
+                var result = MCPRequestQueue.ExecuteWithTracking(
+                    agentId,
+                    apiPath,
+                    () => ExecuteOnMainThread(() => RouteRequest(apiPath, request.HttpMethod, body))
+                );
                 SendJson(response, 200, result);
             }
             catch (Exception ex)
@@ -272,7 +293,11 @@ namespace UnityMCP.Editor
 
         // ─── Queue Submit (async) ───
 
-        private static void HandleQueueSubmit(HttpListenerResponse response, string agentId, string body)
+        private static void HandleQueueSubmit(
+            HttpListenerResponse response,
+            string agentId,
+            string body
+        )
         {
             try
             {
@@ -287,23 +312,34 @@ namespace UnityMCP.Editor
                 }
 
                 // Override agentId if provided in the body
-                if (args.ContainsKey("agentId") && !string.IsNullOrEmpty(args["agentId"]?.ToString()))
+                if (
+                    args.ContainsKey("agentId")
+                    && !string.IsNullOrEmpty(args["agentId"]?.ToString())
+                )
                     agentId = args["agentId"].ToString();
 
                 // Submit to queue — the action captures the routing logic
-                var ticket = MCPRequestQueue.SubmitRequest(agentId, apiPath, () =>
-                {
-                    return RouteRequest(apiPath, "POST", innerBody);
-                });
+                var ticket = MCPRequestQueue.SubmitRequest(
+                    agentId,
+                    apiPath,
+                    () =>
+                    {
+                        return RouteRequest(apiPath, "POST", innerBody);
+                    }
+                );
 
                 // Return immediately with ticket info
-                SendJson(response, 202, new Dictionary<string, object>
-                {
-                    { "ticketId",      ticket.TicketId },
-                    { "status",        ticket.Status.ToString() },
-                    { "queuePosition", ticket.QueuePosition },
-                    { "agentId",       agentId },
-                });
+                SendJson(
+                    response,
+                    202,
+                    new Dictionary<string, object>
+                    {
+                        { "ticketId", ticket.TicketId },
+                        { "status", ticket.Status.ToString() },
+                        { "queuePosition", ticket.QueuePosition },
+                        { "agentId", agentId },
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -313,12 +349,19 @@ namespace UnityMCP.Editor
 
         // ─── Queue Status (polling) ───
 
-        private static void HandleQueueStatus(HttpListenerResponse response, HttpListenerRequest request)
+        private static void HandleQueueStatus(
+            HttpListenerResponse response,
+            HttpListenerRequest request
+        )
         {
             string ticketIdStr = request.QueryString["ticketId"];
             if (string.IsNullOrEmpty(ticketIdStr) || !long.TryParse(ticketIdStr, out long ticketId))
             {
-                SendJson(response, 400, new { error = "Missing or invalid 'ticketId' query parameter" });
+                SendJson(
+                    response,
+                    400,
+                    new { error = "Missing or invalid 'ticketId' query parameter" }
+                );
                 return;
             }
 
@@ -353,24 +396,67 @@ namespace UnityMCP.Editor
             var routes = new List<string>
             {
                 "ping",
-                "editor/state", "editor/play-mode", "editor/execute-menu-item", "editor/undo", "editor/redo", "editor/undo-history",
-                "scene/info", "scene/open", "scene/save", "scene/new", "scene/hierarchy", "scene/stats",
-                "gameobject/create", "gameobject/delete", "gameobject/info", "gameobject/set-transform",
-                "gameobject/duplicate", "gameobject/set-active", "gameobject/reparent",
-                "component/add", "component/remove", "component/get-properties", "component/set-property",
-                "component/set-reference", "component/batch-wire", "component/get-referenceable",
-                "asset/list", "asset/import", "asset/delete", "asset/create-prefab", "asset/instantiate-prefab",
-                "script/create", "script/read", "script/update", "script/execute-code",
-                "material/create", "material/set-material",
-                "build/build", "build/play-mode",
-                "console/log", "console/clear",
+                "editor/state",
+                "editor/play-mode",
+                "editor/execute-menu-item",
+                "editor/undo",
+                "editor/redo",
+                "editor/undo-history",
+                "scene/info",
+                "scene/open",
+                "scene/save",
+                "scene/new",
+                "scene/hierarchy",
+                "scene/stats",
+                "gameobject/create",
+                "gameobject/delete",
+                "gameobject/info",
+                "gameobject/set-transform",
+                "gameobject/duplicate",
+                "gameobject/set-active",
+                "gameobject/reparent",
+                "component/add",
+                "component/remove",
+                "component/get-properties",
+                "component/set-property",
+                "component/set-reference",
+                "component/batch-wire",
+                "component/get-referenceable",
+                "asset/list",
+                "asset/import",
+                "asset/delete",
+                "asset/create-prefab",
+                "asset/instantiate-prefab",
+                "script/create",
+                "script/read",
+                "script/update",
+                "script/execute-code",
+                "material/create",
+                "material/set-material",
+                "build/build",
+                "build/play-mode",
+                "console/log",
+                "console/clear",
                 "compilation/errors",
-                "selection/get", "selection/set", "selection/focus-scene-view", "selection/find-by-type",
-                "search/by-component", "search/by-tag", "search/by-layer", "search/by-name",
-                "search/assets", "search/missing-references",
-                "screenshot/game", "screenshot/scene",
-                "prefab/info", "prefab/set-object-reference",
-                "packages/list", "packages/add", "packages/remove", "packages/search", "packages/info",
+                "selection/get",
+                "selection/set",
+                "selection/focus-scene-view",
+                "selection/find-by-type",
+                "search/by-component",
+                "search/by-tag",
+                "search/by-layer",
+                "search/by-name",
+                "search/assets",
+                "search/missing-references",
+                "screenshot/game",
+                "screenshot/scene",
+                "prefab/info",
+                "prefab/set-object-reference",
+                "packages/list",
+                "packages/add",
+                "packages/remove",
+                "packages/search",
+                "packages/info",
                 "project/info",
                 // VRseBuilder
                 "vrse/status",
@@ -428,36 +514,78 @@ namespace UnityMCP.Editor
                 // VRse general UI setup
                 "vrse/ui/general-setup",
                 // Animation
-                "animation/create-controller", "animation/get-controller", "animation/add-state",
-                "animation/remove-state", "animation/add-transition", "animation/remove-transition",
-                "animation/set-parameter", "animation/remove-parameter", "animation/get-parameters",
-                "animation/create-clip", "animation/set-clip-curve", "animation/get-clip-info",
-                "animation/set-state-motion", "animation/add-layer", "animation/remove-layer",
-                "animation/get-layers", "animation/set-default-state", "animation/add-blend-tree",
+                "animation/create-controller",
+                "animation/get-controller",
+                "animation/add-state",
+                "animation/remove-state",
+                "animation/add-transition",
+                "animation/remove-transition",
+                "animation/set-parameter",
+                "animation/remove-parameter",
+                "animation/get-parameters",
+                "animation/create-clip",
+                "animation/set-clip-curve",
+                "animation/get-clip-info",
+                "animation/set-state-motion",
+                "animation/add-layer",
+                "animation/remove-layer",
+                "animation/get-layers",
+                "animation/set-default-state",
+                "animation/add-blend-tree",
                 // Physics
-                "physics/raycast", "physics/overlap-sphere", "physics/settings",
-                "physics/add-joint", "physics/get-joint", "physics/set-joint",
+                "physics/raycast",
+                "physics/overlap-sphere",
+                "physics/settings",
+                "physics/add-joint",
+                "physics/get-joint",
+                "physics/set-joint",
                 // Audio
-                "audio/play", "audio/stop", "audio/get-info", "audio/set-property",
+                "audio/play",
+                "audio/stop",
+                "audio/get-info",
+                "audio/set-property",
                 // UI
-                "ui/create-canvas", "ui/add-element", "ui/set-rect", "ui/set-text",
-                "ui/set-image", "ui/set-button", "ui/get-hierarchy",
+                "ui/create-canvas",
+                "ui/add-element",
+                "ui/set-rect",
+                "ui/set-text",
+                "ui/set-image",
+                "ui/set-button",
+                "ui/get-hierarchy",
                 // Lighting
-                "lighting/create", "lighting/set-property", "lighting/bake", "lighting/get-settings",
-                "lighting/set-settings", "lighting/get-probes",
+                "lighting/create",
+                "lighting/set-property",
+                "lighting/bake",
+                "lighting/get-settings",
+                "lighting/set-settings",
+                "lighting/get-probes",
                 // Graphics
-                "graphics/camera-info", "graphics/render-settings", "graphics/set-render-settings",
-                "graphics/texture-info", "graphics/renderer-info", "graphics/lighting-summary",
+                "graphics/camera-info",
+                "graphics/render-settings",
+                "graphics/set-render-settings",
+                "graphics/texture-info",
+                "graphics/renderer-info",
+                "graphics/lighting-summary",
                 // Particle System
-                "particle/create", "particle/info", "particle/set-main", "particle/set-emission",
-                "particle/set-shape", "particle/set-velocity", "particle/set-color",
-                "particle/set-size", "particle/set-renderer",
+                "particle/create",
+                "particle/info",
+                "particle/set-main",
+                "particle/set-emission",
+                "particle/set-shape",
+                "particle/set-velocity",
+                "particle/set-color",
+                "particle/set-size",
+                "particle/set-renderer",
                 // VRse Parity Layer (unity-mcp-pro compatibility for the VRse build pipeline)
-                "vrse/parity/batch-execute", "vrse/parity/get-components",
-                "vrse/parity/get-screenshot-inline", "vrse/parity/list-loaded-scenes",
+                "vrse/parity/batch-execute",
+                "vrse/parity/get-components",
+                "vrse/parity/get-screenshot-inline",
+                "vrse/parity/list-loaded-scenes",
                 // VRse Spatial (no-marker spatial placement at Step 4.5)
-                "vrse/spatial/analyze-scene", "vrse/spatial/get-bounds",
-                "vrse/spatial/get-surface", "vrse/spatial/check-placement",
+                "vrse/spatial/analyze-scene",
+                "vrse/spatial/get-bounds",
+                "vrse/spatial/get-surface",
+                "vrse/spatial/check-placement",
                 "vrse/spatial/list-probe-surfaces",
             };
 
@@ -466,7 +594,8 @@ namespace UnityMCP.Editor
             foreach (var route in routes)
             {
                 string cat = ExtractCategory(route);
-                if (!grouped.ContainsKey(cat)) grouped[cat] = new List<string>();
+                if (!grouped.ContainsKey(cat))
+                    grouped[cat] = new List<string>();
                 grouped[cat].Add(route);
             }
 
@@ -474,7 +603,7 @@ namespace UnityMCP.Editor
             {
                 { "routes", routes },
                 { "categories", grouped },
-                { "totalRoutes", routes.Count }
+                { "totalRoutes", routes.Count },
             };
         }
 
@@ -493,10 +622,17 @@ namespace UnityMCP.Editor
 
             // Check if category is enabled
             string category = ExtractCategory(path);
-            if (category != "ping" && category != "agents" && category != "queue"
-                && !MCPSettingsManager.IsCategoryEnabled(category))
+            if (
+                category != "ping"
+                && category != "agents"
+                && category != "queue"
+                && !MCPSettingsManager.IsCategoryEnabled(category)
+            )
             {
-                return new { error = $"Category '{category}' is currently disabled. Enable it in Window > VRseBuilder Unity MCP." };
+                return new
+                {
+                    error = $"Category '{category}' is currently disabled. Enable it in Window > VRseBuilder Unity MCP.",
+                };
             }
 
             switch (path)
@@ -512,7 +648,7 @@ namespace UnityMCP.Editor
                         platform = Application.platform.ToString(),
                         isClone = MCPInstanceRegistry.IsParrelSyncClone(),
                         cloneIndex = MCPInstanceRegistry.GetParrelSyncCloneIndex(),
-                        processId = System.Diagnostics.Process.GetCurrentProcess().Id
+                        processId = System.Diagnostics.Process.GetCurrentProcess().Id,
                     };
 
                 // ─── Editor State ───
@@ -835,7 +971,9 @@ namespace UnityMCP.Editor
                 case "agents/log":
                 {
                     var agentArgs = ParseJson(body);
-                    string id = agentArgs.ContainsKey("agentId") ? agentArgs["agentId"].ToString() : "";
+                    string id = agentArgs.ContainsKey("agentId")
+                        ? agentArgs["agentId"].ToString()
+                        : "";
                     return new Dictionary<string, object>
                     {
                         { "agentId", id },
@@ -966,7 +1104,9 @@ namespace UnityMCP.Editor
                 case "vrse/build-status":
                     return MCPVRseBuilderCommands.BuildStatus(ParseJson(body));
                 case "vrse/story-apply-action-to-multiple-moments":
-                    return MCPVRseBuilderCommands.StoryApplyActionToMultipleMoments(ParseJson(body));
+                    return MCPVRseBuilderCommands.StoryApplyActionToMultipleMoments(
+                        ParseJson(body)
+                    );
                 case "vrse/list-story-backups":
                     return MCPVRseBuilderCommands.ListStoryBackups(ParseJson(body));
                 case "vrse/create-story-backup":
@@ -1230,14 +1370,26 @@ namespace UnityMCP.Editor
             {
                 _mainThreadQueue.Enqueue(() =>
                 {
-                    try { result = action(); }
-                    catch (Exception ex) { exception = ex; }
-                    finally { resetEvent.Set(); }
+                    try
+                    {
+                        result = action();
+                    }
+                    catch (Exception ex)
+                    {
+                        exception = ex;
+                    }
+                    finally
+                    {
+                        resetEvent.Set();
+                    }
                 });
             }
 
             if (!resetEvent.Wait(MCPRequestQueue.SyncTimeoutMs))
-                return new { error = $"Timeout waiting for Unity main thread after {MCPRequestQueue.SyncTimeoutMs / 1000}s" };
+                return new
+                {
+                    error = $"Timeout waiting for Unity main thread after {MCPRequestQueue.SyncTimeoutMs / 1000}s",
+                };
 
             if (exception != null)
                 return new { error = exception.Message, stackTrace = exception.StackTrace };
@@ -1252,7 +1404,10 @@ namespace UnityMCP.Editor
                 while (_mainThreadQueue.Count > 0)
                 {
                     var action = _mainThreadQueue.Dequeue();
-                    try { action?.Invoke(); }
+                    try
+                    {
+                        action?.Invoke();
+                    }
                     catch (Exception ex)
                     {
                         Debug.LogError($"[VRSE-UMCP] Main thread action error: {ex}");
@@ -1262,7 +1417,7 @@ namespace UnityMCP.Editor
         }
 
         // Response size limits (bytes) — prevents oversized payloads from crashing the MCP stdio pipe
-        private const int ResponseSoftLimitBytes = 8 * 1024 * 1024;  // 8 MB — log warning
+        private const int ResponseSoftLimitBytes = 8 * 1024 * 1024; // 8 MB — log warning
         private const int ResponseHardLimitBytes = 16 * 1024 * 1024; // 16 MB — replace with error
 
         private static void SendJson(HttpListenerResponse response, int statusCode, object data)
@@ -1275,13 +1430,18 @@ namespace UnityMCP.Editor
             // Size validation — protect against Write EOF on large projects
             if (buffer.Length > ResponseHardLimitBytes)
             {
-                Debug.LogWarning($"[VRSE-UMCP] Response too large ({buffer.Length / (1024 * 1024)}MB), replacing with error. Use pagination parameters.");
+                Debug.LogWarning(
+                    $"[VRSE-UMCP] Response too large ({buffer.Length / (1024 * 1024)}MB), replacing with error. Use pagination parameters."
+                );
                 var errorData = new Dictionary<string, object>
                 {
                     { "error", "response_too_large" },
                     { "size", buffer.Length },
                     { "limit", ResponseHardLimitBytes },
-                    { "message", "Response exceeded size limit. Use pagination parameters (maxNodes, limit, maxResults) to request smaller chunks." },
+                    {
+                        "message",
+                        "Response exceeded size limit. Use pagination parameters (maxNodes, limit, maxResults) to request smaller chunks."
+                    },
                 };
                 json = MiniJson.Serialize(errorData);
                 buffer = Encoding.UTF8.GetBytes(json);
@@ -1289,7 +1449,9 @@ namespace UnityMCP.Editor
             }
             else if (buffer.Length > ResponseSoftLimitBytes)
             {
-                Debug.LogWarning($"[VRSE-UMCP] Large response ({buffer.Length / (1024 * 1024)}MB). Consider using pagination parameters.");
+                Debug.LogWarning(
+                    $"[VRSE-UMCP] Large response ({buffer.Length / (1024 * 1024)}MB). Consider using pagination parameters."
+                );
             }
 
             response.ContentLength64 = buffer.Length;

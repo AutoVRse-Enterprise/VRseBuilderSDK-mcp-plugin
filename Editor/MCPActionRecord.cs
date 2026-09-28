@@ -12,19 +12,19 @@ namespace UnityMCP.Editor
     [Serializable]
     public class MCPActionRecord
     {
-        public long     Id              { get; set; }
-        public DateTime Timestamp       { get; set; }
-        public string   AgentId         { get; set; }
-        public string   ActionName      { get; set; }
-        public string   Category        { get; set; }
-        public string   Status          { get; set; } // Completed, Failed, TimedOut
-        public long     ExecutionTimeMs { get; set; }
-        public string   ErrorMessage    { get; set; }
+        public long Id { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string AgentId { get; set; }
+        public string ActionName { get; set; }
+        public string Category { get; set; }
+        public string Status { get; set; } // Completed, Failed, TimedOut
+        public long ExecutionTimeMs { get; set; }
+        public string ErrorMessage { get; set; }
 
         // Target object tracking
-        public int    TargetInstanceId { get; set; } // 0 = no target
-        public string TargetPath       { get; set; }
-        public string TargetType       { get; set; } // GameObject, Component, Asset, Script, Scene, etc.
+        public int TargetInstanceId { get; set; } // 0 = no target
+        public string TargetPath { get; set; }
+        public string TargetType { get; set; } // GameObject, Component, Asset, Script, Scene, etc.
 
         // Key parameters (extracted from request)
         public Dictionary<string, string> Parameters { get; set; }
@@ -37,7 +37,8 @@ namespace UnityMCP.Editor
         /// </summary>
         public static string ExtractCategory(string actionName)
         {
-            if (string.IsNullOrEmpty(actionName)) return "unknown";
+            if (string.IsNullOrEmpty(actionName))
+                return "unknown";
             int slash = actionName.IndexOf('/');
             return slash > 0 ? actionName.Substring(0, slash).ToLower() : actionName.ToLower();
         }
@@ -47,7 +48,8 @@ namespace UnityMCP.Editor
         /// </summary>
         public static string ExtractCommand(string actionName)
         {
-            if (string.IsNullOrEmpty(actionName)) return "unknown";
+            if (string.IsNullOrEmpty(actionName))
+                return "unknown";
             int slash = actionName.LastIndexOf('/');
             return slash >= 0 && slash < actionName.Length - 1
                 ? actionName.Substring(slash + 1)
@@ -60,7 +62,8 @@ namespace UnityMCP.Editor
         /// </summary>
         public void ExtractTargetFromResult(object result)
         {
-            if (!(result is Dictionary<string, object> dict)) return;
+            if (!(result is Dictionary<string, object> dict))
+                return;
 
             // Instance ID
             if (dict.TryGetValue("instanceId", out var idObj))
@@ -82,7 +85,11 @@ namespace UnityMCP.Editor
                 TargetPath = hPath.ToString();
 
             // Name (fallback for path)
-            if (string.IsNullOrEmpty(TargetPath) && dict.TryGetValue("name", out var nameObj) && nameObj != null)
+            if (
+                string.IsNullOrEmpty(TargetPath)
+                && dict.TryGetValue("name", out var nameObj)
+                && nameObj != null
+            )
                 TargetPath = nameObj.ToString();
 
             // Determine target type from category
@@ -94,19 +101,31 @@ namespace UnityMCP.Editor
         {
             switch (category)
             {
-                case "gameobject": return "GameObject";
-                case "component":  return "Component";
-                case "asset":      return "Asset";
-                case "script":     return "Script";
-                case "scene":      return "Scene";
-                case "prefab":     return "Prefab";
+                case "gameobject":
+                    return "GameObject";
+                case "component":
+                    return "Component";
+                case "asset":
+                    return "Asset";
+                case "script":
+                    return "Script";
+                case "scene":
+                    return "Scene";
+                case "prefab":
+                    return "Prefab";
                 case "material":
-                case "renderer":   return "Material";
-                case "animation":  return "Animation";
-                case "audio":      return "Audio";
-                case "lighting":   return "Light";
-                case "physics":    return "Physics";
-                default:           return "";
+                case "renderer":
+                    return "Material";
+                case "animation":
+                    return "Animation";
+                case "audio":
+                    return "Audio";
+                case "lighting":
+                    return "Light";
+                case "physics":
+                    return "Physics";
+                default:
+                    return "";
             }
         }
 
@@ -146,18 +165,18 @@ namespace UnityMCP.Editor
         {
             var dict = new Dictionary<string, object>
             {
-                { "id",               Id },
-                { "timestamp",        Timestamp.ToString("O") },
-                { "agentId",          AgentId ?? "" },
-                { "actionName",       ActionName ?? "" },
-                { "category",         Category ?? "" },
-                { "status",           Status ?? "" },
-                { "executionTimeMs",  ExecutionTimeMs },
-                { "errorMessage",     ErrorMessage ?? "" },
+                { "id", Id },
+                { "timestamp", Timestamp.ToString("O") },
+                { "agentId", AgentId ?? "" },
+                { "actionName", ActionName ?? "" },
+                { "category", Category ?? "" },
+                { "status", Status ?? "" },
+                { "executionTimeMs", ExecutionTimeMs },
+                { "errorMessage", ErrorMessage ?? "" },
                 { "targetInstanceId", TargetInstanceId },
-                { "targetPath",       TargetPath ?? "" },
-                { "targetType",       TargetType ?? "" },
-                { "undoGroup",        UndoGroup },
+                { "targetPath", TargetPath ?? "" },
+                { "targetType", TargetType ?? "" },
+                { "undoGroup", UndoGroup },
             };
 
             if (Parameters != null && Parameters.Count > 0)

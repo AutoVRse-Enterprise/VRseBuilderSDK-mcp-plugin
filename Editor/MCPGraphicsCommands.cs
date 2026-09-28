@@ -32,7 +32,8 @@ namespace UnityMCP.Editor
             for (int i = 0; i < maxAttempts; i++)
             {
                 var preview = AssetPreview.GetAssetPreview(asset);
-                if (preview != null) return preview;
+                if (preview != null)
+                    return preview;
 
                 if (!AssetPreview.IsLoadingAssetPreview(asset.GetInstanceID()))
                     break;
@@ -91,7 +92,10 @@ namespace UnityMCP.Editor
 
             var preview = GetPreviewWithRetry(asset);
             if (preview == null)
-                return new { error = $"Could not generate preview for '{assetPath}'. Asset type may not support previews." };
+                return new
+                {
+                    error = $"Could not generate preview for '{assetPath}'. Asset type may not support previews.",
+                };
 
             // AssetPreview textures are not always readable, so copy to a readable texture
             RenderTexture rt = null;
@@ -101,7 +105,12 @@ namespace UnityMCP.Editor
                 rt = RenderTexture.GetTemporary(preview.width, preview.height, 0);
                 Graphics.Blit(preview, rt);
                 RenderTexture.active = rt;
-                readable = new Texture2D(preview.width, preview.height, TextureFormat.RGBA32, false);
+                readable = new Texture2D(
+                    preview.width,
+                    preview.height,
+                    TextureFormat.RGBA32,
+                    false
+                );
                 readable.ReadPixels(new Rect(0, 0, preview.width, preview.height), 0, 0);
                 readable.Apply();
                 RenderTexture.active = null;
@@ -121,8 +130,10 @@ namespace UnityMCP.Editor
             finally
             {
                 RenderTexture.active = null;
-                if (rt != null) RenderTexture.ReleaseTemporary(rt);
-                if (readable != null) UnityEngine.Object.DestroyImmediate(readable);
+                if (rt != null)
+                    RenderTexture.ReleaseTemporary(rt);
+                if (readable != null)
+                    UnityEngine.Object.DestroyImmediate(readable);
             }
         }
 
@@ -166,8 +177,10 @@ namespace UnityMCP.Editor
                 if (sceneView != null && sceneView.camera != null)
                     sceneView.camera.targetTexture = null;
                 RenderTexture.active = null;
-                if (tex != null) UnityEngine.Object.DestroyImmediate(tex);
-                if (rt != null) UnityEngine.Object.DestroyImmediate(rt);
+                if (tex != null)
+                    UnityEngine.Object.DestroyImmediate(tex);
+                if (rt != null)
+                    UnityEngine.Object.DestroyImmediate(rt);
             }
         }
 
@@ -183,11 +196,16 @@ namespace UnityMCP.Editor
             if (!string.IsNullOrEmpty(cameraName))
             {
                 var go = GameObject.Find(cameraName);
-                if (go != null) camera = go.GetComponent<Camera>();
+                if (go != null)
+                    camera = go.GetComponent<Camera>();
             }
-            if (camera == null) camera = Camera.main;
             if (camera == null)
-                return new { error = "No camera found. Ensure a Camera exists with tag 'MainCamera' or specify cameraName." };
+                camera = Camera.main;
+            if (camera == null)
+                return new
+                {
+                    error = "No camera found. Ensure a Camera exists with tag 'MainCamera' or specify cameraName.",
+                };
 
             RenderTexture rt = null;
             Texture2D tex = null;
@@ -218,8 +236,10 @@ namespace UnityMCP.Editor
             {
                 camera.targetTexture = prevTarget;
                 RenderTexture.active = null;
-                if (tex != null) UnityEngine.Object.DestroyImmediate(tex);
-                if (rt != null) UnityEngine.Object.DestroyImmediate(rt);
+                if (tex != null)
+                    UnityEngine.Object.DestroyImmediate(tex);
+                if (rt != null)
+                    UnityEngine.Object.DestroyImmediate(rt);
             }
         }
 
@@ -239,7 +259,9 @@ namespace UnityMCP.Editor
         public static object GetMeshInfo(Dictionary<string, object> args)
         {
             string assetPath = args.ContainsKey("assetPath") ? args["assetPath"].ToString() : "";
-            string gameObjectPath = args.ContainsKey("gameObjectPath") ? args["gameObjectPath"].ToString() : "";
+            string gameObjectPath = args.ContainsKey("gameObjectPath")
+                ? args["gameObjectPath"].ToString()
+                : "";
 
             Mesh mesh = null;
             string source = "";
@@ -310,14 +332,21 @@ namespace UnityMCP.Editor
             }
 
             if (mesh == null)
-                return new { error = "No mesh found. Provide assetPath to a mesh/model asset or gameObjectPath to a scene object with MeshFilter/SkinnedMeshRenderer." };
+                return new
+                {
+                    error = "No mesh found. Provide assetPath to a mesh/model asset or gameObjectPath to a scene object with MeshFilter/SkinnedMeshRenderer.",
+                };
 
             // Count UV channels
             int uvChannels = 0;
-            if (mesh.uv != null && mesh.uv.Length > 0) uvChannels++;
-            if (mesh.uv2 != null && mesh.uv2.Length > 0) uvChannels++;
-            if (mesh.uv3 != null && mesh.uv3.Length > 0) uvChannels++;
-            if (mesh.uv4 != null && mesh.uv4.Length > 0) uvChannels++;
+            if (mesh.uv != null && mesh.uv.Length > 0)
+                uvChannels++;
+            if (mesh.uv2 != null && mesh.uv2.Length > 0)
+                uvChannels++;
+            if (mesh.uv3 != null && mesh.uv3.Length > 0)
+                uvChannels++;
+            if (mesh.uv4 != null && mesh.uv4.Length > 0)
+                uvChannels++;
 
             return new Dictionary<string, object>
             {
@@ -344,8 +373,12 @@ namespace UnityMCP.Editor
         public static object GetMaterialInfo(Dictionary<string, object> args)
         {
             string assetPath = args.ContainsKey("assetPath") ? args["assetPath"].ToString() : "";
-            string gameObjectPath = args.ContainsKey("gameObjectPath") ? args["gameObjectPath"].ToString() : "";
-            int materialIndex = args.ContainsKey("materialIndex") ? Convert.ToInt32(args["materialIndex"]) : 0;
+            string gameObjectPath = args.ContainsKey("gameObjectPath")
+                ? args["gameObjectPath"].ToString()
+                : "";
+            int materialIndex = args.ContainsKey("materialIndex")
+                ? Convert.ToInt32(args["materialIndex"])
+                : 0;
 
             Material mat = null;
 
@@ -366,7 +399,10 @@ namespace UnityMCP.Editor
             }
 
             if (mat == null)
-                return new { error = "Material not found. Provide assetPath to a .mat file or gameObjectPath + materialIndex." };
+                return new
+                {
+                    error = "Material not found. Provide assetPath to a .mat file or gameObjectPath + materialIndex.",
+                };
 
             var shader = mat.shader;
             var result = new Dictionary<string, object>
@@ -413,8 +449,10 @@ namespace UnityMCP.Editor
                             var v = mat.GetVector(propName);
                             propDict["value"] = new Dictionary<string, object>
                             {
-                                { "x", Math.Round(v.x, 4) }, { "y", Math.Round(v.y, 4) },
-                                { "z", Math.Round(v.z, 4) }, { "w", Math.Round(v.w, 4) },
+                                { "x", Math.Round(v.x, 4) },
+                                { "y", Math.Round(v.y, 4) },
+                                { "z", Math.Round(v.z, 4) },
+                                { "w", Math.Round(v.w, 4) },
                             };
                             break;
                         case ShaderPropertyType.Texture:
@@ -460,7 +498,12 @@ namespace UnityMCP.Editor
                     {
                         Graphics.Blit(preview, rt);
                         RenderTexture.active = rt;
-                        var readable = new Texture2D(preview.width, preview.height, TextureFormat.RGBA32, false);
+                        var readable = new Texture2D(
+                            preview.width,
+                            preview.height,
+                            TextureFormat.RGBA32,
+                            false
+                        );
                         readable.ReadPixels(new Rect(0, 0, preview.width, preview.height), 0, 0);
                         readable.Apply();
                         RenderTexture.active = null;
@@ -474,9 +517,12 @@ namespace UnityMCP.Editor
                     }
                 }
             }
-            catch { /* preview optional, don't fail */ }
+            catch
+            { /* preview optional, don't fail */
+            }
 
-            if (base64 != null) result["base64"] = base64;
+            if (base64 != null)
+                result["base64"] = base64;
 
             return result;
         }
@@ -502,7 +548,9 @@ namespace UnityMCP.Editor
                 { "filterMode", texture.filterMode.ToString() },
                 { "wrapMode", texture.wrapMode.ToString() },
                 { "anisoLevel", texture.anisoLevel },
-                { "texelSize", new Dictionary<string, object>
+                {
+                    "texelSize",
+                    new Dictionary<string, object>
                     {
                         { "x", texture.texelSize.x },
                         { "y", texture.texelSize.y },
@@ -553,7 +601,12 @@ namespace UnityMCP.Editor
                     {
                         Graphics.Blit(preview, rt);
                         RenderTexture.active = rt;
-                        var readable = new Texture2D(preview.width, preview.height, TextureFormat.RGBA32, false);
+                        var readable = new Texture2D(
+                            preview.width,
+                            preview.height,
+                            TextureFormat.RGBA32,
+                            false
+                        );
                         readable.ReadPixels(new Rect(0, 0, preview.width, preview.height), 0, 0);
                         readable.Apply();
                         RenderTexture.active = null;
@@ -567,9 +620,12 @@ namespace UnityMCP.Editor
                     }
                 }
             }
-            catch { /* preview optional */ }
+            catch
+            { /* preview optional */
+            }
 
-            if (base64 != null) result["base64"] = base64;
+            if (base64 != null)
+                result["base64"] = base64;
 
             return result;
         }
@@ -578,7 +634,9 @@ namespace UnityMCP.Editor
 
         public static object GetRendererInfo(Dictionary<string, object> args)
         {
-            string gameObjectPath = args.ContainsKey("gameObjectPath") ? args["gameObjectPath"].ToString() : "";
+            string gameObjectPath = args.ContainsKey("gameObjectPath")
+                ? args["gameObjectPath"].ToString()
+                : "";
             if (string.IsNullOrEmpty(gameObjectPath))
                 return new { error = "gameObjectPath is required" };
 
@@ -612,13 +670,15 @@ namespace UnityMCP.Editor
             {
                 if (mat != null)
                 {
-                    matList.Add(new Dictionary<string, object>
-                    {
-                        { "name", mat.name },
-                        { "shaderName", mat.shader != null ? mat.shader.name : "(null)" },
-                        { "assetPath", AssetDatabase.GetAssetPath(mat) },
-                        { "renderQueue", mat.renderQueue },
-                    });
+                    matList.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", mat.name },
+                            { "shaderName", mat.shader != null ? mat.shader.name : "(null)" },
+                            { "assetPath", AssetDatabase.GetAssetPath(mat) },
+                            { "renderQueue", mat.renderQueue },
+                        }
+                    );
                 }
                 else
                 {

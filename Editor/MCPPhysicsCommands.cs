@@ -12,10 +12,20 @@ namespace UnityMCP.Editor
     {
         public static object Raycast(Dictionary<string, object> args)
         {
-            Vector3 origin = MCPGameObjectCommands.DictToVector3(args.ContainsKey("origin") ? args["origin"] as Dictionary<string, object> : null);
-            Vector3 direction = MCPGameObjectCommands.DictToVector3(args.ContainsKey("direction") ? args["direction"] as Dictionary<string, object> : null);
-            float maxDistance = args.ContainsKey("maxDistance") ? Convert.ToSingle(args["maxDistance"]) : Mathf.Infinity;
-            int layerMask = args.ContainsKey("layerMask") ? Convert.ToInt32(args["layerMask"]) : Physics.DefaultRaycastLayers;
+            Vector3 origin = MCPGameObjectCommands.DictToVector3(
+                args.ContainsKey("origin") ? args["origin"] as Dictionary<string, object> : null
+            );
+            Vector3 direction = MCPGameObjectCommands.DictToVector3(
+                args.ContainsKey("direction")
+                    ? args["direction"] as Dictionary<string, object>
+                    : null
+            );
+            float maxDistance = args.ContainsKey("maxDistance")
+                ? Convert.ToSingle(args["maxDistance"])
+                : Mathf.Infinity;
+            int layerMask = args.ContainsKey("layerMask")
+                ? Convert.ToInt32(args["layerMask"])
+                : Physics.DefaultRaycastLayers;
 
             if (direction == Vector3.zero)
                 direction = Vector3.forward;
@@ -43,7 +53,12 @@ namespace UnityMCP.Editor
                 RaycastHit hit;
                 bool didHit = Physics.Raycast(origin, direction, out hit, maxDistance, layerMask);
                 if (!didHit)
-                    return new { hit = false, origin = MCPGameObjectCommands.Vector3ToDict(origin), direction = MCPGameObjectCommands.Vector3ToDict(direction) };
+                    return new
+                    {
+                        hit = false,
+                        origin = MCPGameObjectCommands.Vector3ToDict(origin),
+                        direction = MCPGameObjectCommands.Vector3ToDict(direction),
+                    };
 
                 return new Dictionary<string, object>
                 {
@@ -57,21 +72,27 @@ namespace UnityMCP.Editor
 
         public static object OverlapSphere(Dictionary<string, object> args)
         {
-            Vector3 center = MCPGameObjectCommands.DictToVector3(args.ContainsKey("center") ? args["center"] as Dictionary<string, object> : null);
+            Vector3 center = MCPGameObjectCommands.DictToVector3(
+                args.ContainsKey("center") ? args["center"] as Dictionary<string, object> : null
+            );
             float radius = args.ContainsKey("radius") ? Convert.ToSingle(args["radius"]) : 1f;
-            int layerMask = args.ContainsKey("layerMask") ? Convert.ToInt32(args["layerMask"]) : Physics.AllLayers;
+            int layerMask = args.ContainsKey("layerMask")
+                ? Convert.ToInt32(args["layerMask"])
+                : Physics.AllLayers;
 
             var colliders = Physics.OverlapSphere(center, radius, layerMask);
             var results = new List<Dictionary<string, object>>();
             foreach (var col in colliders)
             {
-                results.Add(new Dictionary<string, object>
-                {
-                    { "gameObject", col.gameObject.name },
-                    { "colliderType", col.GetType().Name },
-                    { "position", MCPGameObjectCommands.Vector3ToDict(col.transform.position) },
-                    { "instanceId", col.gameObject.GetInstanceID() },
-                });
+                results.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "gameObject", col.gameObject.name },
+                        { "colliderType", col.GetType().Name },
+                        { "position", MCPGameObjectCommands.Vector3ToDict(col.transform.position) },
+                        { "instanceId", col.gameObject.GetInstanceID() },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -85,22 +106,33 @@ namespace UnityMCP.Editor
 
         public static object OverlapBox(Dictionary<string, object> args)
         {
-            Vector3 center = MCPGameObjectCommands.DictToVector3(args.ContainsKey("center") ? args["center"] as Dictionary<string, object> : null);
-            Vector3 halfExtents = MCPGameObjectCommands.DictToVector3(args.ContainsKey("halfExtents") ? args["halfExtents"] as Dictionary<string, object> : null);
-            if (halfExtents == Vector3.zero) halfExtents = Vector3.one * 0.5f;
-            int layerMask = args.ContainsKey("layerMask") ? Convert.ToInt32(args["layerMask"]) : Physics.AllLayers;
+            Vector3 center = MCPGameObjectCommands.DictToVector3(
+                args.ContainsKey("center") ? args["center"] as Dictionary<string, object> : null
+            );
+            Vector3 halfExtents = MCPGameObjectCommands.DictToVector3(
+                args.ContainsKey("halfExtents")
+                    ? args["halfExtents"] as Dictionary<string, object>
+                    : null
+            );
+            if (halfExtents == Vector3.zero)
+                halfExtents = Vector3.one * 0.5f;
+            int layerMask = args.ContainsKey("layerMask")
+                ? Convert.ToInt32(args["layerMask"])
+                : Physics.AllLayers;
 
             var colliders = Physics.OverlapBox(center, halfExtents, Quaternion.identity, layerMask);
             var results = new List<Dictionary<string, object>>();
             foreach (var col in colliders)
             {
-                results.Add(new Dictionary<string, object>
-                {
-                    { "gameObject", col.gameObject.name },
-                    { "colliderType", col.GetType().Name },
-                    { "position", MCPGameObjectCommands.Vector3ToDict(col.transform.position) },
-                    { "instanceId", col.gameObject.GetInstanceID() },
-                });
+                results.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "gameObject", col.gameObject.name },
+                        { "colliderType", col.GetType().Name },
+                        { "position", MCPGameObjectCommands.Vector3ToDict(col.transform.position) },
+                        { "instanceId", col.gameObject.GetInstanceID() },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -118,23 +150,22 @@ namespace UnityMCP.Editor
             for (int i = 0; i < 32; i++)
             {
                 string layerName = LayerMask.LayerToName(i);
-                if (string.IsNullOrEmpty(layerName)) continue;
+                if (string.IsNullOrEmpty(layerName))
+                    continue;
 
                 var collidesWith = new List<string>();
                 for (int j = 0; j < 32; j++)
                 {
                     string otherName = LayerMask.LayerToName(j);
-                    if (string.IsNullOrEmpty(otherName)) continue;
+                    if (string.IsNullOrEmpty(otherName))
+                        continue;
                     if (!Physics.GetIgnoreLayerCollision(i, j))
                         collidesWith.Add(otherName);
                 }
                 matrix[layerName] = collidesWith;
             }
 
-            return new Dictionary<string, object>
-            {
-                { "matrix", matrix },
-            };
+            return new Dictionary<string, object> { { "matrix", matrix } };
         }
 
         public static object SetCollisionLayer(Dictionary<string, object> args)
@@ -167,7 +198,9 @@ namespace UnityMCP.Editor
         {
             if (args.ContainsKey("gravity"))
             {
-                var gravity = MCPGameObjectCommands.DictToVector3(args["gravity"] as Dictionary<string, object>);
+                var gravity = MCPGameObjectCommands.DictToVector3(
+                    args["gravity"] as Dictionary<string, object>
+                );
                 Physics.gravity = gravity;
             }
 

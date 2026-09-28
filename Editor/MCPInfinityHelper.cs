@@ -29,7 +29,8 @@ namespace UnityMCP.Editor
             public float Progress;
         }
 
-        private static readonly Dictionary<string, AsyncJob> _jobs = new Dictionary<string, AsyncJob>();
+        private static readonly Dictionary<string, AsyncJob> _jobs =
+            new Dictionary<string, AsyncJob>();
         private static AssetServiceClient _client;
         private static bool _isInitialized;
         private static SessionData _sessionData;
@@ -57,7 +58,9 @@ namespace UnityMCP.Editor
                 if (_sessionData != null)
                 {
                     currentTenant = _sessionData.currentTenant?.name ?? "";
-                    availableTenants = _sessionData.tenants?.Select(t => t.name).ToArray() ?? Array.Empty<string>();
+                    availableTenants =
+                        _sessionData.tenants?.Select(t => t.name).ToArray()
+                        ?? Array.Empty<string>();
                 }
 
                 var result = new
@@ -67,7 +70,7 @@ namespace UnityMCP.Editor
                     userRole,
                     isInitialized = _isInitialized,
                     currentTenant,
-                    availableTenants
+                    availableTenants,
                 };
 
                 return JsonConvert.SerializeObject(result);
@@ -112,7 +115,7 @@ namespace UnityMCP.Editor
                     {
                         isAuthenticated = true,
                         username = client.Username ?? "",
-                        tenantName = _sessionData?.currentTenant?.name ?? ""
+                        tenantName = _sessionData?.currentTenant?.name ?? "",
                     };
                 }
                 else
@@ -122,7 +125,7 @@ namespace UnityMCP.Editor
                     {
                         isAuthenticated = false,
                         username = "",
-                        tenantName = ""
+                        tenantName = "",
                     };
                 }
             }
@@ -143,28 +146,39 @@ namespace UnityMCP.Editor
         }
 
         // ─── Tool 2: ListAssets ───
-        public static string ListAssets(string query, string tags, string tenantName,
-            int page, int limit, bool collectionsOnly, bool showWip)
+        public static string ListAssets(
+            string query,
+            string tags,
+            string tenantName,
+            int page,
+            int limit,
+            bool collectionsOnly,
+            bool showWip
+        )
         {
             try
             {
                 var client = GetClient();
                 if (!client.IsLoggedIn())
                 {
-                    return JsonConvert.SerializeObject(new
-                    {
-                        error = true,
-                        message = "Not authenticated. Please login via Window > Infinity Workshop."
-                    });
+                    return JsonConvert.SerializeObject(
+                        new
+                        {
+                            error = true,
+                            message = "Not authenticated. Please login via Window > Infinity Workshop.",
+                        }
+                    );
                 }
 
                 // Use the tenant from session data or provided name
                 string tenantId = "";
                 if (!string.IsNullOrEmpty(tenantName) && _sessionData?.tenants != null)
                 {
-                    var tenant = _sessionData.tenants.FirstOrDefault(
-                        t => t.name.Equals(tenantName, StringComparison.OrdinalIgnoreCase));
-                    if (tenant != null) tenantId = tenant._id;
+                    var tenant = _sessionData.tenants.FirstOrDefault(t =>
+                        t.name.Equals(tenantName, StringComparison.OrdinalIgnoreCase)
+                    );
+                    if (tenant != null)
+                        tenantId = tenant._id;
                 }
                 else if (_sessionData?.currentTenant != null)
                 {
@@ -173,29 +187,46 @@ namespace UnityMCP.Editor
 
                 if (string.IsNullOrEmpty(tenantId))
                 {
-                    return JsonConvert.SerializeObject(new
-                    {
-                        error = true,
-                        message = "No tenant available. Initialize first or provide tenantName."
-                    });
+                    return JsonConvert.SerializeObject(
+                        new
+                        {
+                            error = true,
+                            message = "No tenant available. Initialize first or provide tenantName.",
+                        }
+                    );
                 }
 
                 // Parse tags
                 string[] tagArray = null;
                 if (!string.IsNullOrEmpty(tags))
                 {
-                    tagArray = tags.Split(',').Select(t => t.Trim()).Where(t => !string.IsNullOrEmpty(t)).ToArray();
+                    tagArray = tags.Split(',')
+                        .Select(t => t.Trim())
+                        .Where(t => !string.IsNullOrEmpty(t))
+                        .ToArray();
                 }
 
                 // Run async list
                 string jobId = Guid.NewGuid().ToString("N").Substring(0, 8);
                 _jobs[jobId] = new AsyncJob();
 
-                ListAssetsAsync(jobId, client, tenantId, query, tagArray, page, limit, collectionsOnly, showWip);
+                ListAssetsAsync(
+                    jobId,
+                    client,
+                    tenantId,
+                    query,
+                    tagArray,
+                    page,
+                    limit,
+                    collectionsOnly,
+                    showWip
+                );
 
                 // Wait synchronously for a short period (listing is fast)
                 int waitMs = 0;
-                while (waitMs < 15000 && _jobs.ContainsKey(jobId) && _jobs[jobId].Status == "running")
+                while (
+                    waitMs < 15000 && _jobs.ContainsKey(jobId) && _jobs[jobId].Status == "running"
+                )
                 {
                     System.Threading.Thread.Sleep(100);
                     waitMs += 100;
@@ -209,12 +240,16 @@ namespace UnityMCP.Editor
                 }
                 else if (_jobs.ContainsKey(jobId) && _jobs[jobId].Status == "error")
                 {
-                    string err = JsonConvert.SerializeObject(new { error = true, message = _jobs[jobId].Error });
+                    string err = JsonConvert.SerializeObject(
+                        new { error = true, message = _jobs[jobId].Error }
+                    );
                     _jobs.Remove(jobId);
                     return err;
                 }
 
-                return JsonConvert.SerializeObject(new { error = true, message = "ListAssets timed out." });
+                return JsonConvert.SerializeObject(
+                    new { error = true, message = "ListAssets timed out." }
+                );
             }
             catch (Exception ex)
             {
@@ -222,9 +257,17 @@ namespace UnityMCP.Editor
             }
         }
 
-        private static async void ListAssetsAsync(string jobId, AssetServiceClient client,
-            string tenantId, string query, string[] tags, int page, int limit,
-            bool collectionsOnly, bool showWip)
+        private static async void ListAssetsAsync(
+            string jobId,
+            AssetServiceClient client,
+            string tenantId,
+            string query,
+            string[] tags,
+            int page,
+            int limit,
+            bool collectionsOnly,
+            bool showWip
+        )
         {
             try
             {
@@ -234,31 +277,40 @@ namespace UnityMCP.Editor
                 var filtered = assets.ToList();
                 if (!showWip)
                 {
-                    filtered = filtered.Where(a => a.tags == null || !a.tags.Contains("WIP")).ToList();
+                    filtered = filtered
+                        .Where(a => a.tags == null || !a.tags.Contains("WIP"))
+                        .ToList();
                 }
 
                 // Filter collections if requested
                 if (collectionsOnly)
                 {
-                    filtered = filtered.Where(a =>
-                        a.currentVersionId?.unityAssetDetails?.isPartOfCollection == true).ToList();
+                    filtered = filtered
+                        .Where(a =>
+                            a.currentVersionId?.unityAssetDetails?.isPartOfCollection == true
+                        )
+                        .ToList();
                 }
 
                 var result = new
                 {
-                    assets = filtered.Select(a => new
-                    {
-                        a.assetId,
-                        a.name,
-                        a.tags,
-                        a.thumbnailUrl,
-                        isCollection = a.currentVersionId?.unityAssetDetails?.isPartOfCollection ?? false,
-                        collectionKey = a.currentVersionId?.unityAssetDetails?.collectionKey ?? "",
-                        updatedAt = a.updatedAt.ToString("o")
-                    }).ToList(),
+                    assets = filtered
+                        .Select(a => new
+                        {
+                            a.assetId,
+                            a.name,
+                            a.tags,
+                            a.thumbnailUrl,
+                            isCollection = a.currentVersionId?.unityAssetDetails?.isPartOfCollection
+                                ?? false,
+                            collectionKey = a.currentVersionId?.unityAssetDetails?.collectionKey
+                                ?? "",
+                            updatedAt = a.updatedAt.ToString("o"),
+                        })
+                        .ToList(),
                     total = filtered.Count,
                     page,
-                    limit
+                    limit,
                 };
 
                 _jobs[jobId].Status = "complete";
@@ -275,27 +327,33 @@ namespace UnityMCP.Editor
         }
 
         // ─── Tool 3: DownloadAssets ───
-        public static string DownloadAssets(string assetIdsJson, string downloadPath, string conflictPolicy)
+        public static string DownloadAssets(
+            string assetIdsJson,
+            string downloadPath,
+            string conflictPolicy
+        )
         {
             try
             {
                 var client = GetClient();
                 if (!client.IsLoggedIn())
                 {
-                    return JsonConvert.SerializeObject(new
-                    {
-                        error = true,
-                        message = "Not authenticated."
-                    });
+                    return JsonConvert.SerializeObject(
+                        new { error = true, message = "Not authenticated." }
+                    );
                 }
 
                 var assetIds = JsonConvert.DeserializeObject<string[]>(assetIdsJson);
                 if (assetIds == null || assetIds.Length == 0)
                 {
-                    return JsonConvert.SerializeObject(new { error = true, message = "No asset IDs provided." });
+                    return JsonConvert.SerializeObject(
+                        new { error = true, message = "No asset IDs provided." }
+                    );
                 }
 
-                string basePath = string.IsNullOrEmpty(downloadPath) ? "Assets/CommonArt/3DAssets" : downloadPath;
+                string basePath = string.IsNullOrEmpty(downloadPath)
+                    ? "Assets/CommonArt/3DAssets"
+                    : downloadPath;
                 string jobId = Guid.NewGuid().ToString("N").Substring(0, 8);
                 _jobs[jobId] = new AsyncJob();
 
@@ -309,8 +367,13 @@ namespace UnityMCP.Editor
             }
         }
 
-        private static async void DownloadAssetsAsync(string jobId, AssetServiceClient client,
-            string[] assetIds, string basePath, string conflictPolicy)
+        private static async void DownloadAssetsAsync(
+            string jobId,
+            AssetServiceClient client,
+            string[] assetIds,
+            string basePath,
+            string conflictPolicy
+        )
         {
             var results = new List<object>();
             int successCount = 0;
@@ -328,17 +391,33 @@ namespace UnityMCP.Editor
                         string assetFolder = Path.Combine(basePath, assetName);
 
                         // Check conflict
-                        string fullPath = Path.Combine(Application.dataPath, "..",  assetFolder);
+                        string fullPath = Path.Combine(Application.dataPath, "..", assetFolder);
                         if (Directory.Exists(fullPath))
                         {
                             switch (conflictPolicy)
                             {
                                 case "cancel":
-                                    results.Add(new { assetId, name = assetName, status = "conflict", message = "Already exists" });
+                                    results.Add(
+                                        new
+                                        {
+                                            assetId,
+                                            name = assetName,
+                                            status = "conflict",
+                                            message = "Already exists",
+                                        }
+                                    );
                                     failCount++;
                                     continue;
                                 case "skip":
-                                    results.Add(new { assetId, name = assetName, status = "skipped", message = "Already exists" });
+                                    results.Add(
+                                        new
+                                        {
+                                            assetId,
+                                            name = assetName,
+                                            status = "skipped",
+                                            message = "Already exists",
+                                        }
+                                    );
                                     continue;
                                 case "overwrite":
                                     // Continue with download
@@ -348,7 +427,12 @@ namespace UnityMCP.Editor
 
                         // Download
                         int version = assetInfo?.latestVersionNumber ?? 1;
-                        bool success = await client.DownloadAssetAsync(assetId, version, fullPath, null);
+                        bool success = await client.DownloadAssetAsync(
+                            assetId,
+                            version,
+                            fullPath,
+                            null
+                        );
 
                         if (success)
                         {
@@ -357,18 +441,41 @@ namespace UnityMCP.Editor
                             File.WriteAllText(markerPath, assetId);
 
                             successCount++;
-                            results.Add(new { assetId, name = assetName, status = "success", path = assetFolder });
+                            results.Add(
+                                new
+                                {
+                                    assetId,
+                                    name = assetName,
+                                    status = "success",
+                                    path = assetFolder,
+                                }
+                            );
                         }
                         else
                         {
                             failCount++;
-                            results.Add(new { assetId, name = assetName, status = "failed", message = "Download failed" });
+                            results.Add(
+                                new
+                                {
+                                    assetId,
+                                    name = assetName,
+                                    status = "failed",
+                                    message = "Download failed",
+                                }
+                            );
                         }
                     }
                     catch (Exception ex)
                     {
                         failCount++;
-                        results.Add(new { assetId, status = "failed", message = ex.Message });
+                        results.Add(
+                            new
+                            {
+                                assetId,
+                                status = "failed",
+                                message = ex.Message,
+                            }
+                        );
                     }
                 }
 
@@ -381,7 +488,7 @@ namespace UnityMCP.Editor
                     total = assetIds.Length,
                     success = successCount,
                     failed = failCount,
-                    results
+                    results,
                 };
             }
             catch (Exception ex)
@@ -416,7 +523,11 @@ namespace UnityMCP.Editor
                     // Search for _assetId.txt markers
                     if (Directory.Exists(searchRoot))
                     {
-                        var markerFiles = Directory.GetFiles(searchRoot, "_assetId.txt", SearchOption.AllDirectories);
+                        var markerFiles = Directory.GetFiles(
+                            searchRoot,
+                            "_assetId.txt",
+                            SearchOption.AllDirectories
+                        );
                         foreach (var marker in markerFiles)
                         {
                             string content = File.ReadAllText(marker).Trim();
@@ -424,23 +535,51 @@ namespace UnityMCP.Editor
                             {
                                 string folder = Path.GetDirectoryName(marker);
                                 // Convert to Unity relative path
-                                folderPath = "Assets" + folder.Substring(Application.dataPath.Length).Replace("\\", "/");
+                                folderPath =
+                                    "Assets"
+                                    + folder
+                                        .Substring(Application.dataPath.Length)
+                                        .Replace("\\", "/");
 
                                 // Find FBX and prefab
-                                var fbxFiles = Directory.GetFiles(folder, "*.fbx", SearchOption.TopDirectoryOnly);
+                                var fbxFiles = Directory.GetFiles(
+                                    folder,
+                                    "*.fbx",
+                                    SearchOption.TopDirectoryOnly
+                                );
                                 if (fbxFiles.Length > 0)
-                                    fbxPath = "Assets" + fbxFiles[0].Substring(Application.dataPath.Length).Replace("\\", "/");
+                                    fbxPath =
+                                        "Assets"
+                                        + fbxFiles[0]
+                                            .Substring(Application.dataPath.Length)
+                                            .Replace("\\", "/");
 
-                                var prefabFiles = Directory.GetFiles(folder, "*.prefab", SearchOption.TopDirectoryOnly);
+                                var prefabFiles = Directory.GetFiles(
+                                    folder,
+                                    "*.prefab",
+                                    SearchOption.TopDirectoryOnly
+                                );
                                 if (prefabFiles.Length > 0)
-                                    prefabPath = "Assets" + prefabFiles[0].Substring(Application.dataPath.Length).Replace("\\", "/");
+                                    prefabPath =
+                                        "Assets"
+                                        + prefabFiles[0]
+                                            .Substring(Application.dataPath.Length)
+                                            .Replace("\\", "/");
 
                                 break;
                             }
                         }
                     }
 
-                    paths.Add(new { assetId, folderPath, fbxPath, prefabPath });
+                    paths.Add(
+                        new
+                        {
+                            assetId,
+                            folderPath,
+                            fbxPath,
+                            prefabPath,
+                        }
+                    );
                 }
 
                 return JsonConvert.SerializeObject(new { paths });
@@ -452,18 +591,29 @@ namespace UnityMCP.Editor
         }
 
         // ─── Tool 5: AddToScene ───
-        public static string AddToScene(string assetPath, string name,
-            float posX, float posY, float posZ,
-            float rotX, float rotY, float rotZ,
-            float sclX, float sclY, float sclZ,
-            string parent)
+        public static string AddToScene(
+            string assetPath,
+            string name,
+            float posX,
+            float posY,
+            float posZ,
+            float rotX,
+            float rotY,
+            float rotZ,
+            float sclX,
+            float sclY,
+            float sclZ,
+            string parent
+        )
         {
             try
             {
                 var asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
                 if (asset == null)
                 {
-                    return JsonConvert.SerializeObject(new { error = true, message = $"Asset not found: {assetPath}" });
+                    return JsonConvert.SerializeObject(
+                        new { error = true, message = $"Asset not found: {assetPath}" }
+                    );
                 }
 
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(asset);
@@ -490,13 +640,15 @@ namespace UnityMCP.Editor
                 Undo.RegisterCreatedObjectUndo(instance, $"MCP Add {instance.name}");
                 EditorUtility.SetDirty(instance);
 
-                return JsonConvert.SerializeObject(new
-                {
-                    success = true,
-                    name = instance.name,
-                    instanceId = instance.GetInstanceID(),
-                    path = GetHierarchyPath(instance.transform)
-                });
+                return JsonConvert.SerializeObject(
+                    new
+                    {
+                        success = true,
+                        name = instance.name,
+                        instanceId = instance.GetInstanceID(),
+                        path = GetHierarchyPath(instance.transform),
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -505,18 +657,30 @@ namespace UnityMCP.Editor
         }
 
         // ─── Tool 9: PlaceSmart ───
-        public static string PlaceSmart(string assetPath, string name, string targetArea,
-            float spacing, bool snapToGround,
-            float sclX, float sclY, float sclZ,
-            float centerX, float centerY, float centerZ,
-            bool strictSafePlacement, string qualityPreset)
+        public static string PlaceSmart(
+            string assetPath,
+            string name,
+            string targetArea,
+            float spacing,
+            bool snapToGround,
+            float sclX,
+            float sclY,
+            float sclZ,
+            float centerX,
+            float centerY,
+            float centerZ,
+            bool strictSafePlacement,
+            string qualityPreset
+        )
         {
             try
             {
                 var asset = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
                 if (asset == null)
                 {
-                    return JsonConvert.SerializeObject(new { error = true, message = $"Asset not found: {assetPath}" });
+                    return JsonConvert.SerializeObject(
+                        new { error = true, message = $"Asset not found: {assetPath}" }
+                    );
                 }
 
                 // Determine center position
@@ -531,7 +695,12 @@ namespace UnityMCP.Editor
                 }
 
                 // Find safe position using spiral search
-                Vector3 placement = FindSafePlacement(center, spacing, strictSafePlacement, qualityPreset);
+                Vector3 placement = FindSafePlacement(
+                    center,
+                    spacing,
+                    strictSafePlacement,
+                    qualityPreset
+                );
 
                 // Instantiate
                 var instance = (GameObject)PrefabUtility.InstantiatePrefab(asset);
@@ -555,7 +724,14 @@ namespace UnityMCP.Editor
                 // Snap to ground
                 if (snapToGround)
                 {
-                    if (Physics.Raycast(instance.transform.position + Vector3.up * 50f, Vector3.down, out RaycastHit hit, 100f))
+                    if (
+                        Physics.Raycast(
+                            instance.transform.position + Vector3.up * 50f,
+                            Vector3.down,
+                            out RaycastHit hit,
+                            100f
+                        )
+                    )
                     {
                         instance.transform.position = hit.point;
                     }
@@ -564,14 +740,21 @@ namespace UnityMCP.Editor
                 Undo.RegisterCreatedObjectUndo(instance, $"MCP PlaceSmart {instance.name}");
                 EditorUtility.SetDirty(instance);
 
-                return JsonConvert.SerializeObject(new
-                {
-                    success = true,
-                    name = instance.name,
-                    instanceId = instance.GetInstanceID(),
-                    path = GetHierarchyPath(instance.transform),
-                    position = new { x = instance.transform.position.x, y = instance.transform.position.y, z = instance.transform.position.z }
-                });
+                return JsonConvert.SerializeObject(
+                    new
+                    {
+                        success = true,
+                        name = instance.name,
+                        instanceId = instance.GetInstanceID(),
+                        path = GetHierarchyPath(instance.transform),
+                        position = new
+                        {
+                            x = instance.transform.position.x,
+                            y = instance.transform.position.y,
+                            z = instance.transform.position.z,
+                        },
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -580,11 +763,20 @@ namespace UnityMCP.Editor
         }
 
         // ─── Tool 10: PlaceSmartBatch ───
-        public static string PlaceSmartBatch(string assetPathsJson, string targetArea,
-            float spacing, bool snapToGround,
-            float sclX, float sclY, float sclZ,
-            float centerX, float centerY, float centerZ,
-            bool strictSafePlacement, string qualityPreset)
+        public static string PlaceSmartBatch(
+            string assetPathsJson,
+            string targetArea,
+            float spacing,
+            bool snapToGround,
+            float sclX,
+            float sclY,
+            float sclZ,
+            float centerX,
+            float centerY,
+            float centerZ,
+            bool strictSafePlacement,
+            string qualityPreset
+        )
         {
             try
             {
@@ -615,7 +807,13 @@ namespace UnityMCP.Editor
                         }
 
                         // Find safe position that avoids existing + batch-placed objects
-                        Vector3 position = FindSafePlacementWithExclusions(center, spacing, placedPositions, strictSafePlacement, qualityPreset);
+                        Vector3 position = FindSafePlacementWithExclusions(
+                            center,
+                            spacing,
+                            placedPositions,
+                            strictSafePlacement,
+                            qualityPreset
+                        );
 
                         var instance = (GameObject)PrefabUtility.InstantiatePrefab(asset);
                         if (instance == null)
@@ -633,7 +831,14 @@ namespace UnityMCP.Editor
 
                         if (snapToGround)
                         {
-                            if (Physics.Raycast(instance.transform.position + Vector3.up * 50f, Vector3.down, out RaycastHit hit, 100f))
+                            if (
+                                Physics.Raycast(
+                                    instance.transform.position + Vector3.up * 50f,
+                                    Vector3.down,
+                                    out RaycastHit hit,
+                                    100f
+                                )
+                            )
                             {
                                 instance.transform.position = hit.point;
                             }
@@ -642,13 +847,20 @@ namespace UnityMCP.Editor
                         Undo.RegisterCreatedObjectUndo(instance, $"MCP BatchPlace {instance.name}");
                         placedPositions.Add(instance.transform.position);
 
-                        placed.Add(new
-                        {
-                            assetPath,
-                            name = instance.name,
-                            instanceId = instance.GetInstanceID(),
-                            position = new { x = instance.transform.position.x, y = instance.transform.position.y, z = instance.transform.position.z }
-                        });
+                        placed.Add(
+                            new
+                            {
+                                assetPath,
+                                name = instance.name,
+                                instanceId = instance.GetInstanceID(),
+                                position = new
+                                {
+                                    x = instance.transform.position.x,
+                                    y = instance.transform.position.y,
+                                    z = instance.transform.position.z,
+                                },
+                            }
+                        );
                     }
                     catch (Exception ex)
                     {
@@ -656,14 +868,16 @@ namespace UnityMCP.Editor
                     }
                 }
 
-                return JsonConvert.SerializeObject(new
-                {
-                    success = true,
-                    placedCount = placed.Count,
-                    skippedCount = skipped.Count,
-                    placed,
-                    skipped
-                });
+                return JsonConvert.SerializeObject(
+                    new
+                    {
+                        success = true,
+                        placedCount = placed.Count,
+                        skippedCount = skipped.Count,
+                        placed,
+                        skipped,
+                    }
+                );
             }
             catch (Exception ex)
             {
@@ -677,13 +891,17 @@ namespace UnityMCP.Editor
         {
             if (!_jobs.ContainsKey(jobId))
             {
-                return JsonConvert.SerializeObject(new { status = "error", error = $"Unknown job: {jobId}" });
+                return JsonConvert.SerializeObject(
+                    new { status = "error", error = $"Unknown job: {jobId}" }
+                );
             }
 
             var job = _jobs[jobId];
             if (job.Status == "running")
             {
-                return JsonConvert.SerializeObject(new { status = "running", progress = job.Progress });
+                return JsonConvert.SerializeObject(
+                    new { status = "running", progress = job.Progress }
+                );
             }
             else if (job.Status == "complete")
             {
@@ -693,7 +911,9 @@ namespace UnityMCP.Editor
             }
             else // error
             {
-                string result = JsonConvert.SerializeObject(new { status = "error", error = job.Error });
+                string result = JsonConvert.SerializeObject(
+                    new { status = "error", error = job.Error }
+                );
                 _jobs.Remove(jobId);
                 return result;
             }
@@ -720,18 +940,35 @@ namespace UnityMCP.Editor
             return bounds.center;
         }
 
-        private static Vector3 FindSafePlacement(Vector3 center, float spacing,
-            bool strict, string preset)
+        private static Vector3 FindSafePlacement(
+            Vector3 center,
+            float spacing,
+            bool strict,
+            string preset
+        )
         {
-            return FindSafePlacementWithExclusions(center, spacing, new List<Vector3>(), strict, preset);
+            return FindSafePlacementWithExclusions(
+                center,
+                spacing,
+                new List<Vector3>(),
+                strict,
+                preset
+            );
         }
 
-        private static Vector3 FindSafePlacementWithExclusions(Vector3 center, float spacing,
-            List<Vector3> excludePositions, bool strict, string preset)
+        private static Vector3 FindSafePlacementWithExclusions(
+            Vector3 center,
+            float spacing,
+            List<Vector3> excludePositions,
+            bool strict,
+            string preset
+        )
         {
             float minSpacing = spacing;
-            if (preset == "strict") minSpacing = Mathf.Max(spacing, 5f);
-            else if (preset == "relaxed") minSpacing = Mathf.Max(spacing * 0.5f, 0.3f);
+            if (preset == "strict")
+                minSpacing = Mathf.Max(spacing, 5f);
+            else if (preset == "relaxed")
+                minSpacing = Mathf.Max(spacing * 0.5f, 0.3f);
 
             // Spiral search outward from center
             int maxAttempts = strict ? 200 : 50;
@@ -742,11 +979,8 @@ namespace UnityMCP.Editor
                 // Spiral coordinates
                 float angle = i * 137.5f * Mathf.Deg2Rad; // Golden angle
                 float radius = stepSize * Mathf.Sqrt(i);
-                Vector3 candidate = center + new Vector3(
-                    Mathf.Cos(angle) * radius,
-                    0,
-                    Mathf.Sin(angle) * radius
-                );
+                Vector3 candidate =
+                    center + new Vector3(Mathf.Cos(angle) * radius, 0, Mathf.Sin(angle) * radius);
 
                 // Check against excluded positions
                 bool tooClose = false;
@@ -777,8 +1011,10 @@ namespace UnityMCP.Editor
 
         private static string GetHierarchyPath(Transform transform)
         {
-            if (transform == null) return string.Empty;
-            if (transform.parent == null) return transform.name;
+            if (transform == null)
+                return string.Empty;
+            if (transform.parent == null)
+                return transform.name;
             return GetHierarchyPath(transform.parent) + "/" + transform.name;
         }
     }

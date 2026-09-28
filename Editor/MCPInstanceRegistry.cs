@@ -55,7 +55,9 @@ namespace UnityMCP.Editor
             // Determine registry directory based on platform
             if (Application.platform == RuntimePlatform.WindowsEditor)
             {
-                string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                string localAppData = Environment.GetFolderPath(
+                    Environment.SpecialFolder.LocalApplicationData
+                );
                 RegistryDir = Path.Combine(localAppData, "UnityMCP");
             }
             else
@@ -82,77 +84,86 @@ namespace UnityMCP.Editor
         {
             int result = PortRangeStart;
 
-            WithRegistryLock(() =>
-            {
-                var occupiedPorts = new HashSet<int>();
-                string myProjectPath = GetProjectPath();
-
-                // Read registry to find ports claimed by other instances
-                var instances = ReadRegistry();
-                foreach (var inst in instances)
+            WithRegistryLock(
+                () =>
                 {
-                    if (inst.ContainsKey("port"))
-                    {
-                        int existingPort = ExtractPort(inst);
-                        if (existingPort > 0)
-                            occupiedPorts.Add(existingPort);
-                    }
-                }
+                    var occupiedPorts = new HashSet<int>();
+                    string myProjectPath = GetProjectPath();
 
-                // Port affinity: try to reclaim the last-used port for this project.
-                // This prevents port swapping when multiple projects restart simultaneously.
-                int preferredPort = GetLastUsedPort();
-                if (preferredPort >= PortRangeStart && preferredPort <= PortRangeEnd)
-                {
-                    // Check the preferred port isn't claimed by a DIFFERENT project in the registry
-                    bool claimedByOther = false;
+                    // Read registry to find ports claimed by other instances
+                    var instances = ReadRegistry();
                     foreach (var inst in instances)
                     {
-                        int instPort = ExtractPort(inst);
-                        if (instPort == preferredPort)
+                        if (inst.ContainsKey("port"))
                         {
-                            string instPath = inst.ContainsKey("projectPath") ? inst["projectPath"].ToString() : "";
-                            if (instPath != myProjectPath)
-                            {
-                                claimedByOther = true;
-                            }
-                            break;
+                            int existingPort = ExtractPort(inst);
+                            if (existingPort > 0)
+                                occupiedPorts.Add(existingPort);
                         }
                     }
 
-                    if (!claimedByOther && IsPortAvailable(preferredPort))
+                    // Port affinity: try to reclaim the last-used port for this project.
+                    // This prevents port swapping when multiple projects restart simultaneously.
+                    int preferredPort = GetLastUsedPort();
+                    if (preferredPort >= PortRangeStart && preferredPort <= PortRangeEnd)
                     {
-                        Debug.Log($"[VRSE-UMCP] Reclaimed preferred port {preferredPort} (port affinity).");
-                        result = preferredPort;
-                        return;
+                        // Check the preferred port isn't claimed by a DIFFERENT project in the registry
+                        bool claimedByOther = false;
+                        foreach (var inst in instances)
+                        {
+                            int instPort = ExtractPort(inst);
+                            if (instPort == preferredPort)
+                            {
+                                string instPath = inst.ContainsKey("projectPath")
+                                    ? inst["projectPath"].ToString()
+                                    : "";
+                                if (instPath != myProjectPath)
+                                {
+                                    claimedByOther = true;
+                                }
+                                break;
+                            }
+                        }
+
+                        if (!claimedByOther && IsPortAvailable(preferredPort))
+                        {
+                            Debug.Log(
+                                $"[VRSE-UMCP] Reclaimed preferred port {preferredPort} (port affinity)."
+                            );
+                            result = preferredPort;
+                            return;
+                        }
                     }
-                }
 
-                // Standard scan: try each port in range, skipping occupied ones
-                for (int port = PortRangeStart; port <= PortRangeEnd; port++)
-                {
-                    if (occupiedPorts.Contains(port))
-                        continue;
-
-                    if (IsPortAvailable(port))
+                    // Standard scan: try each port in range, skipping occupied ones
+                    for (int port = PortRangeStart; port <= PortRangeEnd; port++)
                     {
-                        result = port;
-                        return;
-                    }
-                }
+                        if (occupiedPorts.Contains(port))
+                            continue;
 
-                // Fallback: try any port in range even if registered (stale entries)
-                for (int port = PortRangeStart; port <= PortRangeEnd; port++)
-                {
-                    if (IsPortAvailable(port))
+                        if (IsPortAvailable(port))
+                        {
+                            result = port;
+                            return;
+                        }
+                    }
+
+                    // Fallback: try any port in range even if registered (stale entries)
+                    for (int port = PortRangeStart; port <= PortRangeEnd; port++)
                     {
-                        result = port;
-                        return;
+                        if (IsPortAvailable(port))
+                        {
+                            result = port;
+                            return;
+                        }
                     }
-                }
 
-                Debug.LogWarning($"[VRSE-UMCP] No available port in range {PortRangeStart}-{PortRangeEnd}. Using default {PortRangeStart}.");
-            }, "find-port");
+                    Debug.LogWarning(
+                        $"[VRSE-UMCP] No available port in range {PortRangeStart}-{PortRangeEnd}. Using default {PortRangeStart}."
+                    );
+                },
+                "find-port"
+            );
 
             return result;
         }
@@ -163,10 +174,14 @@ namespace UnityMCP.Editor
         /// </summary>
         private static int ExtractPort(Dictionary<string, object> inst)
         {
-            if (!inst.ContainsKey("port")) return 0;
-            if (inst["port"] is long lp) return (int)lp;
-            if (inst["port"] is double dp) return (int)dp;
-            if (int.TryParse(inst["port"].ToString(), out int ip)) return ip;
+            if (!inst.ContainsKey("port"))
+                return 0;
+            if (inst["port"] is long lp)
+                return (int)lp;
+            if (inst["port"] is double dp)
+                return (int)dp;
+            if (int.TryParse(inst["port"].ToString(), out int ip))
+                return ip;
             return 0;
         }
 
@@ -176,7 +191,10 @@ namespace UnityMCP.Editor
         /// </summary>
         private static int GetLastUsedPort()
         {
-            return EditorPrefs.GetInt("UnityMCP_LastUsedPort_" + GetProjectPath().GetHashCode(), -1);
+            return EditorPrefs.GetInt(
+                "UnityMCP_LastUsedPort_" + GetProjectPath().GetHashCode(),
+                -1
+            );
         }
 
         /// <summary>
@@ -214,48 +232,56 @@ namespace UnityMCP.Editor
             _registeredPort = port;
             SaveLastUsedPort(port); // Port affinity: remember for next restart
 
-            WithRegistryLock(() =>
-            {
-                var instances = ReadRegistry();
-
-                // Remove any stale entry for this project path
-                string projectPath = GetProjectPath();
-                instances.RemoveAll(inst =>
-                    inst.ContainsKey("projectPath") &&
-                    inst["projectPath"].ToString() == projectPath);
-
-                // Also remove any entry on the same port (stale from crash)
-                instances.RemoveAll(inst =>
+            WithRegistryLock(
+                () =>
                 {
-                    if (!inst.ContainsKey("port")) return false;
-                    int existingPort = 0;
-                    if (inst["port"] is long lp) existingPort = (int)lp;
-                    else if (inst["port"] is double dp) existingPort = (int)dp;
-                    else int.TryParse(inst["port"].ToString(), out existingPort);
-                    return existingPort == port;
-                });
+                    var instances = ReadRegistry();
 
-                // Build our entry
-                string nowUtc = DateTime.UtcNow.ToString("o");
-                var entry = new Dictionary<string, object>
-                {
-                    { "port", port },
-                    { "projectName", Application.productName },
-                    { "projectPath", projectPath },
-                    { "unityVersion", Application.unityVersion },
-                    { "platform", Application.platform.ToString() },
-                    { "processId", System.Diagnostics.Process.GetCurrentProcess().Id },
-                    { "isClone", IsParrelSyncClone() },
-                    { "cloneIndex", GetParrelSyncCloneIndex() },
-                    { "registeredAt", nowUtc },
-                    { "lastSeen", nowUtc }
-                };
+                    // Remove any stale entry for this project path
+                    string projectPath = GetProjectPath();
+                    instances.RemoveAll(inst =>
+                        inst.ContainsKey("projectPath")
+                        && inst["projectPath"].ToString() == projectPath
+                    );
 
-                instances.Add(entry);
-                WriteRegistry(instances);
+                    // Also remove any entry on the same port (stale from crash)
+                    instances.RemoveAll(inst =>
+                    {
+                        if (!inst.ContainsKey("port"))
+                            return false;
+                        int existingPort = 0;
+                        if (inst["port"] is long lp)
+                            existingPort = (int)lp;
+                        else if (inst["port"] is double dp)
+                            existingPort = (int)dp;
+                        else
+                            int.TryParse(inst["port"].ToString(), out existingPort);
+                        return existingPort == port;
+                    });
 
-                Debug.Log($"[VRSE-UMCP] Registered instance on port {port} in registry.");
-            }, "register");
+                    // Build our entry
+                    string nowUtc = DateTime.UtcNow.ToString("o");
+                    var entry = new Dictionary<string, object>
+                    {
+                        { "port", port },
+                        { "projectName", Application.productName },
+                        { "projectPath", projectPath },
+                        { "unityVersion", Application.unityVersion },
+                        { "platform", Application.platform.ToString() },
+                        { "processId", System.Diagnostics.Process.GetCurrentProcess().Id },
+                        { "isClone", IsParrelSyncClone() },
+                        { "cloneIndex", GetParrelSyncCloneIndex() },
+                        { "registeredAt", nowUtc },
+                        { "lastSeen", nowUtc },
+                    };
+
+                    instances.Add(entry);
+                    WriteRegistry(instances);
+
+                    Debug.Log($"[VRSE-UMCP] Registered instance on port {port} in registry.");
+                },
+                "register"
+            );
 
             // Start the heartbeat: periodically update lastSeen so the MCP server
             // can detect crashes (if Unity crashes, the heartbeat stops and the
@@ -274,10 +300,12 @@ namespace UnityMCP.Editor
         /// </summary>
         private static void HeartbeatTick()
         {
-            if (_registeredPort < 0) return;
+            if (_registeredPort < 0)
+                return;
 
             double now = EditorApplication.timeSinceStartup;
-            if (now - _lastHeartbeatTime < HeartbeatIntervalSeconds) return;
+            if (now - _lastHeartbeatTime < HeartbeatIntervalSeconds)
+                return;
 
             _lastHeartbeatTime = now;
             UpdateLastSeen();
@@ -289,29 +317,34 @@ namespace UnityMCP.Editor
         /// </summary>
         private static void UpdateLastSeen()
         {
-            WithRegistryLock(() =>
-            {
-                var instances = ReadRegistry();
-                string projectPath = GetProjectPath();
-                string nowUtc = DateTime.UtcNow.ToString("o");
-                bool updated = false;
-
-                foreach (var inst in instances)
+            WithRegistryLock(
+                () =>
                 {
-                    if (inst.ContainsKey("projectPath") &&
-                        inst["projectPath"].ToString() == projectPath)
+                    var instances = ReadRegistry();
+                    string projectPath = GetProjectPath();
+                    string nowUtc = DateTime.UtcNow.ToString("o");
+                    bool updated = false;
+
+                    foreach (var inst in instances)
                     {
-                        inst["lastSeen"] = nowUtc;
-                        updated = true;
-                        break;
+                        if (
+                            inst.ContainsKey("projectPath")
+                            && inst["projectPath"].ToString() == projectPath
+                        )
+                        {
+                            inst["lastSeen"] = nowUtc;
+                            updated = true;
+                            break;
+                        }
                     }
-                }
 
-                if (updated)
-                {
-                    WriteRegistry(instances);
-                }
-            }, "heartbeat");
+                    if (updated)
+                    {
+                        WriteRegistry(instances);
+                    }
+                },
+                "heartbeat"
+            );
         }
 
         /// <summary>
@@ -323,33 +356,41 @@ namespace UnityMCP.Editor
             // Stop heartbeat
             EditorApplication.update -= HeartbeatTick;
 
-            if (_registeredPort < 0) return;
+            if (_registeredPort < 0)
+                return;
 
             int port = _registeredPort;
-            WithRegistryLock(() =>
-            {
-                var instances = ReadRegistry();
-                string projectPath = GetProjectPath();
-
-                instances.RemoveAll(inst =>
+            WithRegistryLock(
+                () =>
                 {
-                    bool matchPath = inst.ContainsKey("projectPath") &&
-                                     inst["projectPath"].ToString() == projectPath;
-                    bool matchPort = false;
-                    if (inst.ContainsKey("port"))
-                    {
-                        int existingPort = 0;
-                        if (inst["port"] is long lp) existingPort = (int)lp;
-                        else if (inst["port"] is double dp) existingPort = (int)dp;
-                        else int.TryParse(inst["port"].ToString(), out existingPort);
-                        matchPort = existingPort == port;
-                    }
-                    return matchPath || matchPort;
-                });
+                    var instances = ReadRegistry();
+                    string projectPath = GetProjectPath();
 
-                WriteRegistry(instances);
-                Debug.Log($"[VRSE-UMCP] Unregistered instance (port {port}) from registry.");
-            }, "unregister");
+                    instances.RemoveAll(inst =>
+                    {
+                        bool matchPath =
+                            inst.ContainsKey("projectPath")
+                            && inst["projectPath"].ToString() == projectPath;
+                        bool matchPort = false;
+                        if (inst.ContainsKey("port"))
+                        {
+                            int existingPort = 0;
+                            if (inst["port"] is long lp)
+                                existingPort = (int)lp;
+                            else if (inst["port"] is double dp)
+                                existingPort = (int)dp;
+                            else
+                                int.TryParse(inst["port"].ToString(), out existingPort);
+                            matchPort = existingPort == port;
+                        }
+                        return matchPath || matchPort;
+                    });
+
+                    WriteRegistry(instances);
+                    Debug.Log($"[VRSE-UMCP] Unregistered instance (port {port}) from registry.");
+                },
+                "unregister"
+            );
             _registeredPort = -1;
         }
 
@@ -359,38 +400,48 @@ namespace UnityMCP.Editor
         /// </summary>
         public static void CleanupStaleEntries()
         {
-            WithRegistryLock(() =>
-            {
-                var instances = ReadRegistry();
-                int removed = instances.RemoveAll(inst =>
+            WithRegistryLock(
+                () =>
                 {
-                    if (!inst.ContainsKey("processId")) return true;
-
-                    int pid = 0;
-                    if (inst["processId"] is long lp) pid = (int)lp;
-                    else if (inst["processId"] is double dp) pid = (int)dp;
-                    else int.TryParse(inst["processId"].ToString(), out pid);
-
-                    if (pid <= 0) return true;
-
-                    try
+                    var instances = ReadRegistry();
+                    int removed = instances.RemoveAll(inst =>
                     {
-                        var proc = System.Diagnostics.Process.GetProcessById(pid);
-                        return proc.HasExited;
-                    }
-                    catch
-                    {
-                        // Process not found — stale
-                        return true;
-                    }
-                });
+                        if (!inst.ContainsKey("processId"))
+                            return true;
 
-                if (removed > 0)
-                {
-                    WriteRegistry(instances);
-                    Debug.Log($"[VRSE-UMCP] Cleaned up {removed} stale instance(s) from registry.");
-                }
-            }, "cleanup");
+                        int pid = 0;
+                        if (inst["processId"] is long lp)
+                            pid = (int)lp;
+                        else if (inst["processId"] is double dp)
+                            pid = (int)dp;
+                        else
+                            int.TryParse(inst["processId"].ToString(), out pid);
+
+                        if (pid <= 0)
+                            return true;
+
+                        try
+                        {
+                            var proc = System.Diagnostics.Process.GetProcessById(pid);
+                            return proc.HasExited;
+                        }
+                        catch
+                        {
+                            // Process not found — stale
+                            return true;
+                        }
+                    });
+
+                    if (removed > 0)
+                    {
+                        WriteRegistry(instances);
+                        Debug.Log(
+                            $"[VRSE-UMCP] Cleaned up {removed} stale instance(s) from registry."
+                        );
+                    }
+                },
+                "cleanup"
+            );
         }
 
         // ─── ParrelSync Detection ───
@@ -403,7 +454,8 @@ namespace UnityMCP.Editor
         {
             string projectPath = GetProjectPath();
             string folderName = Path.GetFileName(projectPath);
-            return folderName != null && System.Text.RegularExpressions.Regex.IsMatch(folderName, @"_clone_\d+$");
+            return folderName != null
+                && System.Text.RegularExpressions.Regex.IsMatch(folderName, @"_clone_\d+$");
         }
 
         /// <summary>
@@ -413,7 +465,8 @@ namespace UnityMCP.Editor
         {
             string projectPath = GetProjectPath();
             string folderName = Path.GetFileName(projectPath);
-            if (folderName == null) return -1;
+            if (folderName == null)
+                return -1;
 
             var match = System.Text.RegularExpressions.Regex.Match(folderName, @"_clone_(\d+)$");
             if (match.Success && int.TryParse(match.Groups[1].Value, out int index))
@@ -449,20 +502,28 @@ namespace UnityMCP.Editor
 
                 if (!acquired)
                 {
-                    Debug.LogWarning($"[VRSE-UMCP] Could not acquire registry lock for '{operationName}' within {MutexTimeoutMs}ms. Proceeding without lock.");
+                    Debug.LogWarning(
+                        $"[VRSE-UMCP] Could not acquire registry lock for '{operationName}' within {MutexTimeoutMs}ms. Proceeding without lock."
+                    );
                 }
 
                 action();
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[VRSE-UMCP] Failed to {operationName} in instance registry: {ex.Message}");
+                Debug.LogWarning(
+                    $"[VRSE-UMCP] Failed to {operationName} in instance registry: {ex.Message}"
+                );
             }
             finally
             {
                 if (acquired && mutex != null)
                 {
-                    try { mutex.ReleaseMutex(); } catch { }
+                    try
+                    {
+                        mutex.ReleaseMutex();
+                    }
+                    catch { }
                 }
                 mutex?.Dispose();
             }

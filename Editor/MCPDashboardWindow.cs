@@ -36,8 +36,14 @@ namespace UnityMCP.Editor
 
         private static readonly string[] AgentClients =
         {
-            "OpenCode", "Claude Code", "Claude Desktop", "Codex", "Cursor",
-            "GitHub Copilot", "Visual Studio Code", "Other"
+            "OpenCode",
+            "Claude Code",
+            "Claude Desktop",
+            "Codex",
+            "Cursor",
+            "GitHub Copilot",
+            "Visual Studio Code",
+            "Other",
         };
 
         private static readonly string[] McpServerSources = { "Custom", "Cloud" };
@@ -65,7 +71,8 @@ namespace UnityMCP.Editor
 
         private void InitStyles()
         {
-            if (_stylesInitialized) return;
+            if (_stylesInitialized)
+                return;
 
             _headerStyle = new GUIStyle(EditorStyles.largeLabel)
             {
@@ -79,10 +86,7 @@ namespace UnityMCP.Editor
                 alignment = TextAnchor.MiddleCenter,
             };
 
-            _subHeaderStyle = new GUIStyle(EditorStyles.boldLabel)
-            {
-                fontSize = 12,
-            };
+            _subHeaderStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = 12 };
 
             _dotStyle = new GUIStyle(EditorStyles.label)
             {
@@ -163,15 +167,17 @@ namespace UnityMCP.Editor
 
             EditorGUILayout.LabelField(
                 running ? "Server Running" : "Server Stopped",
-                EditorStyles.boldLabel);
+                EditorStyles.boldLabel
+            );
 
             GUILayout.FlexibleSpace();
 
             // Show actual active port when running, settings port when stopped
             int displayPort = running ? MCPBridgeServer.ActivePort : MCPSettingsManager.Port;
-            string portLabel = running && !MCPSettingsManager.UseManualPort
-                ? $"Port {displayPort} (auto)"
-                : $"Port {displayPort}";
+            string portLabel =
+                running && !MCPSettingsManager.UseManualPort
+                    ? $"Port {displayPort} (auto)"
+                    : $"Port {displayPort}";
             EditorGUILayout.LabelField(portLabel, GUILayout.Width(100));
 
             // Cache values once per event to prevent Layout/Repaint mismatch.
@@ -188,13 +194,20 @@ namespace UnityMCP.Editor
             // Agent count indicator
             GUI.color = showAgents ? ColorGreen : new Color(0, 0, 0, 0);
             GUILayout.Label("\u25CF", _dotStyle, GUILayout.Width(22));
-            GUI.color = showAgents ? new Color(prevColor.r, prevColor.g, prevColor.b, savedAlpha) : new Color(0, 0, 0, 0);
-            EditorGUILayout.LabelField(showAgents ? $"{agents} agent{(agents > 1 ? "s" : "")}" : "", GUILayout.Width(65));
+            GUI.color = showAgents
+                ? new Color(prevColor.r, prevColor.g, prevColor.b, savedAlpha)
+                : new Color(0, 0, 0, 0);
+            EditorGUILayout.LabelField(
+                showAgents ? $"{agents} agent{(agents > 1 ? "s" : "")}" : "",
+                GUILayout.Width(65)
+            );
 
             // Queue count indicator
             GUI.color = showQueued ? ColorYellow : new Color(0, 0, 0, 0);
             GUILayout.Label("\u25CF", _dotStyle, GUILayout.Width(22));
-            GUI.color = showQueued ? new Color(prevColor.r, prevColor.g, prevColor.b, savedAlpha) : new Color(0, 0, 0, 0);
+            GUI.color = showQueued
+                ? new Color(prevColor.r, prevColor.g, prevColor.b, savedAlpha)
+                : new Color(0, 0, 0, 0);
             EditorGUILayout.LabelField(showQueued ? $"{queued} queued" : "", GUILayout.Width(65));
 
             GUI.color = prevColor;
@@ -212,9 +225,7 @@ namespace UnityMCP.Editor
                     fontStyle = FontStyle.Italic,
                 };
                 int cloneIdx = MCPInstanceRegistry.GetParrelSyncCloneIndex();
-                EditorGUILayout.LabelField(
-                    $"\u2937 ParrelSync Clone #{cloneIdx}",
-                    cloneStyle);
+                EditorGUILayout.LabelField($"\u2937 ParrelSync Clone #{cloneIdx}", cloneStyle);
                 EditorGUILayout.EndHorizontal();
             }
         }
@@ -249,8 +260,14 @@ namespace UnityMCP.Editor
 
         private void DrawQueueStatus()
         {
-            _queueFoldout = EditorGUILayout.Foldout(_queueFoldout, "Request Queue", true, EditorStyles.foldoutHeader);
-            if (!_queueFoldout) return;
+            _queueFoldout = EditorGUILayout.Foldout(
+                _queueFoldout,
+                "Request Queue",
+                true,
+                EditorStyles.foldoutHeader
+            );
+            if (!_queueFoldout)
+                return;
 
             var queueInfo = MCPRequestQueue.GetQueueInfo();
 
@@ -276,15 +293,19 @@ namespace UnityMCP.Editor
             GUILayout.Label("\u25CF", _dotStyle, GUILayout.Width(22));
             GUI.color = prevColor;
 
-            string statusText = totalQueued > 0
-                ? $"{totalQueued} pending  |  {activeAgents} agents  |  {cacheSize} cached"
-                : $"Idle  |  {activeAgents} agents  |  {cacheSize} cached";
+            string statusText =
+                totalQueued > 0
+                    ? $"{totalQueued} pending  |  {activeAgents} agents  |  {cacheSize} cached"
+                    : $"Idle  |  {activeAgents} agents  |  {cacheSize} cached";
             EditorGUILayout.LabelField(statusText, EditorStyles.miniLabel);
 
             EditorGUILayout.EndHorizontal();
 
             // Per-agent breakdown (if any queued)
-            if (queueInfo.ContainsKey("perAgentQueued") && queueInfo["perAgentQueued"] is Dictionary<string, object> perAgent)
+            if (
+                queueInfo.ContainsKey("perAgentQueued")
+                && queueInfo["perAgentQueued"] is Dictionary<string, object> perAgent
+            )
             {
                 if (perAgent.Count > 0)
                 {
@@ -319,14 +340,23 @@ namespace UnityMCP.Editor
 
         private void DrawProjectContext()
         {
-            _contextFoldout = EditorGUILayout.Foldout(_contextFoldout, "Project Context", true, EditorStyles.foldoutHeader);
-            if (!_contextFoldout) return;
+            _contextFoldout = EditorGUILayout.Foldout(
+                _contextFoldout,
+                "Project Context",
+                true,
+                EditorStyles.foldoutHeader
+            );
+            if (!_contextFoldout)
+                return;
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             // Enabled toggle
             EditorGUILayout.BeginHorizontal();
-            bool enabled = EditorGUILayout.Toggle("Enable Context", MCPSettingsManager.ContextEnabled);
+            bool enabled = EditorGUILayout.Toggle(
+                "Enable Context",
+                MCPSettingsManager.ContextEnabled
+            );
             if (enabled != MCPSettingsManager.ContextEnabled)
                 MCPSettingsManager.ContextEnabled = enabled;
             GUILayout.FlexibleSpace();
@@ -336,11 +366,17 @@ namespace UnityMCP.Editor
             {
                 int created = MCPContextManager.CreateDefaultTemplates();
                 if (created > 0)
-                    EditorUtility.DisplayDialog("Templates Created",
-                        $"Created {created} template file(s) in:\n{MCPSettingsManager.ContextPath}", "OK");
+                    EditorUtility.DisplayDialog(
+                        "Templates Created",
+                        $"Created {created} template file(s) in:\n{MCPSettingsManager.ContextPath}",
+                        "OK"
+                    );
                 else
-                    EditorUtility.DisplayDialog("Templates Exist",
-                        "All template files already exist.", "OK");
+                    EditorUtility.DisplayDialog(
+                        "Templates Exist",
+                        "All template files already exist.",
+                        "OK"
+                    );
             }
 
             if (GUILayout.Button("Open Folder", GUILayout.Width(90), GUILayout.Height(18)))
@@ -349,21 +385,31 @@ namespace UnityMCP.Editor
                 if (System.IO.Directory.Exists(folderPath))
                     EditorUtility.RevealInFinder(folderPath);
                 else
-                    EditorUtility.DisplayDialog("Folder Not Found",
-                        $"Context folder does not exist yet.\nClick 'Create Templates' to set it up.\n\n{folderPath}", "OK");
+                    EditorUtility.DisplayDialog(
+                        "Folder Not Found",
+                        $"Context folder does not exist yet.\nClick 'Create Templates' to set it up.\n\n{folderPath}",
+                        "OK"
+                    );
             }
 
             EditorGUILayout.EndHorizontal();
 
             if (!enabled)
             {
-                EditorGUILayout.HelpBox("Project context is disabled. Agents will not receive project documentation.", MessageType.Info);
+                EditorGUILayout.HelpBox(
+                    "Project context is disabled. Agents will not receive project documentation.",
+                    MessageType.Info
+                );
                 EditorGUILayout.EndVertical();
                 return;
             }
 
             // Path display
-            EditorGUILayout.LabelField("Path:", MCPSettingsManager.ContextPath, EditorStyles.miniLabel);
+            EditorGUILayout.LabelField(
+                "Path:",
+                MCPSettingsManager.ContextPath,
+                EditorStyles.miniLabel
+            );
 
             // File list
             var files = MCPContextManager.GetContextFileList();
@@ -371,7 +417,8 @@ namespace UnityMCP.Editor
 
             foreach (var file in files)
             {
-                if (!file.IsStandard && !file.Exists) continue; // Don't show missing custom files
+                if (!file.IsStandard && !file.Exists)
+                    continue; // Don't show missing custom files
 
                 anyFiles = true;
                 EditorGUILayout.BeginHorizontal();
@@ -392,16 +439,23 @@ namespace UnityMCP.Editor
 
                 if (file.Exists)
                 {
-                    string sizeLabel = file.SizeBytes > 1024
-                        ? $"{file.SizeBytes / 1024f:0.#} KB"
-                        : $"{file.SizeBytes} B";
+                    string sizeLabel =
+                        file.SizeBytes > 1024
+                            ? $"{file.SizeBytes / 1024f:0.#} KB"
+                            : $"{file.SizeBytes} B";
                     EditorGUILayout.LabelField(
                         file.SizeBytes == 0 ? "empty" : sizeLabel,
-                        EditorStyles.miniLabel, GUILayout.Width(60));
+                        EditorStyles.miniLabel,
+                        GUILayout.Width(60)
+                    );
                 }
                 else
                 {
-                    EditorGUILayout.LabelField("not created", EditorStyles.miniLabel, GUILayout.Width(60));
+                    EditorGUILayout.LabelField(
+                        "not created",
+                        EditorStyles.miniLabel,
+                        GUILayout.Width(60)
+                    );
                 }
 
                 GUILayout.FlexibleSpace();
@@ -412,7 +466,8 @@ namespace UnityMCP.Editor
             {
                 EditorGUILayout.HelpBox(
                     "No context files found. Click 'Create Templates' to get started.",
-                    MessageType.Info);
+                    MessageType.Info
+                );
             }
 
             EditorGUILayout.EndVertical();
@@ -423,8 +478,13 @@ namespace UnityMCP.Editor
         private void DrawAgentConfiguration()
         {
             _agentConfigurationFoldout = EditorGUILayout.Foldout(
-                _agentConfigurationFoldout, "AI Agent Configuration", true, EditorStyles.foldoutHeader);
-            if (!_agentConfigurationFoldout) return;
+                _agentConfigurationFoldout,
+                "AI Agent Configuration",
+                true,
+                EditorStyles.foldoutHeader
+            );
+            if (!_agentConfigurationFoldout)
+                return;
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
@@ -445,15 +505,23 @@ namespace UnityMCP.Editor
             GUILayout.FlexibleSpace();
             var previousColor = GUI.color;
             GUI.color = agentConfigured ? ColorGreen : ColorYellow;
-            EditorGUILayout.LabelField(agentConfigured ? "Configured" : "Not configured", EditorStyles.miniLabel,
-                GUILayout.Width(90));
+            EditorGUILayout.LabelField(
+                agentConfigured ? "Configured" : "Not configured",
+                EditorStyles.miniLabel,
+                GUILayout.Width(90)
+            );
             GUI.color = previousColor;
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space(4);
             DrawServerSetup(serverLocated, entryPointLocated);
             EditorGUILayout.Space(6);
-            DrawAgentConfigInstall(serverLocated, entryPointLocated, agentConfigLocated, agentConfigured);
+            DrawAgentConfigInstall(
+                serverLocated,
+                entryPointLocated,
+                agentConfigLocated,
+                agentConfigured
+            );
             EditorGUILayout.Space(4);
             DrawAgentSkills();
             EditorGUILayout.Space(4);
@@ -470,18 +538,25 @@ namespace UnityMCP.Editor
             GUILayout.FlexibleSpace();
 
             int sourceIndex = IsCloudMcpServer() ? 1 : 0;
-            int newSourceIndex = GUILayout.Toolbar(sourceIndex, McpServerSources, GUILayout.Width(135));
+            int newSourceIndex = GUILayout.Toolbar(
+                sourceIndex,
+                McpServerSources,
+                GUILayout.Width(135)
+            );
             if (newSourceIndex != sourceIndex)
                 MCPSettingsManager.McpServerSource = McpServerSources[newSourceIndex];
             EditorGUILayout.EndHorizontal();
 
             DrawAgentConnectionRow(
                 MCPBridgeServer.IsRunning ? ColorGreen : ColorRed,
-                MCPBridgeServer.IsRunning ? "Unity: Connected" : "Unity: Server stopped");
+                MCPBridgeServer.IsRunning ? "Unity: Connected" : "Unity: Server stopped"
+            );
             DrawAgentConnectionRow(
                 agentConfigured ? ColorGreen : ColorYellow,
-                "AI agent: " + MCPSettingsManager.AgentClient +
-                (agentConfigured ? " configured" : " needs configuration"));
+                "AI agent: "
+                    + MCPSettingsManager.AgentClient
+                    + (agentConfigured ? " configured" : " needs configuration")
+            );
         }
 
         private void DrawAgentConnectionRow(Color color, string label)
@@ -500,7 +575,8 @@ namespace UnityMCP.Editor
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("AI agent", _subHeaderStyle, GUILayout.Width(70));
             int selectedIndex = System.Array.IndexOf(AgentClients, MCPSettingsManager.AgentClient);
-            if (selectedIndex < 0) selectedIndex = AgentClients.Length - 1;
+            if (selectedIndex < 0)
+                selectedIndex = AgentClients.Length - 1;
 
             int newSelectedIndex = EditorGUILayout.Popup(selectedIndex, AgentClients);
             if (newSelectedIndex != selectedIndex)
@@ -530,13 +606,23 @@ namespace UnityMCP.Editor
             if (serverLocated)
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Custom server", EditorStyles.miniLabel, GUILayout.Width(85));
-                EditorGUILayout.SelectableLabel(MCPSettingsManager.McpServerPath, EditorStyles.miniLabel,
-                    GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                EditorGUILayout.LabelField(
+                    "Custom server",
+                    EditorStyles.miniLabel,
+                    GUILayout.Width(85)
+                );
+                EditorGUILayout.SelectableLabel(
+                    MCPSettingsManager.McpServerPath,
+                    EditorStyles.miniLabel,
+                    GUILayout.Height(EditorGUIUtility.singleLineHeight)
+                );
                 if (GUILayout.Button("Change", GUILayout.Width(60)))
                 {
                     string selectedPath = EditorUtility.OpenFolderPanel(
-                        "Locate MCP Server", MCPSettingsManager.McpServerPath, "");
+                        "Locate MCP Server",
+                        MCPSettingsManager.McpServerPath,
+                        ""
+                    );
                     if (!string.IsNullOrEmpty(selectedPath))
                         MCPSettingsManager.McpServerPath = selectedPath;
                 }
@@ -544,16 +630,24 @@ namespace UnityMCP.Editor
             }
             else
             {
-                EditorGUILayout.HelpBox("Choose a local server folder or clone one from its repository.", MessageType.None);
+                EditorGUILayout.HelpBox(
+                    "Choose a local server folder or clone one from its repository.",
+                    MessageType.None
+                );
                 _customServerSetupFoldout = true;
             }
 
             _customServerSetupFoldout = EditorGUILayout.Foldout(
-                _customServerSetupFoldout, "Custom server setup", true);
+                _customServerSetupFoldout,
+                "Custom server setup",
+                true
+            );
             if (_customServerSetupFoldout)
             {
                 EditorGUILayout.LabelField("Repository URL", EditorStyles.miniLabel);
-                string repository = EditorGUILayout.TextField(MCPSettingsManager.McpServerRepository);
+                string repository = EditorGUILayout.TextField(
+                    MCPSettingsManager.McpServerRepository
+                );
                 if (repository != MCPSettingsManager.McpServerRepository)
                     MCPSettingsManager.McpServerRepository = repository;
 
@@ -561,34 +655,55 @@ namespace UnityMCP.Editor
                 if (GUILayout.Button("Locate Server Folder", GUILayout.Height(20)))
                 {
                     string selectedPath = EditorUtility.OpenFolderPanel(
-                        "Locate MCP Server", MCPSettingsManager.McpServerPath, "");
+                        "Locate MCP Server",
+                        MCPSettingsManager.McpServerPath,
+                        ""
+                    );
                     if (!string.IsNullOrEmpty(selectedPath))
                         MCPSettingsManager.McpServerPath = selectedPath;
                 }
 
-                GUI.enabled = _cloneProcess == null && !string.IsNullOrWhiteSpace(MCPSettingsManager.McpServerRepository);
-                if (GUILayout.Button(_cloneProcess == null ? "Clone Repository" : "Cloning...", GUILayout.Height(20)))
+                GUI.enabled =
+                    _cloneProcess == null
+                    && !string.IsNullOrWhiteSpace(MCPSettingsManager.McpServerRepository);
+                if (
+                    GUILayout.Button(
+                        _cloneProcess == null ? "Clone Repository" : "Cloning...",
+                        GUILayout.Height(20)
+                    )
+                )
                     CloneMcpServer();
                 GUI.enabled = true;
                 EditorGUILayout.EndHorizontal();
             }
 
-            int port = MCPBridgeServer.IsRunning ? MCPBridgeServer.ActivePort : MCPSettingsManager.Port;
+            int port = MCPBridgeServer.IsRunning
+                ? MCPBridgeServer.ActivePort
+                : MCPSettingsManager.Port;
             string endpoint = $"http://127.0.0.1:{port}";
-            string bridgeStatus = MCPBridgeServer.IsRunning ? "Unity bridge running" : "Unity bridge stopped";
+            string bridgeStatus = MCPBridgeServer.IsRunning
+                ? "Unity bridge running"
+                : "Unity bridge stopped";
             EditorGUILayout.LabelField(bridgeStatus + " at " + endpoint, EditorStyles.miniLabel);
 
             _advancedServerFoldout = EditorGUILayout.Foldout(
                 _advancedServerFoldout,
                 "Advanced local launch settings",
-                true);
+                true
+            );
             if (_advancedServerFoldout)
             {
-                string command = EditorGUILayout.TextField("Launch Command", MCPSettingsManager.McpServerCommand);
+                string command = EditorGUILayout.TextField(
+                    "Launch Command",
+                    MCPSettingsManager.McpServerCommand
+                );
                 if (command != MCPSettingsManager.McpServerCommand)
                     MCPSettingsManager.McpServerCommand = command;
 
-                string entryPoint = EditorGUILayout.TextField("Entry Point", MCPSettingsManager.McpServerEntryPoint);
+                string entryPoint = EditorGUILayout.TextField(
+                    "Entry Point",
+                    MCPSettingsManager.McpServerEntryPoint
+                );
                 if (entryPoint != MCPSettingsManager.McpServerEntryPoint)
                     MCPSettingsManager.McpServerEntryPoint = entryPoint;
             }
@@ -597,30 +712,50 @@ namespace UnityMCP.Editor
             {
                 EditorGUILayout.HelpBox(
                     "The configured entry point was not found. Update it in Advanced launch settings before configuring an agent.",
-                    MessageType.Warning);
+                    MessageType.Warning
+                );
             }
 
             if (!string.IsNullOrEmpty(_cloneStatus))
-                EditorGUILayout.HelpBox(_cloneStatus, _cloneFailed ? MessageType.Warning : MessageType.Info);
-
+                EditorGUILayout.HelpBox(
+                    _cloneStatus,
+                    _cloneFailed ? MessageType.Warning : MessageType.Info
+                );
         }
 
         private void DrawCloudMcpServerSetup()
         {
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Cloud package", EditorStyles.miniLabel, GUILayout.Width(85));
+            EditorGUILayout.LabelField(
+                "Cloud package",
+                EditorStyles.miniLabel,
+                GUILayout.Width(85)
+            );
             EditorGUILayout.SelectableLabel(
                 "npx -y --registry=" + CloudMcpRegistry + " " + CloudMcpPackage,
                 EditorStyles.miniLabel,
-                GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                GUILayout.Height(EditorGUIUtility.singleLineHeight)
+            );
             EditorGUILayout.EndHorizontal();
 
-            int port = MCPBridgeServer.IsRunning ? MCPBridgeServer.ActivePort : MCPSettingsManager.Port;
-            string bridgeStatus = MCPBridgeServer.IsRunning ? "Unity bridge running" : "Unity bridge stopped";
-            EditorGUILayout.LabelField(bridgeStatus + " at http://127.0.0.1:" + port, EditorStyles.miniLabel);
+            int port = MCPBridgeServer.IsRunning
+                ? MCPBridgeServer.ActivePort
+                : MCPSettingsManager.Port;
+            string bridgeStatus = MCPBridgeServer.IsRunning
+                ? "Unity bridge running"
+                : "Unity bridge stopped";
+            EditorGUILayout.LabelField(
+                bridgeStatus + " at http://127.0.0.1:" + port,
+                EditorStyles.miniLabel
+            );
         }
 
-        private void DrawAgentConfigInstall(bool serverLocated, bool entryPointLocated, bool agentConfigLocated, bool agentConfigured)
+        private void DrawAgentConfigInstall(
+            bool serverLocated,
+            bool entryPointLocated,
+            bool agentConfigLocated,
+            bool agentConfigured
+        )
         {
             EditorGUILayout.LabelField("Configuration", EditorStyles.boldLabel);
             EditorGUILayout.BeginHorizontal();
@@ -639,7 +774,10 @@ namespace UnityMCP.Editor
             {
                 string configDirectory = GetSafeDirectoryName(MCPSettingsManager.AgentConfigPath);
                 string selectedPath = EditorUtility.OpenFilePanel(
-                    "Locate Agent Configuration", configDirectory, GetAgentConfigExtension());
+                    "Locate Agent Configuration",
+                    configDirectory,
+                    GetAgentConfigExtension()
+                );
                 if (!string.IsNullOrEmpty(selectedPath))
                 {
                     MCPSettingsManager.AgentConfigPath = selectedPath;
@@ -653,38 +791,52 @@ namespace UnityMCP.Editor
             bool canConfigure = serverLocated && entryPointLocated && hasConfigTarget;
             if (!canConfigure)
             {
-                string message = !hasConfigTarget
-                    ? "Click Find to detect this agent's configuration file."
+                string message =
+                    !hasConfigTarget ? "Click Find to detect this agent's configuration file."
                     : !serverLocated
                         ? "Locate the companion MCP server before configuring an agent."
-                        : "Confirm the server entry point before configuring an agent.";
+                    : "Confirm the server entry point before configuring an agent.";
                 EditorGUILayout.HelpBox(message, MessageType.None);
             }
             else
             {
                 EditorGUILayout.LabelField(
-                    agentConfigured ? "VRseBuilder MCP configuration found." :
-                    agentConfigLocated ? "Configuration found, but VRseBuilder is not configured." :
-                    "A new configuration file will be created.",
-                    EditorStyles.miniLabel);
+                    agentConfigured ? "VRseBuilder MCP configuration found."
+                        : agentConfigLocated
+                            ? "Configuration found, but VRseBuilder is not configured."
+                        : "A new configuration file will be created.",
+                    EditorStyles.miniLabel
+                );
             }
 
             string agentConfig = BuildAgentConfiguration();
             EditorGUILayout.BeginHorizontal();
             GUI.enabled = canConfigure;
-            if (GUILayout.Button("Configure " + MCPSettingsManager.AgentClient, GUILayout.Height(24)))
+            if (
+                GUILayout.Button(
+                    "Configure " + MCPSettingsManager.AgentClient,
+                    GUILayout.Height(24)
+                )
+            )
                 ConfigureAgentConfig();
             GUI.enabled = true;
             if (GUILayout.Button("Copy Config", GUILayout.Width(90), GUILayout.Height(24)))
                 GUIUtility.systemCopyBuffer = agentConfig;
             EditorGUILayout.EndHorizontal();
 
-            _configPreviewFoldout = EditorGUILayout.Foldout(_configPreviewFoldout, "Preview generated configuration", true);
+            _configPreviewFoldout = EditorGUILayout.Foldout(
+                _configPreviewFoldout,
+                "Preview generated configuration",
+                true
+            );
             if (_configPreviewFoldout)
                 EditorGUILayout.TextArea(agentConfig, GUILayout.MinHeight(72));
 
             if (!string.IsNullOrEmpty(_agentConfigStatus))
-                EditorGUILayout.HelpBox(_agentConfigStatus, _agentConfigFailed ? MessageType.Warning : MessageType.Info);
+                EditorGUILayout.HelpBox(
+                    _agentConfigStatus,
+                    _agentConfigFailed ? MessageType.Warning : MessageType.Info
+                );
         }
 
         private void DrawAgentSkills()
@@ -693,7 +845,10 @@ namespace UnityMCP.Editor
             var skills = GetPackagedSkills();
             if (skills.Count == 0)
             {
-                EditorGUILayout.HelpBox("No packaged skills were found in the VRseBuilder Unity MCP package.", MessageType.None);
+                EditorGUILayout.HelpBox(
+                    "No packaged skills were found in the VRseBuilder Unity MCP package.",
+                    MessageType.None
+                );
                 return;
             }
 
@@ -701,7 +856,10 @@ namespace UnityMCP.Editor
             bool selectionChanged = false;
             foreach (PackagedSkill skill in skills)
             {
-                bool selected = EditorGUILayout.ToggleLeft(skill.Name, selectedSkillIds.Contains(skill.Id));
+                bool selected = EditorGUILayout.ToggleLeft(
+                    skill.Name,
+                    selectedSkillIds.Contains(skill.Id)
+                );
                 if (selected == selectedSkillIds.Contains(skill.Id))
                     continue;
 
@@ -723,13 +881,18 @@ namespace UnityMCP.Editor
             GUI.enabled = true;
 
             if (!string.IsNullOrEmpty(_skillInstallStatus))
-                EditorGUILayout.HelpBox(_skillInstallStatus, _skillInstallFailed ? MessageType.Warning : MessageType.Info);
+                EditorGUILayout.HelpBox(
+                    _skillInstallStatus,
+                    _skillInstallFailed ? MessageType.Warning : MessageType.Info
+                );
         }
 
         private static List<PackagedSkill> GetPackagedSkills()
         {
             var skills = new List<PackagedSkill>();
-            string packagePath = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(MCPDashboardWindow).Assembly)?.assetPath;
+            string packagePath = UnityEditor
+                .PackageManager.PackageInfo.FindForAssembly(typeof(MCPDashboardWindow).Assembly)
+                ?.assetPath;
             if (string.IsNullOrEmpty(packagePath))
                 return skills;
 
@@ -763,7 +926,11 @@ namespace UnityMCP.Editor
             }
         }
 
-        private void InstallSelectedSkills(List<PackagedSkill> skills, HashSet<string> selectedSkillIds, string destination)
+        private void InstallSelectedSkills(
+            List<PackagedSkill> skills,
+            HashSet<string> selectedSkillIds,
+            string destination
+        )
         {
             try
             {
@@ -777,7 +944,8 @@ namespace UnityMCP.Editor
                     installedCount++;
                 }
 
-                _skillInstallStatus = $"Installed {installedCount} skill{(installedCount == 1 ? "" : "s")} for {MCPSettingsManager.AgentClient}. Restart the agent to load them.";
+                _skillInstallStatus =
+                    $"Installed {installedCount} skill{(installedCount == 1 ? "" : "s")} for {MCPSettingsManager.AgentClient}. Restart the agent to load them.";
                 _skillInstallFailed = false;
             }
             catch (System.Exception exception)
@@ -791,9 +959,16 @@ namespace UnityMCP.Editor
         {
             System.IO.Directory.CreateDirectory(destination);
             foreach (string file in System.IO.Directory.GetFiles(source))
-                System.IO.File.Copy(file, System.IO.Path.Combine(destination, System.IO.Path.GetFileName(file)), true);
+                System.IO.File.Copy(
+                    file,
+                    System.IO.Path.Combine(destination, System.IO.Path.GetFileName(file)),
+                    true
+                );
             foreach (string directory in System.IO.Directory.GetDirectories(source))
-                CopyDirectory(directory, System.IO.Path.Combine(destination, System.IO.Path.GetFileName(directory)));
+                CopyDirectory(
+                    directory,
+                    System.IO.Path.Combine(destination, System.IO.Path.GetFileName(directory))
+                );
         }
 
         private sealed class PackagedSkill
@@ -813,20 +988,35 @@ namespace UnityMCP.Editor
         private void DrawAgentTroubleshooting()
         {
             _agentTroubleshootingFoldout = EditorGUILayout.Foldout(
-                _agentTroubleshootingFoldout, "Troubleshooting", true);
-            if (!_agentTroubleshootingFoldout) return;
+                _agentTroubleshootingFoldout,
+                "Troubleshooting",
+                true
+            );
+            if (!_agentTroubleshootingFoldout)
+                return;
 
-            EditorGUILayout.LabelField("- Verify that Node.js and npx are available from your terminal.", EditorStyles.wordWrappedMiniLabel);
-            EditorGUILayout.LabelField("- Restart the selected AI agent after changing its configuration.", EditorStyles.wordWrappedMiniLabel);
-            EditorGUILayout.LabelField("- Keep the Unity bridge running while the agent connects.", EditorStyles.wordWrappedMiniLabel);
+            EditorGUILayout.LabelField(
+                "- Verify that Node.js and npx are available from your terminal.",
+                EditorStyles.wordWrappedMiniLabel
+            );
+            EditorGUILayout.LabelField(
+                "- Restart the selected AI agent after changing its configuration.",
+                EditorStyles.wordWrappedMiniLabel
+            );
+            EditorGUILayout.LabelField(
+                "- Keep the Unity bridge running while the agent connects.",
+                EditorStyles.wordWrappedMiniLabel
+            );
         }
 
         private static bool HasMcpServerPackage()
         {
             try
             {
-                return !string.IsNullOrEmpty(MCPSettingsManager.McpServerPath) &&
-                    System.IO.File.Exists(System.IO.Path.Combine(MCPSettingsManager.McpServerPath, "package.json"));
+                return !string.IsNullOrEmpty(MCPSettingsManager.McpServerPath)
+                    && System.IO.File.Exists(
+                        System.IO.Path.Combine(MCPSettingsManager.McpServerPath, "package.json")
+                    );
             }
             catch (System.ArgumentException)
             {
@@ -851,7 +1041,9 @@ namespace UnityMCP.Editor
         {
             try
             {
-                return string.IsNullOrEmpty(path) ? "" : System.IO.Path.GetDirectoryName(path) ?? "";
+                return string.IsNullOrEmpty(path)
+                    ? ""
+                    : System.IO.Path.GetDirectoryName(path) ?? "";
             }
             catch (System.ArgumentException)
             {
@@ -865,13 +1057,15 @@ namespace UnityMCP.Editor
                 return;
 
             var candidates = GetAgentConfigCandidates(MCPSettingsManager.AgentClient);
-            if (candidates.Count == 0) return;
+            if (candidates.Count == 0)
+                return;
 
             string selectedPath = candidates[0];
             bool found = false;
             foreach (string candidate in candidates)
             {
-                if (!System.IO.File.Exists(candidate)) continue;
+                if (!System.IO.File.Exists(candidate))
+                    continue;
 
                 selectedPath = candidate;
                 found = true;
@@ -889,15 +1083,25 @@ namespace UnityMCP.Editor
         {
             var candidates = new List<string>();
             string projectRoot = GetProjectRoot();
-            string userHome = System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile);
-            string appData = System.Environment.GetFolderPath(System.Environment.SpecialFolder.ApplicationData);
+            string userHome = System.Environment.GetFolderPath(
+                System.Environment.SpecialFolder.UserProfile
+            );
+            string appData = System.Environment.GetFolderPath(
+                System.Environment.SpecialFolder.ApplicationData
+            );
 
             switch (client)
             {
                 case "OpenCode":
                     // OpenCode deep-merges project config over global config. Configure the global
                     // file by default so the server remains available across Unity projects.
-                    AddConfigCandidate(candidates, userHome, ".config", "opencode", "opencode.json");
+                    AddConfigCandidate(
+                        candidates,
+                        userHome,
+                        ".config",
+                        "opencode",
+                        "opencode.json"
+                    );
                     AddConfigCandidate(candidates, projectRoot, "opencode.json");
                     AddConfigCandidate(candidates, projectRoot, ".opencode", "opencode.json");
                     break;
@@ -966,16 +1170,21 @@ namespace UnityMCP.Editor
                     return CodexConfigMatchesSelectedServer(System.IO.File.ReadAllText(configPath));
                 }
 
-                var root = MiniJson.Deserialize(System.IO.File.ReadAllText(configPath)) as Dictionary<string, object>;
-                if (root == null) return false;
+                var root =
+                    MiniJson.Deserialize(System.IO.File.ReadAllText(configPath))
+                    as Dictionary<string, object>;
+                if (root == null)
+                    return false;
 
-                string serverKey = MCPSettingsManager.AgentClient == "OpenCode" ? "mcp" :
-                    UsesVsCodeMcpFormat() ? "servers" : "mcpServers";
-                return root.TryGetValue(serverKey, out object servers) &&
-                    servers is Dictionary<string, object> serverEntries &&
-                    serverEntries.TryGetValue("vrsebuilder", out object server) &&
-                    server is Dictionary<string, object> serverConfig &&
-                    ServerConfigMatchesSelectedServer(serverConfig);
+                string serverKey =
+                    MCPSettingsManager.AgentClient == "OpenCode" ? "mcp"
+                    : UsesVsCodeMcpFormat() ? "servers"
+                    : "mcpServers";
+                return root.TryGetValue(serverKey, out object servers)
+                    && servers is Dictionary<string, object> serverEntries
+                    && serverEntries.TryGetValue("vrsebuilder", out object server)
+                    && server is Dictionary<string, object> serverConfig
+                    && ServerConfigMatchesSelectedServer(serverConfig);
             }
             catch (System.Exception)
             {
@@ -983,7 +1192,9 @@ namespace UnityMCP.Editor
             }
         }
 
-        private static bool ServerConfigMatchesSelectedServer(Dictionary<string, object> serverConfig)
+        private static bool ServerConfigMatchesSelectedServer(
+            Dictionary<string, object> serverConfig
+        )
         {
             var expected = GetServerLaunchCommand();
             if (!serverConfig.TryGetValue("command", out object command))
@@ -995,19 +1206,29 @@ namespace UnityMCP.Editor
             if (!string.Equals(command?.ToString(), expected[0], System.StringComparison.Ordinal))
                 return false;
 
-            return serverConfig.TryGetValue("args", out object arguments) &&
-                arguments is System.Collections.IList argumentArray &&
-                CommandArrayMatches(argumentArray, expected, 1);
+            return serverConfig.TryGetValue("args", out object arguments)
+                && arguments is System.Collections.IList argumentArray
+                && CommandArrayMatches(argumentArray, expected, 1);
         }
 
-        private static bool CommandArrayMatches(System.Collections.IList values, List<string> expected, int expectedStartIndex)
+        private static bool CommandArrayMatches(
+            System.Collections.IList values,
+            List<string> expected,
+            int expectedStartIndex
+        )
         {
             if (values.Count != expected.Count - expectedStartIndex)
                 return false;
 
             for (int i = 0; i < values.Count; i++)
             {
-                if (!string.Equals(values[i]?.ToString(), expected[i + expectedStartIndex], System.StringComparison.Ordinal))
+                if (
+                    !string.Equals(
+                        values[i]?.ToString(),
+                        expected[i + expectedStartIndex],
+                        System.StringComparison.Ordinal
+                    )
+                )
                     return false;
             }
 
@@ -1018,12 +1239,18 @@ namespace UnityMCP.Editor
         {
             const string Header = "[mcp_servers.vrsebuilder]";
             int startIndex = config.IndexOf(Header, System.StringComparison.OrdinalIgnoreCase);
-            if (startIndex < 0) return false;
+            if (startIndex < 0)
+                return false;
 
-            int nextSection = config.IndexOf("\n[", startIndex + Header.Length, System.StringComparison.Ordinal);
-            string section = nextSection >= 0
-                ? config.Substring(startIndex, nextSection - startIndex)
-                : config.Substring(startIndex);
+            int nextSection = config.IndexOf(
+                "\n[",
+                startIndex + Header.Length,
+                System.StringComparison.Ordinal
+            );
+            string section =
+                nextSection >= 0
+                    ? config.Substring(startIndex, nextSection - startIndex)
+                    : config.Substring(startIndex);
             string expected = BuildAgentConfiguration();
             return section.IndexOf(expected, System.StringComparison.Ordinal) >= 0;
         }
@@ -1031,7 +1258,8 @@ namespace UnityMCP.Editor
         private void CloneMcpServer()
         {
             string parentDirectory = EditorUtility.OpenFolderPanel("Clone MCP Server Into", "", "");
-            if (string.IsNullOrEmpty(parentDirectory)) return;
+            if (string.IsNullOrEmpty(parentDirectory))
+                return;
 
             string repository = MCPSettingsManager.McpServerRepository.Trim();
             string folderName = GetRepositoryFolderName(repository);
@@ -1045,7 +1273,8 @@ namespace UnityMCP.Editor
             _cloneTargetPath = System.IO.Path.Combine(parentDirectory, folderName);
             if (System.IO.Directory.Exists(_cloneTargetPath))
             {
-                _cloneStatus = "The target folder already exists. Locate the server instead or choose another parent folder.";
+                _cloneStatus =
+                    "The target folder already exists. Locate the server instead or choose another parent folder.";
                 _cloneFailed = true;
                 return;
             }
@@ -1075,7 +1304,8 @@ namespace UnityMCP.Editor
 
         private void UpdateCloneStatus()
         {
-            if (_cloneProcess == null || !_cloneProcess.HasExited) return;
+            if (_cloneProcess == null || !_cloneProcess.HasExited)
+                return;
 
             string output = _cloneProcess.StandardOutput.ReadToEnd();
             string error = _cloneProcess.StandardError.ReadToEnd();
@@ -1083,7 +1313,10 @@ namespace UnityMCP.Editor
             _cloneProcess.Dispose();
             _cloneProcess = null;
 
-            if (succeeded && System.IO.File.Exists(System.IO.Path.Combine(_cloneTargetPath, "package.json")))
+            if (
+                succeeded
+                && System.IO.File.Exists(System.IO.Path.Combine(_cloneTargetPath, "package.json"))
+            )
             {
                 MCPSettingsManager.McpServerPath = _cloneTargetPath;
                 _cloneStatus = "MCP server cloned and selected.";
@@ -1092,8 +1325,9 @@ namespace UnityMCP.Editor
             else
             {
                 string details = string.IsNullOrWhiteSpace(error) ? output : error;
-                _cloneStatus = "MCP server clone failed" +
-                    (string.IsNullOrWhiteSpace(details) ? "." : ": " + details.Trim());
+                _cloneStatus =
+                    "MCP server clone failed"
+                    + (string.IsNullOrWhiteSpace(details) ? "." : ": " + details.Trim());
                 _cloneFailed = true;
             }
         }
@@ -1102,7 +1336,8 @@ namespace UnityMCP.Editor
         {
             string trimmed = repository.TrimEnd('/', '\\');
             int separator = trimmed.LastIndexOf('/');
-            if (separator < 0) separator = trimmed.LastIndexOf('\\');
+            if (separator < 0)
+                separator = trimmed.LastIndexOf('\\');
             string name = separator >= 0 ? trimmed.Substring(separator + 1) : trimmed;
             return name.EndsWith(".git") ? name.Substring(0, name.Length - 4) : name;
         }
@@ -1125,11 +1360,7 @@ namespace UnityMCP.Editor
                 };
             }
 
-            return new List<string>
-            {
-                MCPSettingsManager.McpServerCommand,
-                GetServerEntryPoint(),
-            };
+            return new List<string> { MCPSettingsManager.McpServerCommand, GetServerEntryPoint() };
         }
 
         private static string BuildJsonStringArray(List<string> values, int startIndex)
@@ -1153,45 +1384,58 @@ namespace UnityMCP.Editor
 
             if (MCPSettingsManager.AgentClient == "Codex")
             {
-                return "[mcp_servers.vrsebuilder]\n" +
-                    "command = \"" + command + "\"\n" +
-                    "args = " + commandArguments;
+                return "[mcp_servers.vrsebuilder]\n"
+                    + "command = \""
+                    + command
+                    + "\"\n"
+                    + "args = "
+                    + commandArguments;
             }
 
             if (MCPSettingsManager.AgentClient == "OpenCode")
             {
-                return "{\n" +
-                    "  \"mcp\": {\n" +
-                    "    \"vrsebuilder\": {\n" +
-                    "      \"type\": \"local\",\n" +
-                    "      \"command\": " + BuildJsonStringArray(launchCommand, 0) + ",\n" +
-                    "      \"enabled\": true\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}";
+                return "{\n"
+                    + "  \"mcp\": {\n"
+                    + "    \"vrsebuilder\": {\n"
+                    + "      \"type\": \"local\",\n"
+                    + "      \"command\": "
+                    + BuildJsonStringArray(launchCommand, 0)
+                    + ",\n"
+                    + "      \"enabled\": true\n"
+                    + "    }\n"
+                    + "  }\n"
+                    + "}";
             }
 
             if (UsesVsCodeMcpFormat())
             {
-                return "{\n" +
-                    "  \"servers\": {\n" +
-                    "    \"vrsebuilder\": {\n" +
-                    "      \"type\": \"stdio\",\n" +
-                    "      \"command\": \"" + command + "\",\n" +
-                    "      \"args\": " + commandArguments + "\n" +
-                    "    }\n" +
-                    "  }\n" +
-                    "}";
+                return "{\n"
+                    + "  \"servers\": {\n"
+                    + "    \"vrsebuilder\": {\n"
+                    + "      \"type\": \"stdio\",\n"
+                    + "      \"command\": \""
+                    + command
+                    + "\",\n"
+                    + "      \"args\": "
+                    + commandArguments
+                    + "\n"
+                    + "    }\n"
+                    + "  }\n"
+                    + "}";
             }
 
-            return "{\n" +
-                "  \"mcpServers\": {\n" +
-                "    \"vrsebuilder\": {\n" +
-                "      \"command\": \"" + command + "\",\n" +
-                "      \"args\": " + commandArguments + "\n" +
-                "    }\n" +
-                "  }\n" +
-                "}";
+            return "{\n"
+                + "  \"mcpServers\": {\n"
+                + "    \"vrsebuilder\": {\n"
+                + "      \"command\": \""
+                + command
+                + "\",\n"
+                + "      \"args\": "
+                + commandArguments
+                + "\n"
+                + "    }\n"
+                + "  }\n"
+                + "}";
         }
 
         private void ConfigureAgentConfig()
@@ -1211,7 +1455,8 @@ namespace UnityMCP.Editor
                     launchArguments.Add(launchCommand[i]);
 
                 var root = System.IO.File.Exists(configPath)
-                    ? MiniJson.Deserialize(System.IO.File.ReadAllText(configPath)) as Dictionary<string, object>
+                    ? MiniJson.Deserialize(System.IO.File.ReadAllText(configPath))
+                        as Dictionary<string, object>
                     : new Dictionary<string, object>();
                 if (root == null)
                 {
@@ -1230,10 +1475,7 @@ namespace UnityMCP.Editor
                 {
                     var mcp = GetOrCreateObject(root, "mcp");
                     serverConfig["type"] = "local";
-                    serverConfig["command"] = new List<object>
-                    {
-                        launchCommand[0],
-                    };
+                    serverConfig["command"] = new List<object> { launchCommand[0] };
                     for (int i = 1; i < launchCommand.Count; i++)
                         ((List<object>)serverConfig["command"]).Add(launchCommand[i]);
                     serverConfig["enabled"] = true;
@@ -1254,8 +1496,12 @@ namespace UnityMCP.Editor
                 }
 
                 EnsureConfigDirectoryExists(configPath);
-                System.IO.File.WriteAllText(configPath, PrettyPrintJson(MiniJson.Serialize(root)) + "\n");
-                _agentConfigStatus = "Added or updated the vrsebuilder MCP server in the selected agent configuration.";
+                System.IO.File.WriteAllText(
+                    configPath,
+                    PrettyPrintJson(MiniJson.Serialize(root)) + "\n"
+                );
+                _agentConfigStatus =
+                    "Added or updated the vrsebuilder MCP server in the selected agent configuration.";
                 _agentConfigFailed = false;
             }
             catch (System.Exception exception)
@@ -1272,26 +1518,39 @@ namespace UnityMCP.Editor
                 : "";
             string serverConfig = BuildAgentConfiguration();
             const string Header = "[mcp_servers.vrsebuilder]";
-            int startIndex = existingConfig.IndexOf(Header, System.StringComparison.OrdinalIgnoreCase);
+            int startIndex = existingConfig.IndexOf(
+                Header,
+                System.StringComparison.OrdinalIgnoreCase
+            );
 
             if (startIndex >= 0)
             {
-                int nextSection = existingConfig.IndexOf("\n[", startIndex + Header.Length, System.StringComparison.Ordinal);
-                existingConfig = nextSection >= 0
-                    ? existingConfig.Substring(0, startIndex) + existingConfig.Substring(nextSection)
-                    : existingConfig.Substring(0, startIndex);
+                int nextSection = existingConfig.IndexOf(
+                    "\n[",
+                    startIndex + Header.Length,
+                    System.StringComparison.Ordinal
+                );
+                existingConfig =
+                    nextSection >= 0
+                        ? existingConfig.Substring(0, startIndex)
+                            + existingConfig.Substring(nextSection)
+                        : existingConfig.Substring(0, startIndex);
             }
 
             EnsureConfigDirectoryExists(configPath);
-            System.IO.File.WriteAllText(configPath, existingConfig.TrimEnd() + "\n\n" + serverConfig + "\n");
-            _agentConfigStatus = "Added or updated the vrsebuilder MCP server in the selected Codex configuration.";
+            System.IO.File.WriteAllText(
+                configPath,
+                existingConfig.TrimEnd() + "\n\n" + serverConfig + "\n"
+            );
+            _agentConfigStatus =
+                "Added or updated the vrsebuilder MCP server in the selected Codex configuration.";
             _agentConfigFailed = false;
         }
 
         private static bool UsesVsCodeMcpFormat()
         {
-            return MCPSettingsManager.AgentClient == "GitHub Copilot" ||
-                MCPSettingsManager.AgentClient == "Visual Studio Code";
+            return MCPSettingsManager.AgentClient == "GitHub Copilot"
+                || MCPSettingsManager.AgentClient == "Visual Studio Code";
         }
 
         private static void EnsureConfigDirectoryExists(string configPath)
@@ -1361,9 +1620,15 @@ namespace UnityMCP.Editor
                 builder.Append("  ");
         }
 
-        private static Dictionary<string, object> GetOrCreateObject(Dictionary<string, object> root, string key)
+        private static Dictionary<string, object> GetOrCreateObject(
+            Dictionary<string, object> root,
+            string key
+        )
         {
-            if (root.TryGetValue(key, out object existing) && existing is Dictionary<string, object> value)
+            if (
+                root.TryGetValue(key, out object existing)
+                && existing is Dictionary<string, object> value
+            )
                 return value;
 
             var created = new Dictionary<string, object>();
@@ -1376,7 +1641,10 @@ namespace UnityMCP.Editor
             string entryPoint = MCPSettingsManager.McpServerEntryPoint;
             try
             {
-                if (!System.IO.Path.IsPathRooted(entryPoint) && !string.IsNullOrEmpty(MCPSettingsManager.McpServerPath))
+                if (
+                    !System.IO.Path.IsPathRooted(entryPoint)
+                    && !string.IsNullOrEmpty(MCPSettingsManager.McpServerPath)
+                )
                     return System.IO.Path.Combine(MCPSettingsManager.McpServerPath, entryPoint);
             }
             catch (System.ArgumentException)
@@ -1390,14 +1658,22 @@ namespace UnityMCP.Editor
         {
             switch (client)
             {
-                case "OpenCode": return "opencode";
-                case "Claude Code": return "claude-code";
-                case "Claude Desktop": return "claude-desktop";
-                case "Codex": return "codex";
-                case "Cursor": return "cursor";
-                case "GitHub Copilot": return "github-copilot";
-                case "Visual Studio Code": return "vscode";
-                default: return "";
+                case "OpenCode":
+                    return "opencode";
+                case "Claude Code":
+                    return "claude-code";
+                case "Claude Desktop":
+                    return "claude-desktop";
+                case "Codex":
+                    return "codex";
+                case "Cursor":
+                    return "cursor";
+                case "GitHub Copilot":
+                    return "github-copilot";
+                case "Visual Studio Code":
+                    return "vscode";
+                default:
+                    return "";
             }
         }
 
@@ -1405,8 +1681,14 @@ namespace UnityMCP.Editor
 
         private void DrawRecentActions()
         {
-            _recentActionsFoldout = EditorGUILayout.Foldout(_recentActionsFoldout, "Recent Actions", true, EditorStyles.foldoutHeader);
-            if (!_recentActionsFoldout) return;
+            _recentActionsFoldout = EditorGUILayout.Foldout(
+                _recentActionsFoldout,
+                "Recent Actions",
+                true,
+                EditorStyles.foldoutHeader
+            );
+            if (!_recentActionsFoldout)
+                return;
 
             var recent = MCPActionHistory.GetRecent(8);
 
@@ -1429,21 +1711,31 @@ namespace UnityMCP.Editor
                 Color dotColor;
                 switch (r.Status)
                 {
-                    case "Completed": dotColor = ColorGreen; break;
-                    case "Failed": dotColor = ColorRed; break;
-                    default: dotColor = ColorYellow; break;
+                    case "Completed":
+                        dotColor = ColorGreen;
+                        break;
+                    case "Failed":
+                        dotColor = ColorRed;
+                        break;
+                    default:
+                        dotColor = ColorYellow;
+                        break;
                 }
                 GUI.color = dotColor;
                 GUILayout.Label("\u25CF", _dotStyle, GUILayout.Width(22));
                 GUI.color = prevColor;
 
                 // Timestamp
-                EditorGUILayout.LabelField(r.Timestamp.ToString("HH:mm:ss"),
-                    EditorStyles.miniLabel, GUILayout.Width(55));
+                EditorGUILayout.LabelField(
+                    r.Timestamp.ToString("HH:mm:ss"),
+                    EditorStyles.miniLabel,
+                    GUILayout.Width(55)
+                );
 
                 // Agent (short)
                 string agent = r.AgentId ?? "?";
-                if (agent.Length > 10) agent = agent.Substring(0, 8) + "..";
+                if (agent.Length > 10)
+                    agent = agent.Substring(0, 8) + "..";
                 prevColor = GUI.color;
                 GUI.color = ColorBlue;
                 EditorGUILayout.LabelField(agent, EditorStyles.miniLabel, GUILayout.Width(65));
@@ -1467,9 +1759,10 @@ namespace UnityMCP.Editor
             EditorGUILayout.Space(2);
             EditorGUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            string btnLabel = MCPActionHistory.Count > 8
-                ? $"Open Full History ({MCPActionHistory.Count} actions)"
-                : "Open Full History";
+            string btnLabel =
+                MCPActionHistory.Count > 8
+                    ? $"Open Full History ({MCPActionHistory.Count} actions)"
+                    : "Open Full History";
             if (GUILayout.Button(btnLabel, GUILayout.Width(200), GUILayout.Height(20)))
             {
                 MCPActionHistoryWindow.ShowWindow();
@@ -1484,8 +1777,14 @@ namespace UnityMCP.Editor
 
         private void DrawCategoryStatus()
         {
-            _categoriesFoldout = EditorGUILayout.Foldout(_categoriesFoldout, "Feature Categories", true, EditorStyles.foldoutHeader);
-            if (!_categoriesFoldout) return;
+            _categoriesFoldout = EditorGUILayout.Foldout(
+                _categoriesFoldout,
+                "Feature Categories",
+                true,
+                EditorStyles.foldoutHeader
+            );
+            if (!_categoriesFoldout)
+                return;
 
             // Test controls bar
             EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
@@ -1500,9 +1799,14 @@ namespace UnityMCP.Editor
             {
                 EditorGUILayout.LabelField(
                     $"Testing: {MCPSelfTest.CurrentCategory}...",
-                    EditorStyles.miniLabel);
+                    EditorStyles.miniLabel
+                );
                 var rect = GUILayoutUtility.GetRect(100, 16, GUILayout.ExpandWidth(true));
-                EditorGUI.ProgressBar(rect, MCPSelfTest.Progress, $"{(int)(MCPSelfTest.Progress * 100)}%");
+                EditorGUI.ProgressBar(
+                    rect,
+                    MCPSelfTest.Progress,
+                    $"{(int)(MCPSelfTest.Progress * 100)}%"
+                );
             }
             else if (MCPSelfTest.LastRunTime > System.DateTime.MinValue)
             {
@@ -1555,9 +1859,14 @@ namespace UnityMCP.Editor
                 EditorGUILayout.LabelField(displayName, GUILayout.Width(100));
 
                 // Test status label — always draw both controls to avoid IMGUI control count mismatch
-                bool hasTested = testResult != null && testResult.Status != MCPTestResult.TestStatus.Untested;
-                bool hasDetails = hasTested && (testResult.Status == MCPTestResult.TestStatus.Failed ||
-                    testResult.Status == MCPTestResult.TestStatus.Warning);
+                bool hasTested =
+                    testResult != null && testResult.Status != MCPTestResult.TestStatus.Untested;
+                bool hasDetails =
+                    hasTested
+                    && (
+                        testResult.Status == MCPTestResult.TestStatus.Failed
+                        || testResult.Status == MCPTestResult.TestStatus.Warning
+                    );
 
                 if (hasTested)
                 {
@@ -1570,7 +1879,11 @@ namespace UnityMCP.Editor
                 }
                 else
                 {
-                    EditorGUILayout.LabelField("\u2014", EditorStyles.miniLabel, GUILayout.Width(90));
+                    EditorGUILayout.LabelField(
+                        "\u2014",
+                        EditorStyles.miniLabel,
+                        GUILayout.Width(90)
+                    );
                 }
 
                 // Always draw the details button to keep control count stable
@@ -1599,14 +1912,18 @@ namespace UnityMCP.Editor
                 EditorGUILayout.EndHorizontal();
 
                 // Expanded error details
-                if (_expandedTestCategory == cat && testResult != null &&
-                    !string.IsNullOrEmpty(testResult.Details))
+                if (
+                    _expandedTestCategory == cat
+                    && testResult != null
+                    && !string.IsNullOrEmpty(testResult.Details)
+                )
                 {
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                     EditorGUILayout.SelectableLabel(
                         testResult.Details,
                         EditorStyles.wordWrappedMiniLabel,
-                        GUILayout.MinHeight(36));
+                        GUILayout.MinHeight(36)
+                    );
                     EditorGUILayout.EndVertical();
                 }
             }
@@ -1616,16 +1933,21 @@ namespace UnityMCP.Editor
 
         private Color GetCategoryDotColor(bool enabled, MCPTestResult result)
         {
-            if (!enabled) return ColorGrey;
+            if (!enabled)
+                return ColorGrey;
             if (result == null || result.Status == MCPTestResult.TestStatus.Untested)
                 return enabled ? ColorGreen : ColorGrey;
 
             switch (result.Status)
             {
-                case MCPTestResult.TestStatus.Passed: return ColorGreen;
-                case MCPTestResult.TestStatus.Warning: return ColorYellow;
-                case MCPTestResult.TestStatus.Failed: return ColorRed;
-                default: return ColorGrey;
+                case MCPTestResult.TestStatus.Passed:
+                    return ColorGreen;
+                case MCPTestResult.TestStatus.Warning:
+                    return ColorYellow;
+                case MCPTestResult.TestStatus.Failed:
+                    return ColorRed;
+                default:
+                    return ColorGrey;
             }
         }
 
@@ -1648,8 +1970,14 @@ namespace UnityMCP.Editor
 
         private void DrawAgentSessions()
         {
-            _agentsFoldout = EditorGUILayout.Foldout(_agentsFoldout, "Active Agent Sessions", true, EditorStyles.foldoutHeader);
-            if (!_agentsFoldout) return;
+            _agentsFoldout = EditorGUILayout.Foldout(
+                _agentsFoldout,
+                "Active Agent Sessions",
+                true,
+                EditorStyles.foldoutHeader
+            );
+            if (!_agentsFoldout)
+                return;
 
             var sessions = MCPRequestQueue.GetActiveSessions();
 
@@ -1670,12 +1998,22 @@ namespace UnityMCP.Editor
                 GUILayout.Label("\u25CF", _dotStyle, GUILayout.Width(22));
                 GUI.color = prevColor;
 
-                string agentId = session.ContainsKey("agentId") ? session["agentId"].ToString() : "?";
-                string action = session.ContainsKey("currentAction") ? session["currentAction"].ToString() : "idle";
+                string agentId = session.ContainsKey("agentId")
+                    ? session["agentId"].ToString()
+                    : "?";
+                string action = session.ContainsKey("currentAction")
+                    ? session["currentAction"].ToString()
+                    : "idle";
                 object totalObj = session.ContainsKey("totalActions") ? session["totalActions"] : 0;
-                object queuedObj = session.ContainsKey("queuedRequests") ? session["queuedRequests"] : 0;
-                object completedObj = session.ContainsKey("completedRequests") ? session["completedRequests"] : 0;
-                object avgMs = session.ContainsKey("averageResponseTimeMs") ? session["averageResponseTimeMs"] : 0;
+                object queuedObj = session.ContainsKey("queuedRequests")
+                    ? session["queuedRequests"]
+                    : 0;
+                object completedObj = session.ContainsKey("completedRequests")
+                    ? session["completedRequests"]
+                    : 0;
+                object avgMs = session.ContainsKey("averageResponseTimeMs")
+                    ? session["averageResponseTimeMs"]
+                    : 0;
 
                 EditorGUILayout.LabelField(agentId, EditorStyles.boldLabel, GUILayout.Width(160));
                 EditorGUILayout.LabelField(action, GUILayout.MinWidth(80));
@@ -1704,20 +2042,32 @@ namespace UnityMCP.Editor
 
         private void DrawSettings()
         {
-            _settingsFoldout = EditorGUILayout.Foldout(_settingsFoldout, "Settings", true, EditorStyles.foldoutHeader);
-            if (!_settingsFoldout) return;
+            _settingsFoldout = EditorGUILayout.Foldout(
+                _settingsFoldout,
+                "Settings",
+                true,
+                EditorStyles.foldoutHeader
+            );
+            if (!_settingsFoldout)
+                return;
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             // Auto-start
-            bool autoStart = EditorGUILayout.Toggle("Auto-start on Editor Load", MCPSettingsManager.AutoStart);
+            bool autoStart = EditorGUILayout.Toggle(
+                "Auto-start on Editor Load",
+                MCPSettingsManager.AutoStart
+            );
             if (autoStart != MCPSettingsManager.AutoStart)
                 MCPSettingsManager.AutoStart = autoStart;
 
             EditorGUILayout.Space(2);
 
             // Port mode toggle
-            bool useManual = EditorGUILayout.Toggle("Use Manual Port", MCPSettingsManager.UseManualPort);
+            bool useManual = EditorGUILayout.Toggle(
+                "Use Manual Port",
+                MCPSettingsManager.UseManualPort
+            );
             if (useManual != MCPSettingsManager.UseManualPort)
                 MCPSettingsManager.UseManualPort = useManual;
 
@@ -1732,8 +2082,14 @@ namespace UnityMCP.Editor
                 }
                 EditorGUILayout.EndHorizontal();
 
-                if (MCPBridgeServer.IsRunning && MCPBridgeServer.ActivePort != MCPSettingsManager.Port)
-                    EditorGUILayout.HelpBox("Restart server to apply port change.", MessageType.Info);
+                if (
+                    MCPBridgeServer.IsRunning
+                    && MCPBridgeServer.ActivePort != MCPSettingsManager.Port
+                )
+                    EditorGUILayout.HelpBox(
+                        "Restart server to apply port change.",
+                        MessageType.Info
+                    );
             }
             else
             {
@@ -1749,8 +2105,14 @@ namespace UnityMCP.Editor
             // Reset button
             if (GUILayout.Button("Reset All Settings to Defaults"))
             {
-                if (EditorUtility.DisplayDialog("Reset Settings",
-                    "Reset all MCP settings to defaults?", "Reset", "Cancel"))
+                if (
+                    EditorUtility.DisplayDialog(
+                        "Reset Settings",
+                        "Reset all MCP settings to defaults?",
+                        "Reset",
+                        "Cancel"
+                    )
+                )
                 {
                     MCPSettingsManager.ResetToDefaults();
                 }
@@ -1769,21 +2131,28 @@ namespace UnityMCP.Editor
 
             if (GUILayout.Button("Check for Updates", GUILayout.Width(130)))
             {
-                MCPUpdateChecker.CheckForUpdates((hasUpdate, latestVersion) =>
-                {
-                    if (hasUpdate)
+                MCPUpdateChecker.CheckForUpdates(
+                    (hasUpdate, latestVersion) =>
                     {
-                        EditorUtility.DisplayDialog("Update Available",
-                            $"A new version ({latestVersion}) is available.\n" +
-                            "Update via Unity Package Manager.",
-                            "OK");
+                        if (hasUpdate)
+                        {
+                            EditorUtility.DisplayDialog(
+                                "Update Available",
+                                $"A new version ({latestVersion}) is available.\n"
+                                    + "Update via Unity Package Manager.",
+                                "OK"
+                            );
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog(
+                                "Up to Date",
+                                "You are running the latest version.",
+                                "OK"
+                            );
+                        }
                     }
-                    else
-                    {
-                        EditorUtility.DisplayDialog("Up to Date",
-                            "You are running the latest version.", "OK");
-                    }
-                });
+                );
             }
 
             EditorGUILayout.EndHorizontal();

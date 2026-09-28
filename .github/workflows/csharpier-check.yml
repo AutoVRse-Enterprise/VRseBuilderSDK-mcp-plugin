@@ -1,0 +1,28 @@
+name: CSharpier Code Format Check
+
+on:
+  push:
+    branches: [ style/csharpier-formatting ]
+  pull_request:
+    branches: [ style/csharpier-formatting ]
+
+jobs:
+  check-formatting:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install CSharpier
+        run: |
+          dotnet tool install -g csharpier
+          echo "$HOME/.dotnet/tools" >> $GITHUB_PATH
+
+      - name: Run CSharpier Formatting Check
+        run: csharpier check .

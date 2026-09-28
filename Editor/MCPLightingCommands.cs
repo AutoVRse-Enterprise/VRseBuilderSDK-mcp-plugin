@@ -22,7 +22,16 @@ namespace UnityMCP.Editor
                     { "name", light.gameObject.name },
                     { "instanceId", light.gameObject.GetInstanceID() },
                     { "type", light.type.ToString() },
-                    { "color", new Dictionary<string, object> { { "r", light.color.r }, { "g", light.color.g }, { "b", light.color.b }, { "a", light.color.a } } },
+                    {
+                        "color",
+                        new Dictionary<string, object>
+                        {
+                            { "r", light.color.r },
+                            { "g", light.color.g },
+                            { "b", light.color.b },
+                            { "a", light.color.a },
+                        }
+                    },
                     { "intensity", light.intensity },
                     { "range", light.range },
                     { "spotAngle", light.spotAngle },
@@ -54,7 +63,10 @@ namespace UnityMCP.Editor
 
             LightType lightType;
             if (!Enum.TryParse(typeStr, true, out lightType))
-                return new { error = $"Invalid light type: {typeStr}. Use Point, Directional, Spot, or Area." };
+                return new
+                {
+                    error = $"Invalid light type: {typeStr}. Use Point, Directional, Spot, or Area.",
+                };
 
             var go = new GameObject(name);
             var light = go.AddComponent<Light>();
@@ -63,7 +75,8 @@ namespace UnityMCP.Editor
             if (args.ContainsKey("color"))
             {
                 var cd = args["color"] as Dictionary<string, object>;
-                if (cd != null) light.color = DictToColor(cd);
+                if (cd != null)
+                    light.color = DictToColor(cd);
             }
 
             if (args.ContainsKey("intensity"))
@@ -83,10 +96,14 @@ namespace UnityMCP.Editor
             }
 
             if (args.ContainsKey("position"))
-                go.transform.position = MCPGameObjectCommands.DictToVector3(args["position"] as Dictionary<string, object>);
+                go.transform.position = MCPGameObjectCommands.DictToVector3(
+                    args["position"] as Dictionary<string, object>
+                );
 
             if (args.ContainsKey("rotation"))
-                go.transform.eulerAngles = MCPGameObjectCommands.DictToVector3(args["rotation"] as Dictionary<string, object>);
+                go.transform.eulerAngles = MCPGameObjectCommands.DictToVector3(
+                    args["rotation"] as Dictionary<string, object>
+                );
 
             Undo.RegisterCreatedObjectUndo(go, $"Create Light {name}");
 
@@ -113,7 +130,8 @@ namespace UnityMCP.Editor
             if (args.ContainsKey("ambientColor"))
             {
                 var cd = args["ambientColor"] as Dictionary<string, object>;
-                if (cd != null) RenderSettings.ambientLight = DictToColor(cd);
+                if (cd != null)
+                    RenderSettings.ambientLight = DictToColor(cd);
             }
 
             if (args.ContainsKey("ambientIntensity"))
@@ -125,7 +143,8 @@ namespace UnityMCP.Editor
             if (args.ContainsKey("fogColor"))
             {
                 var cd = args["fogColor"] as Dictionary<string, object>;
-                if (cd != null) RenderSettings.fogColor = DictToColor(cd);
+                if (cd != null)
+                    RenderSettings.fogColor = DictToColor(cd);
             }
 
             if (args.ContainsKey("fogDensity"))
@@ -142,7 +161,8 @@ namespace UnityMCP.Editor
             {
                 string matPath = args["skyboxMaterialPath"].ToString();
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(matPath);
-                if (mat != null) RenderSettings.skybox = mat;
+                if (mat != null)
+                    RenderSettings.skybox = mat;
             }
 
             return new Dictionary<string, object>
@@ -164,10 +184,14 @@ namespace UnityMCP.Editor
             var probe = go.AddComponent<ReflectionProbe>();
 
             if (args.ContainsKey("position"))
-                go.transform.position = MCPGameObjectCommands.DictToVector3(args["position"] as Dictionary<string, object>);
+                go.transform.position = MCPGameObjectCommands.DictToVector3(
+                    args["position"] as Dictionary<string, object>
+                );
 
             if (args.ContainsKey("size"))
-                probe.size = MCPGameObjectCommands.DictToVector3(args["size"] as Dictionary<string, object>);
+                probe.size = MCPGameObjectCommands.DictToVector3(
+                    args["size"] as Dictionary<string, object>
+                );
 
             if (args.ContainsKey("resolution"))
                 probe.resolution = Convert.ToInt32(args["resolution"]);
@@ -199,7 +223,9 @@ namespace UnityMCP.Editor
             var group = go.AddComponent<LightProbeGroup>();
 
             if (args.ContainsKey("position"))
-                go.transform.position = MCPGameObjectCommands.DictToVector3(args["position"] as Dictionary<string, object>);
+                go.transform.position = MCPGameObjectCommands.DictToVector3(
+                    args["position"] as Dictionary<string, object>
+                );
 
             Undo.RegisterCreatedObjectUndo(go, $"Create Light Probe Group {name}");
 
@@ -216,7 +242,13 @@ namespace UnityMCP.Editor
 
         private static Dictionary<string, object> ColorToDict(Color c)
         {
-            return new Dictionary<string, object> { { "r", c.r }, { "g", c.g }, { "b", c.b }, { "a", c.a } };
+            return new Dictionary<string, object>
+            {
+                { "r", c.r },
+                { "g", c.g },
+                { "b", c.b },
+                { "a", c.a },
+            };
         }
 
         private static Color DictToColor(Dictionary<string, object> d)

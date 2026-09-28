@@ -11,9 +11,12 @@ namespace UnityMCP.Editor
         public static object Add(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            string typeName = args.ContainsKey("componentType") ? args["componentType"].ToString() : "";
+            string typeName = args.ContainsKey("componentType")
+                ? args["componentType"].ToString()
+                : "";
             if (string.IsNullOrEmpty(typeName))
                 return new { error = "componentType is required" };
 
@@ -37,33 +40,50 @@ namespace UnityMCP.Editor
         public static object Remove(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            string typeName = args.ContainsKey("componentType") ? args["componentType"].ToString() : "";
+            string typeName = args.ContainsKey("componentType")
+                ? args["componentType"].ToString()
+                : "";
             Type type = FindType(typeName);
-            if (type == null) return new { error = $"Component type '{typeName}' not found" };
+            if (type == null)
+                return new { error = $"Component type '{typeName}' not found" };
 
             int index = args.ContainsKey("index") ? Convert.ToInt32(args["index"]) : 0;
 
             var components = go.GetComponents(type);
             if (index >= components.Length)
-                return new { error = $"Component index {index} out of range (found {components.Length})" };
+                return new
+                {
+                    error = $"Component index {index} out of range (found {components.Length})",
+                };
 
             Undo.DestroyObjectImmediate(components[index]);
-            return new { success = true, removed = typeName, fromGameObject = go.name };
+            return new
+            {
+                success = true,
+                removed = typeName,
+                fromGameObject = go.name,
+            };
         }
 
         public static object GetProperties(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            string typeName = args.ContainsKey("componentType") ? args["componentType"].ToString() : "";
+            string typeName = args.ContainsKey("componentType")
+                ? args["componentType"].ToString()
+                : "";
             Type type = FindType(typeName);
-            if (type == null) return new { error = $"Component type '{typeName}' not found" };
+            if (type == null)
+                return new { error = $"Component type '{typeName}' not found" };
 
             var component = go.GetComponent(type);
-            if (component == null) return new { error = $"Component '{typeName}' not found on {go.name}" };
+            if (component == null)
+                return new { error = $"Component '{typeName}' not found on {go.name}" };
 
             // Use SerializedObject to read properties
             var serialized = new SerializedObject(component);
@@ -74,14 +94,16 @@ namespace UnityMCP.Editor
             {
                 do
                 {
-                    properties.Add(new Dictionary<string, object>
-                    {
-                        { "name", iterator.name },
-                        { "displayName", iterator.displayName },
-                        { "type", iterator.propertyType.ToString() },
-                        { "value", GetSerializedValue(iterator) },
-                        { "editable", iterator.editable },
-                    });
+                    properties.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", iterator.name },
+                            { "displayName", iterator.displayName },
+                            { "type", iterator.propertyType.ToString() },
+                            { "value", GetSerializedValue(iterator) },
+                            { "editable", iterator.editable },
+                        }
+                    );
                 } while (iterator.NextVisible(false));
             }
 
@@ -96,27 +118,41 @@ namespace UnityMCP.Editor
         public static object SetProperty(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            string typeName = args.ContainsKey("componentType") ? args["componentType"].ToString() : "";
-            string propName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
+            string typeName = args.ContainsKey("componentType")
+                ? args["componentType"].ToString()
+                : "";
+            string propName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
             object value = args.ContainsKey("value") ? args["value"] : null;
 
             Type type = FindType(typeName);
-            if (type == null) return new { error = $"Component type '{typeName}' not found" };
+            if (type == null)
+                return new { error = $"Component type '{typeName}' not found" };
 
             var component = go.GetComponent(type);
-            if (component == null) return new { error = $"Component '{typeName}' not found on {go.name}" };
+            if (component == null)
+                return new { error = $"Component '{typeName}' not found on {go.name}" };
 
             var serialized = new SerializedObject(component);
             var prop = serialized.FindProperty(propName);
-            if (prop == null) return new { error = $"Property '{propName}' not found on {typeName}" };
+            if (prop == null)
+                return new { error = $"Property '{propName}' not found on {typeName}" };
 
             try
             {
                 SetSerializedValue(prop, value);
                 serialized.ApplyModifiedProperties();
-                return new { success = true, gameObject = go.name, component = typeName, property = propName };
+                return new
+                {
+                    success = true,
+                    gameObject = go.name,
+                    component = typeName,
+                    property = propName,
+                };
             }
             catch (Exception ex)
             {
@@ -135,10 +171,18 @@ namespace UnityMCP.Editor
         public static object SetReference(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found. Provide 'path' or 'instanceId' for the target GameObject." };
+            if (go == null)
+                return new
+                {
+                    error = "GameObject not found. Provide 'path' or 'instanceId' for the target GameObject.",
+                };
 
-            string componentType = args.ContainsKey("componentType") ? args["componentType"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
+            string componentType = args.ContainsKey("componentType")
+                ? args["componentType"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
@@ -148,14 +192,16 @@ namespace UnityMCP.Editor
             if (!string.IsNullOrEmpty(componentType))
             {
                 Type type = FindType(componentType);
-                if (type != null) component = go.GetComponent(type);
+                if (type != null)
+                    component = go.GetComponent(type);
             }
             else
             {
                 // Auto-search all components for this property
                 foreach (var comp in go.GetComponents<Component>())
                 {
-                    if (comp == null) continue;
+                    if (comp == null)
+                        continue;
                     var so = new SerializedObject(comp);
                     if (so.FindProperty(propertyName) != null)
                     {
@@ -174,13 +220,22 @@ namespace UnityMCP.Editor
                 return new { error = $"Property '{propertyName}' not found" };
 
             if (prop.propertyType != SerializedPropertyType.ObjectReference)
-                return new { error = $"Property '{propertyName}' is not an ObjectReference (type: {prop.propertyType}). Use component/set-property instead." };
+                return new
+                {
+                    error = $"Property '{propertyName}' is not an ObjectReference (type: {prop.propertyType}). Use component/set-property instead.",
+                };
 
             // Resolve the reference from the various input options
             string assetPath = args.ContainsKey("assetPath") ? args["assetPath"].ToString() : "";
-            string gameObjectRef = args.ContainsKey("referenceGameObject") ? args["referenceGameObject"].ToString() : "";
-            string componentRef = args.ContainsKey("referenceComponentType") ? args["referenceComponentType"].ToString() : "";
-            int refInstanceId = args.ContainsKey("referenceInstanceId") ? Convert.ToInt32(args["referenceInstanceId"]) : 0;
+            string gameObjectRef = args.ContainsKey("referenceGameObject")
+                ? args["referenceGameObject"].ToString()
+                : "";
+            string componentRef = args.ContainsKey("referenceComponentType")
+                ? args["referenceComponentType"].ToString()
+                : "";
+            int refInstanceId = args.ContainsKey("referenceInstanceId")
+                ? Convert.ToInt32(args["referenceInstanceId"])
+                : 0;
             bool clearRef = args.ContainsKey("clear") && Convert.ToBoolean(args["clear"]);
 
             UnityEngine.Object targetRef = null;
@@ -219,7 +274,9 @@ namespace UnityMCP.Editor
                 if (refGo == null)
                 {
                     // Fallback: search by name in all objects
-                    var allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+                    var allObjects = UnityEngine.Object.FindObjectsByType<GameObject>(
+                        FindObjectsSortMode.None
+                    );
                     foreach (var obj in allObjects)
                     {
                         if (obj.name == gameObjectRef)
@@ -241,7 +298,10 @@ namespace UnityMCP.Editor
 
                     var refComp = refGo.GetComponent(refType);
                     if (refComp == null)
-                        return new { error = $"Component '{componentRef}' not found on '{refGo.name}'" };
+                        return new
+                        {
+                            error = $"Component '{componentRef}' not found on '{refGo.name}'",
+                        };
 
                     targetRef = refComp;
                 }
@@ -252,7 +312,10 @@ namespace UnityMCP.Editor
             }
             else
             {
-                return new { error = "Provide one of: assetPath, referenceGameObject, referenceInstanceId, or clear=true" };
+                return new
+                {
+                    error = "Provide one of: assetPath, referenceGameObject, referenceInstanceId, or clear=true",
+                };
             }
 
             prop.objectReferenceValue = targetRef;
@@ -296,7 +359,9 @@ namespace UnityMCP.Editor
                 var refArgs = item as Dictionary<string, object>;
                 if (refArgs == null)
                 {
-                    results.Add(new Dictionary<string, object> { { "error", "Invalid reference entry" } });
+                    results.Add(
+                        new Dictionary<string, object> { { "error", "Invalid reference entry" } }
+                    );
                     errorCount++;
                     continue;
                 }
@@ -344,10 +409,15 @@ namespace UnityMCP.Editor
         public static object GetReferenceableObjects(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
-            string componentType = args.ContainsKey("componentType") ? args["componentType"].ToString() : "";
-            string propertyName = args.ContainsKey("propertyName") ? args["propertyName"].ToString() : "";
+            string componentType = args.ContainsKey("componentType")
+                ? args["componentType"].ToString()
+                : "";
+            string propertyName = args.ContainsKey("propertyName")
+                ? args["propertyName"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(propertyName))
                 return new { error = "propertyName is required" };
@@ -357,13 +427,15 @@ namespace UnityMCP.Editor
             if (!string.IsNullOrEmpty(componentType))
             {
                 Type type = FindType(componentType);
-                if (type != null) component = go.GetComponent(type);
+                if (type != null)
+                    component = go.GetComponent(type);
             }
             else
             {
                 foreach (var comp in go.GetComponents<Component>())
                 {
-                    if (comp == null) continue;
+                    if (comp == null)
+                        continue;
                     var so = new SerializedObject(comp);
                     if (so.FindProperty(propertyName) != null)
                     {
@@ -382,60 +454,83 @@ namespace UnityMCP.Editor
                 return new { error = $"Property '{propertyName}' is not an ObjectReference" };
 
             // Get the expected type from reflection
-            var fieldInfo = component.GetType().GetField(propertyName,
-                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            var fieldInfo = component
+                .GetType()
+                .GetField(
+                    propertyName,
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                );
             Type expectedType = typeof(UnityEngine.Object);
-            if (fieldInfo != null) expectedType = fieldInfo.FieldType;
+            if (fieldInfo != null)
+                expectedType = fieldInfo.FieldType;
 
             // Gather scene objects of matching type
             var sceneObjects = new List<Dictionary<string, object>>();
             if (typeof(Component).IsAssignableFrom(expectedType))
             {
-                var found = UnityEngine.Object.FindObjectsByType(expectedType, FindObjectsSortMode.None);
+                var found = UnityEngine.Object.FindObjectsByType(
+                    expectedType,
+                    FindObjectsSortMode.None
+                );
                 foreach (var obj in found)
                 {
                     var comp = obj as Component;
-                    if (comp == null) continue;
-                    sceneObjects.Add(new Dictionary<string, object>
-                    {
-                        { "name", comp.gameObject.name },
-                        { "type", comp.GetType().Name },
-                        { "instanceId", comp.GetInstanceID() },
-                        { "path", GetGameObjectPath(comp.gameObject) },
-                    });
-                    if (sceneObjects.Count >= 50) break; // Limit results
+                    if (comp == null)
+                        continue;
+                    sceneObjects.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", comp.gameObject.name },
+                            { "type", comp.GetType().Name },
+                            { "instanceId", comp.GetInstanceID() },
+                            { "path", GetGameObjectPath(comp.gameObject) },
+                        }
+                    );
+                    if (sceneObjects.Count >= 50)
+                        break; // Limit results
                 }
             }
             else if (typeof(GameObject).IsAssignableFrom(expectedType))
             {
-                var found = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+                var found = UnityEngine.Object.FindObjectsByType<GameObject>(
+                    FindObjectsSortMode.None
+                );
                 foreach (var obj in found)
                 {
-                    sceneObjects.Add(new Dictionary<string, object>
-                    {
-                        { "name", obj.name },
-                        { "type", "GameObject" },
-                        { "instanceId", obj.GetInstanceID() },
-                        { "path", GetGameObjectPath(obj) },
-                    });
-                    if (sceneObjects.Count >= 50) break;
+                    sceneObjects.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", obj.name },
+                            { "type", "GameObject" },
+                            { "instanceId", obj.GetInstanceID() },
+                            { "path", GetGameObjectPath(obj) },
+                        }
+                    );
+                    if (sceneObjects.Count >= 50)
+                        break;
                 }
             }
 
             // Gather assets of matching type
             var assetResults = new List<Dictionary<string, object>>();
-            if (!typeof(Component).IsAssignableFrom(expectedType) || typeof(MonoBehaviour).IsAssignableFrom(expectedType))
+            if (
+                !typeof(Component).IsAssignableFrom(expectedType)
+                || typeof(MonoBehaviour).IsAssignableFrom(expectedType)
+            )
             {
                 string[] guids = AssetDatabase.FindAssets($"t:{expectedType.Name}");
                 foreach (var guid in guids)
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
-                    assetResults.Add(new Dictionary<string, object>
-                    {
-                        { "assetPath", path },
-                        { "name", System.IO.Path.GetFileNameWithoutExtension(path) },
-                    });
-                    if (assetResults.Count >= 50) break;
+                    assetResults.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "assetPath", path },
+                            { "name", System.IO.Path.GetFileNameWithoutExtension(path) },
+                        }
+                    );
+                    if (assetResults.Count >= 50)
+                        break;
                 }
             }
 
@@ -445,7 +540,10 @@ namespace UnityMCP.Editor
                 { "gameObject", go.name },
                 { "property", propertyName },
                 { "expectedType", expectedType.Name },
-                { "currentValue", prop.objectReferenceValue != null ? prop.objectReferenceValue.name : null },
+                {
+                    "currentValue",
+                    prop.objectReferenceValue != null ? prop.objectReferenceValue.name : null
+                },
                 { "sceneObjects", sceneObjects },
                 { "assets", assetResults },
             };
@@ -457,29 +555,36 @@ namespace UnityMCP.Editor
         {
             // Try common Unity types
             Type t = Type.GetType($"UnityEngine.{name}, UnityEngine");
-            if (t != null) return t;
+            if (t != null)
+                return t;
 
             t = Type.GetType($"UnityEngine.{name}, UnityEngine.CoreModule");
-            if (t != null) return t;
+            if (t != null)
+                return t;
 
             t = Type.GetType($"UnityEngine.{name}, UnityEngine.PhysicsModule");
-            if (t != null) return t;
+            if (t != null)
+                return t;
 
             t = Type.GetType($"UnityEngine.{name}, UnityEngine.AudioModule");
-            if (t != null) return t;
+            if (t != null)
+                return t;
 
             t = Type.GetType($"UnityEngine.UI.{name}, UnityEngine.UI");
-            if (t != null) return t;
+            if (t != null)
+                return t;
 
             // Search all loaded assemblies
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 t = assembly.GetType(name);
-                if (t != null) return t;
+                if (t != null)
+                    return t;
 
                 // Try with UnityEngine prefix
                 t = assembly.GetType($"UnityEngine.{name}");
-                if (t != null) return t;
+                if (t != null)
+                    return t;
             }
 
             // Fallback: search by short class name across all assemblies
@@ -515,24 +620,47 @@ namespace UnityMCP.Editor
         {
             switch (prop.propertyType)
             {
-                case SerializedPropertyType.Integer: return prop.intValue;
-                case SerializedPropertyType.Boolean: return prop.boolValue;
-                case SerializedPropertyType.Float: return prop.floatValue;
-                case SerializedPropertyType.String: return prop.stringValue;
+                case SerializedPropertyType.Integer:
+                    return prop.intValue;
+                case SerializedPropertyType.Boolean:
+                    return prop.boolValue;
+                case SerializedPropertyType.Float:
+                    return prop.floatValue;
+                case SerializedPropertyType.String:
+                    return prop.stringValue;
                 case SerializedPropertyType.Color:
                     var c = prop.colorValue;
-                    return new Dictionary<string, object> { { "r", c.r }, { "g", c.g }, { "b", c.b }, { "a", c.a } };
+                    return new Dictionary<string, object>
+                    {
+                        { "r", c.r },
+                        { "g", c.g },
+                        { "b", c.b },
+                        { "a", c.a },
+                    };
                 case SerializedPropertyType.Vector2:
                     var v2 = prop.vector2Value;
                     return new Dictionary<string, object> { { "x", v2.x }, { "y", v2.y } };
                 case SerializedPropertyType.Vector3:
                     var v3 = prop.vector3Value;
-                    return new Dictionary<string, object> { { "x", v3.x }, { "y", v3.y }, { "z", v3.z } };
+                    return new Dictionary<string, object>
+                    {
+                        { "x", v3.x },
+                        { "y", v3.y },
+                        { "z", v3.z },
+                    };
                 case SerializedPropertyType.Vector4:
                     var v4 = prop.vector4Value;
-                    return new Dictionary<string, object> { { "x", v4.x }, { "y", v4.y }, { "z", v4.z }, { "w", v4.w } };
+                    return new Dictionary<string, object>
+                    {
+                        { "x", v4.x },
+                        { "y", v4.y },
+                        { "z", v4.z },
+                        { "w", v4.w },
+                    };
                 case SerializedPropertyType.Enum:
-                    return prop.enumNames.Length > prop.enumValueIndex ? prop.enumNames[prop.enumValueIndex] : prop.enumValueIndex.ToString();
+                    return prop.enumNames.Length > prop.enumValueIndex
+                        ? prop.enumNames[prop.enumValueIndex]
+                        : prop.enumValueIndex.ToString();
                 case SerializedPropertyType.ObjectReference:
                     if (prop.objectReferenceValue != null)
                     {
@@ -559,16 +687,44 @@ namespace UnityMCP.Editor
                     return prop.intValue;
                 case SerializedPropertyType.Quaternion:
                     var q = prop.quaternionValue;
-                    return new Dictionary<string, object> { { "x", q.x }, { "y", q.y }, { "z", q.z }, { "w", q.w } };
+                    return new Dictionary<string, object>
+                    {
+                        { "x", q.x },
+                        { "y", q.y },
+                        { "z", q.z },
+                        { "w", q.w },
+                    };
                 case SerializedPropertyType.Rect:
                     var r = prop.rectValue;
-                    return new Dictionary<string, object> { { "x", r.x }, { "y", r.y }, { "width", r.width }, { "height", r.height } };
+                    return new Dictionary<string, object>
+                    {
+                        { "x", r.x },
+                        { "y", r.y },
+                        { "width", r.width },
+                        { "height", r.height },
+                    };
                 case SerializedPropertyType.Bounds:
                     var b = prop.boundsValue;
                     return new Dictionary<string, object>
                     {
-                        { "center", new Dictionary<string, object> { { "x", b.center.x }, { "y", b.center.y }, { "z", b.center.z } } },
-                        { "size", new Dictionary<string, object> { { "x", b.size.x }, { "y", b.size.y }, { "z", b.size.z } } },
+                        {
+                            "center",
+                            new Dictionary<string, object>
+                            {
+                                { "x", b.center.x },
+                                { "y", b.center.y },
+                                { "z", b.center.z },
+                            }
+                        },
+                        {
+                            "size",
+                            new Dictionary<string, object>
+                            {
+                                { "x", b.size.x },
+                                { "y", b.size.y },
+                                { "z", b.size.z },
+                            }
+                        },
                     };
                 default:
                     return prop.propertyType.ToString();
@@ -598,14 +754,16 @@ namespace UnityMCP.Editor
                             Convert.ToSingle(cd.GetValueOrDefault("r", 0f)),
                             Convert.ToSingle(cd.GetValueOrDefault("g", 0f)),
                             Convert.ToSingle(cd.GetValueOrDefault("b", 0f)),
-                            Convert.ToSingle(cd.GetValueOrDefault("a", 1f)));
+                            Convert.ToSingle(cd.GetValueOrDefault("a", 1f))
+                        );
                     break;
                 case SerializedPropertyType.Vector2:
                     var v2d = value as Dictionary<string, object>;
                     if (v2d != null)
                         prop.vector2Value = new Vector2(
                             Convert.ToSingle(v2d.GetValueOrDefault("x", 0f)),
-                            Convert.ToSingle(v2d.GetValueOrDefault("y", 0f)));
+                            Convert.ToSingle(v2d.GetValueOrDefault("y", 0f))
+                        );
                     break;
                 case SerializedPropertyType.Vector3:
                     var vd = value as Dictionary<string, object>;
@@ -613,7 +771,8 @@ namespace UnityMCP.Editor
                         prop.vector3Value = new Vector3(
                             Convert.ToSingle(vd.GetValueOrDefault("x", 0f)),
                             Convert.ToSingle(vd.GetValueOrDefault("y", 0f)),
-                            Convert.ToSingle(vd.GetValueOrDefault("z", 0f)));
+                            Convert.ToSingle(vd.GetValueOrDefault("z", 0f))
+                        );
                     break;
                 case SerializedPropertyType.Vector4:
                     var v4d = value as Dictionary<string, object>;
@@ -622,13 +781,15 @@ namespace UnityMCP.Editor
                             Convert.ToSingle(v4d.GetValueOrDefault("x", 0f)),
                             Convert.ToSingle(v4d.GetValueOrDefault("y", 0f)),
                             Convert.ToSingle(v4d.GetValueOrDefault("z", 0f)),
-                            Convert.ToSingle(v4d.GetValueOrDefault("w", 0f)));
+                            Convert.ToSingle(v4d.GetValueOrDefault("w", 0f))
+                        );
                     break;
                 case SerializedPropertyType.Enum:
                     if (value is string enumName)
                     {
                         int index = Array.IndexOf(prop.enumNames, enumName);
-                        if (index >= 0) prop.enumValueIndex = index;
+                        if (index >= 0)
+                            prop.enumValueIndex = index;
                     }
                     else
                     {
@@ -645,13 +806,16 @@ namespace UnityMCP.Editor
                             Convert.ToSingle(rd.GetValueOrDefault("x", 0f)),
                             Convert.ToSingle(rd.GetValueOrDefault("y", 0f)),
                             Convert.ToSingle(rd.GetValueOrDefault("width", 0f)),
-                            Convert.ToSingle(rd.GetValueOrDefault("height", 0f)));
+                            Convert.ToSingle(rd.GetValueOrDefault("height", 0f))
+                        );
                     break;
                 case SerializedPropertyType.ObjectReference:
                     prop.objectReferenceValue = ResolveObjectReference(value);
                     break;
                 default:
-                    throw new NotSupportedException($"Cannot set property type: {prop.propertyType}");
+                    throw new NotSupportedException(
+                        $"Cannot set property type: {prop.propertyType}"
+                    );
             }
         }
 
@@ -665,8 +829,10 @@ namespace UnityMCP.Editor
         internal static UnityEngine.Object ResolveObjectReference(object value)
         {
             // Null / empty → clear
-            if (value == null) return null;
-            if (value is string s && string.IsNullOrEmpty(s)) return null;
+            if (value == null)
+                return null;
+            if (value is string s && string.IsNullOrEmpty(s))
+                return null;
 
             // Already a dictionary
             var dict = value as Dictionary<string, object>;
@@ -678,7 +844,9 @@ namespace UnityMCP.Editor
                 {
                     dict = MiniJson.Deserialize(jsonStr) as Dictionary<string, object>;
                 }
-                catch { /* not valid JSON, fall through to string handling */ }
+                catch
+                { /* not valid JSON, fall through to string handling */
+                }
             }
 
             // Dictionary-based resolution
@@ -688,20 +856,27 @@ namespace UnityMCP.Editor
 
                 if (dict.ContainsKey("assetPath"))
                 {
-                    resolved = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(dict["assetPath"].ToString());
+                    resolved = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
+                        dict["assetPath"].ToString()
+                    );
                 }
                 else if (dict.ContainsKey("instanceId"))
                 {
-                    resolved = EditorUtility.InstanceIDToObject(Convert.ToInt32(dict["instanceId"]));
+                    resolved = EditorUtility.InstanceIDToObject(
+                        Convert.ToInt32(dict["instanceId"])
+                    );
                 }
                 else if (dict.ContainsKey("gameObject") || dict.ContainsKey("path"))
                 {
-                    string goPath = dict.ContainsKey("path") ? dict["path"].ToString() : dict["gameObject"].ToString();
+                    string goPath = dict.ContainsKey("path")
+                        ? dict["path"].ToString()
+                        : dict["gameObject"].ToString();
                     var refGo = GameObject.Find(goPath);
                     if (refGo != null && dict.ContainsKey("componentType"))
                     {
                         Type ct = FindType(dict["componentType"].ToString());
-                        if (ct != null) resolved = refGo.GetComponent(ct);
+                        if (ct != null)
+                            resolved = refGo.GetComponent(ct);
                     }
                     else
                     {
@@ -710,7 +885,9 @@ namespace UnityMCP.Editor
                 }
 
                 if (resolved == null)
-                    throw new InvalidOperationException("Could not resolve object reference from dict. Provide assetPath, instanceId, path, or gameObject.");
+                    throw new InvalidOperationException(
+                        "Could not resolve object reference from dict. Provide assetPath, instanceId, path, or gameObject."
+                    );
                 return resolved;
             }
 
@@ -721,25 +898,32 @@ namespace UnityMCP.Editor
                 if (strVal.StartsWith("Assets/"))
                 {
                     var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(strVal);
-                    if (asset != null) return asset;
+                    if (asset != null)
+                        return asset;
                 }
 
                 // Scene hierarchy path or name via GameObject.Find
                 var foundGo = GameObject.Find(strVal);
-                if (foundGo != null) return foundGo;
+                if (foundGo != null)
+                    return foundGo;
 
                 // Last resort: search all root objects for partial match
                 var scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
                 foreach (var root in scene.GetRootGameObjects())
                 {
                     var found = root.transform.Find(strVal);
-                    if (found != null) return found.gameObject;
+                    if (found != null)
+                        return found.gameObject;
                 }
 
-                throw new InvalidOperationException($"Could not resolve '{strVal}' as asset path or scene object.");
+                throw new InvalidOperationException(
+                    $"Could not resolve '{strVal}' as asset path or scene object."
+                );
             }
 
-            throw new NotSupportedException($"ObjectReference value must be a string (path/name) or dict with assetPath/instanceId/gameObject/path.");
+            throw new NotSupportedException(
+                $"ObjectReference value must be a string (path/name) or dict with assetPath/instanceId/gameObject/path."
+            );
         }
     }
 }

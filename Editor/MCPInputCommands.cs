@@ -22,12 +22,16 @@ namespace UnityMCP.Editor
         {
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             if (string.IsNullOrEmpty(path))
-                return new { error = "path is required (e.g. 'Assets/Settings/MyControls.inputactions')" };
+                return new
+                {
+                    error = "path is required (e.g. 'Assets/Settings/MyControls.inputactions')",
+                };
 
             if (!path.EndsWith(".inputactions"))
                 path += ".inputactions";
 
-            string assetName = args.ContainsKey("name") ? args["name"].ToString()
+            string assetName = args.ContainsKey("name")
+                ? args["name"].ToString()
                 : Path.GetFileNameWithoutExtension(path);
 
             // Ensure directory exists
@@ -53,7 +57,9 @@ namespace UnityMCP.Editor
                 {
                     if (mapObj is Dictionary<string, object> mapDef)
                     {
-                        string mapName = mapDef.ContainsKey("name") ? mapDef["name"].ToString() : "Default";
+                        string mapName = mapDef.ContainsKey("name")
+                            ? mapDef["name"].ToString()
+                            : "Default";
                         maps.Add(BuildEmptyMap(mapName));
                     }
                 }
@@ -63,11 +69,12 @@ namespace UnityMCP.Editor
             {
                 { "name", assetName },
                 { "maps", maps },
-                { "controlSchemes", new List<object>() }
+                { "controlSchemes", new List<object>() },
             };
 
             string json = MiniJson.Serialize(root);
-            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), path).Replace('\\', '/');
+            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), path)
+                .Replace('\\', '/');
             File.WriteAllText(fullPath, json);
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
 
@@ -76,7 +83,7 @@ namespace UnityMCP.Editor
                 { "success", true },
                 { "path", path },
                 { "name", assetName },
-                { "maps", maps.Count }
+                { "maps", maps.Count },
             };
         }
 
@@ -95,7 +102,7 @@ namespace UnityMCP.Editor
             var result = new Dictionary<string, object>
             {
                 { "name", root.ContainsKey("name") ? root["name"] : "" },
-                { "path", path }
+                { "path", path },
             };
 
             if (root.ContainsKey("maps") && root["maps"] is List<object> maps)
@@ -108,7 +115,7 @@ namespace UnityMCP.Editor
                         var mapInfo = new Dictionary<string, object>
                         {
                             { "name", map.ContainsKey("name") ? map["name"] : "" },
-                            { "id", map.ContainsKey("id") ? map["id"] : "" }
+                            { "id", map.ContainsKey("id") ? map["id"] : "" },
                         };
 
                         // Count actions
@@ -121,13 +128,20 @@ namespace UnityMCP.Editor
                             {
                                 if (actObj is Dictionary<string, object> act)
                                 {
-                                    actionInfos.Add(new Dictionary<string, object>
-                                    {
-                                        { "name", act.ContainsKey("name") ? act["name"] : "" },
-                                        { "type", act.ContainsKey("type") ? act["type"] : "" },
-                                        { "id", act.ContainsKey("id") ? act["id"] : "" },
-                                        { "expectedControlType", act.ContainsKey("expectedControlType") ? act["expectedControlType"] : "" }
-                                    });
+                                    actionInfos.Add(
+                                        new Dictionary<string, object>
+                                        {
+                                            { "name", act.ContainsKey("name") ? act["name"] : "" },
+                                            { "type", act.ContainsKey("type") ? act["type"] : "" },
+                                            { "id", act.ContainsKey("id") ? act["id"] : "" },
+                                            {
+                                                "expectedControlType",
+                                                act.ContainsKey("expectedControlType")
+                                                    ? act["expectedControlType"]
+                                                    : ""
+                                            },
+                                        }
+                                    );
                                 }
                             }
                         }
@@ -144,14 +158,29 @@ namespace UnityMCP.Editor
                             {
                                 if (bObj is Dictionary<string, object> b)
                                 {
-                                    bindingInfos.Add(new Dictionary<string, object>
-                                    {
-                                        { "name", b.ContainsKey("name") ? b["name"] : "" },
-                                        { "path", b.ContainsKey("path") ? b["path"] : "" },
-                                        { "action", b.ContainsKey("action") ? b["action"] : "" },
-                                        { "isComposite", b.ContainsKey("isComposite") ? b["isComposite"] : false },
-                                        { "isPartOfComposite", b.ContainsKey("isPartOfComposite") ? b["isPartOfComposite"] : false }
-                                    });
+                                    bindingInfos.Add(
+                                        new Dictionary<string, object>
+                                        {
+                                            { "name", b.ContainsKey("name") ? b["name"] : "" },
+                                            { "path", b.ContainsKey("path") ? b["path"] : "" },
+                                            {
+                                                "action",
+                                                b.ContainsKey("action") ? b["action"] : ""
+                                            },
+                                            {
+                                                "isComposite",
+                                                b.ContainsKey("isComposite")
+                                                    ? b["isComposite"]
+                                                    : false
+                                            },
+                                            {
+                                                "isPartOfComposite",
+                                                b.ContainsKey("isPartOfComposite")
+                                                    ? b["isPartOfComposite"]
+                                                    : false
+                                            },
+                                        }
+                                    );
                                 }
                             }
                             mapInfo["bindings"] = bindingInfos;
@@ -165,7 +194,9 @@ namespace UnityMCP.Editor
                 result["mapCount"] = mapInfos.Count;
             }
 
-            if (root.ContainsKey("controlSchemes") && root["controlSchemes"] is List<object> schemes)
+            if (
+                root.ContainsKey("controlSchemes") && root["controlSchemes"] is List<object> schemes
+            )
                 result["controlSchemeCount"] = schemes.Count;
 
             return result;
@@ -185,13 +216,17 @@ namespace UnityMCP.Editor
                 return new { error = $"Could not load .inputactions file at '{path}'" };
 
             var maps = root.ContainsKey("maps") ? root["maps"] as List<object> : new List<object>();
-            if (maps == null) maps = new List<object>();
+            if (maps == null)
+                maps = new List<object>();
 
             // Check for duplicate
             foreach (var m in maps)
             {
-                if (m is Dictionary<string, object> existing &&
-                    existing.ContainsKey("name") && existing["name"].ToString() == mapName)
+                if (
+                    m is Dictionary<string, object> existing
+                    && existing.ContainsKey("name")
+                    && existing["name"].ToString() == mapName
+                )
                     return new { error = $"Action map '{mapName}' already exists" };
             }
 
@@ -204,7 +239,7 @@ namespace UnityMCP.Editor
                 { "success", true },
                 { "path", path },
                 { "mapName", mapName },
-                { "totalMaps", maps.Count }
+                { "totalMaps", maps.Count },
             };
         }
 
@@ -225,7 +260,10 @@ namespace UnityMCP.Editor
                 return new { error = "No maps found in file" };
 
             int removed = maps.RemoveAll(m =>
-                m is Dictionary<string, object> d && d.ContainsKey("name") && d["name"].ToString() == mapName);
+                m is Dictionary<string, object> d
+                && d.ContainsKey("name")
+                && d["name"].ToString() == mapName
+            );
 
             if (removed == 0)
                 return new { error = $"Action map '{mapName}' not found" };
@@ -236,7 +274,7 @@ namespace UnityMCP.Editor
                 { "success", true },
                 { "path", path },
                 { "removedMap", mapName },
-                { "totalMaps", maps.Count }
+                { "totalMaps", maps.Count },
             };
         }
 
@@ -247,8 +285,12 @@ namespace UnityMCP.Editor
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             string mapName = args.ContainsKey("mapName") ? args["mapName"].ToString() : "";
             string actionName = args.ContainsKey("actionName") ? args["actionName"].ToString() : "";
-            string actionType = args.ContainsKey("actionType") ? args["actionType"].ToString() : "Value";
-            string controlType = args.ContainsKey("expectedControlType") ? args["expectedControlType"].ToString() : "";
+            string actionType = args.ContainsKey("actionType")
+                ? args["actionType"].ToString()
+                : "Value";
+            string controlType = args.ContainsKey("expectedControlType")
+                ? args["expectedControlType"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(actionName))
                 return new { error = "actionName is required" };
@@ -261,15 +303,24 @@ namespace UnityMCP.Editor
             if (map == null)
                 return new { error = $"Action map '{mapName}' not found" };
 
-            var actions = map.ContainsKey("actions") ? map["actions"] as List<object> : new List<object>();
-            if (actions == null) actions = new List<object>();
+            var actions = map.ContainsKey("actions")
+                ? map["actions"] as List<object>
+                : new List<object>();
+            if (actions == null)
+                actions = new List<object>();
 
             // Check for duplicate
             foreach (var a in actions)
             {
-                if (a is Dictionary<string, object> existing &&
-                    existing.ContainsKey("name") && existing["name"].ToString() == actionName)
-                    return new { error = $"Action '{actionName}' already exists in map '{mapName}'" };
+                if (
+                    a is Dictionary<string, object> existing
+                    && existing.ContainsKey("name")
+                    && existing["name"].ToString() == actionName
+                )
+                    return new
+                    {
+                        error = $"Action '{actionName}' already exists in map '{mapName}'",
+                    };
             }
 
             var action = new Dictionary<string, object>
@@ -280,7 +331,7 @@ namespace UnityMCP.Editor
                 { "expectedControlType", controlType },
                 { "processors", "" },
                 { "interactions", "" },
-                { "initialStateCheck", actionType == "Value" }
+                { "initialStateCheck", actionType == "Value" },
             };
 
             actions.Add(action);
@@ -293,7 +344,7 @@ namespace UnityMCP.Editor
                 { "path", path },
                 { "mapName", mapName },
                 { "actionName", actionName },
-                { "actionType", actionType }
+                { "actionType", actionType },
             };
         }
 
@@ -323,11 +374,17 @@ namespace UnityMCP.Editor
             if (map.ContainsKey("bindings") && map["bindings"] is List<object> bindings)
             {
                 bindings.RemoveAll(b =>
-                    b is Dictionary<string, object> d && d.ContainsKey("action") && d["action"].ToString() == actionName);
+                    b is Dictionary<string, object> d
+                    && d.ContainsKey("action")
+                    && d["action"].ToString() == actionName
+                );
             }
 
             int removed = actions.RemoveAll(a =>
-                a is Dictionary<string, object> d && d.ContainsKey("name") && d["name"].ToString() == actionName);
+                a is Dictionary<string, object> d
+                && d.ContainsKey("name")
+                && d["name"].ToString() == actionName
+            );
 
             if (removed == 0)
                 return new { error = $"Action '{actionName}' not found in map '{mapName}'" };
@@ -338,7 +395,7 @@ namespace UnityMCP.Editor
                 { "success", true },
                 { "path", path },
                 { "mapName", mapName },
-                { "removedAction", actionName }
+                { "removedAction", actionName },
             };
         }
 
@@ -349,7 +406,9 @@ namespace UnityMCP.Editor
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             string mapName = args.ContainsKey("mapName") ? args["mapName"].ToString() : "";
             string actionName = args.ContainsKey("actionName") ? args["actionName"].ToString() : "";
-            string bindingPath = args.ContainsKey("bindingPath") ? args["bindingPath"].ToString() : "";
+            string bindingPath = args.ContainsKey("bindingPath")
+                ? args["bindingPath"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(actionName))
                 return new { error = "actionName is required" };
@@ -362,8 +421,11 @@ namespace UnityMCP.Editor
             if (map == null)
                 return new { error = $"Action map '{mapName}' not found" };
 
-            var bindings = map.ContainsKey("bindings") ? map["bindings"] as List<object> : new List<object>();
-            if (bindings == null) bindings = new List<object>();
+            var bindings = map.ContainsKey("bindings")
+                ? map["bindings"] as List<object>
+                : new List<object>();
+            if (bindings == null)
+                bindings = new List<object>();
 
             var binding = new Dictionary<string, object>
             {
@@ -375,7 +437,7 @@ namespace UnityMCP.Editor
                 { "groups", "" },
                 { "action", actionName },
                 { "isComposite", false },
-                { "isPartOfComposite", false }
+                { "isPartOfComposite", false },
             };
 
             bindings.Add(binding);
@@ -388,7 +450,7 @@ namespace UnityMCP.Editor
                 { "path", path },
                 { "mapName", mapName },
                 { "actionName", actionName },
-                { "bindingPath", bindingPath }
+                { "bindingPath", bindingPath },
             };
         }
 
@@ -399,8 +461,12 @@ namespace UnityMCP.Editor
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             string mapName = args.ContainsKey("mapName") ? args["mapName"].ToString() : "";
             string actionName = args.ContainsKey("actionName") ? args["actionName"].ToString() : "";
-            string compositeName = args.ContainsKey("compositeName") ? args["compositeName"].ToString() : "";
-            string compositeType = args.ContainsKey("compositeType") ? args["compositeType"].ToString() : "1DAxis";
+            string compositeName = args.ContainsKey("compositeName")
+                ? args["compositeName"].ToString()
+                : "";
+            string compositeType = args.ContainsKey("compositeType")
+                ? args["compositeType"].ToString()
+                : "1DAxis";
 
             if (string.IsNullOrEmpty(actionName) || string.IsNullOrEmpty(compositeName))
                 return new { error = "actionName and compositeName are required" };
@@ -413,8 +479,11 @@ namespace UnityMCP.Editor
             if (map == null)
                 return new { error = $"Action map '{mapName}' not found" };
 
-            var bindings = map.ContainsKey("bindings") ? map["bindings"] as List<object> : new List<object>();
-            if (bindings == null) bindings = new List<object>();
+            var bindings = map.ContainsKey("bindings")
+                ? map["bindings"] as List<object>
+                : new List<object>();
+            if (bindings == null)
+                bindings = new List<object>();
 
             // Add composite parent
             var composite = new Dictionary<string, object>
@@ -427,7 +496,7 @@ namespace UnityMCP.Editor
                 { "groups", "" },
                 { "action", actionName },
                 { "isComposite", true },
-                { "isPartOfComposite", false }
+                { "isPartOfComposite", false },
             };
             bindings.Add(composite);
 
@@ -438,8 +507,12 @@ namespace UnityMCP.Editor
                 {
                     if (partObj is Dictionary<string, object> partDef)
                     {
-                        string partName = partDef.ContainsKey("name") ? partDef["name"].ToString() : "";
-                        string partPath = partDef.ContainsKey("path") ? partDef["path"].ToString() : "";
+                        string partName = partDef.ContainsKey("name")
+                            ? partDef["name"].ToString()
+                            : "";
+                        string partPath = partDef.ContainsKey("path")
+                            ? partDef["path"].ToString()
+                            : "";
 
                         var part = new Dictionary<string, object>
                         {
@@ -451,7 +524,7 @@ namespace UnityMCP.Editor
                             { "groups", "" },
                             { "action", actionName },
                             { "isComposite", false },
-                            { "isPartOfComposite", true }
+                            { "isPartOfComposite", true },
                         };
                         bindings.Add(part);
                     }
@@ -467,7 +540,7 @@ namespace UnityMCP.Editor
                 { "path", path },
                 { "mapName", mapName },
                 { "actionName", actionName },
-                { "compositeName", compositeName }
+                { "compositeName", compositeName },
             };
         }
 
@@ -480,19 +553,25 @@ namespace UnityMCP.Editor
                 { "name", name },
                 { "id", Guid.NewGuid().ToString() },
                 { "actions", new List<object>() },
-                { "bindings", new List<object>() }
+                { "bindings", new List<object>() },
             };
         }
 
-        private static Dictionary<string, object> FindMap(Dictionary<string, object> root, string mapName)
+        private static Dictionary<string, object> FindMap(
+            Dictionary<string, object> root,
+            string mapName
+        )
         {
             if (!root.ContainsKey("maps") || !(root["maps"] is List<object> maps))
                 return null;
 
             foreach (var m in maps)
             {
-                if (m is Dictionary<string, object> map &&
-                    map.ContainsKey("name") && map["name"].ToString() == mapName)
+                if (
+                    m is Dictionary<string, object> map
+                    && map.ContainsKey("name")
+                    && map["name"].ToString() == mapName
+                )
                     return map;
             }
             return null;
@@ -503,7 +582,8 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(assetPath))
                 return null;
 
-            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), assetPath).Replace('\\', '/');
+            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), assetPath)
+                .Replace('\\', '/');
             if (!File.Exists(fullPath))
                 return null;
 
@@ -514,7 +594,8 @@ namespace UnityMCP.Editor
         private static void SaveInputActionsJson(string assetPath, Dictionary<string, object> root)
         {
             string json = MiniJson.Serialize(root);
-            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), assetPath).Replace('\\', '/');
+            string fullPath = Path.Combine(Path.GetDirectoryName(Application.dataPath), assetPath)
+                .Replace('\\', '/');
             File.WriteAllText(fullPath, json);
             AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate);
         }

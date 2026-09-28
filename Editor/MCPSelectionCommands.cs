@@ -13,19 +13,24 @@ namespace UnityMCP.Editor
             var selected = new List<Dictionary<string, object>>();
             foreach (var obj in Selection.gameObjects)
             {
-                selected.Add(new Dictionary<string, object>
-                {
-                    { "name", obj.name },
-                    { "instanceId", obj.GetInstanceID() },
-                    { "path", MCPGameObjectCommands.GetHierarchyPath(obj) },
-                });
+                selected.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "name", obj.name },
+                        { "instanceId", obj.GetInstanceID() },
+                        { "path", MCPGameObjectCommands.GetHierarchyPath(obj) },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
             {
                 { "count", selected.Count },
                 { "selected", selected },
-                { "activeObject", Selection.activeGameObject != null ? Selection.activeGameObject.name : null },
+                {
+                    "activeObject",
+                    Selection.activeGameObject != null ? Selection.activeGameObject.name : null
+                },
             };
         }
 
@@ -41,7 +46,8 @@ namespace UnityMCP.Editor
                     foreach (var p in paths)
                     {
                         var go = GameObject.Find(p.ToString());
-                        if (go != null) gameObjects.Add(go);
+                        if (go != null)
+                            gameObjects.Add(go);
                     }
                 }
             }
@@ -49,14 +55,16 @@ namespace UnityMCP.Editor
             if (args.ContainsKey("path"))
             {
                 var go = GameObject.Find(args["path"].ToString());
-                if (go != null) gameObjects.Add(go);
+                if (go != null)
+                    gameObjects.Add(go);
             }
 
             if (args.ContainsKey("instanceId"))
             {
                 int id = Convert.ToInt32(args["instanceId"]);
                 var go = EditorUtility.InstanceIDToObject(id) as GameObject;
-                if (go != null) gameObjects.Add(go);
+                if (go != null)
+                    gameObjects.Add(go);
             }
 
             Selection.objects = gameObjects.Cast<UnityEngine.Object>().ToArray();
@@ -73,7 +81,7 @@ namespace UnityMCP.Editor
         public static object FocusSceneView(Dictionary<string, object> args)
         {
             var go = MCPGameObjectCommands.FindGameObject(args);
-            
+
             var sceneView = SceneView.lastActiveSceneView;
             if (sceneView == null)
                 return new { error = "No active Scene View found" };
@@ -86,12 +94,16 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("position"))
             {
-                sceneView.pivot = MCPGameObjectCommands.DictToVector3(args["position"] as Dictionary<string, object>);
+                sceneView.pivot = MCPGameObjectCommands.DictToVector3(
+                    args["position"] as Dictionary<string, object>
+                );
             }
 
             if (args.ContainsKey("rotation"))
             {
-                var euler = MCPGameObjectCommands.DictToVector3(args["rotation"] as Dictionary<string, object>);
+                var euler = MCPGameObjectCommands.DictToVector3(
+                    args["rotation"] as Dictionary<string, object>
+                );
                 sceneView.rotation = Quaternion.Euler(euler);
             }
 
@@ -119,16 +131,19 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(typeName))
                 return new { error = "typeName is required" };
 
-            Type type = Type.GetType($"UnityEngine.{typeName}, UnityEngine") ??
-                        Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule") ??
-                        Type.GetType($"UnityEngine.{typeName}, UnityEngine.PhysicsModule");
+            Type type =
+                Type.GetType($"UnityEngine.{typeName}, UnityEngine")
+                ?? Type.GetType($"UnityEngine.{typeName}, UnityEngine.CoreModule")
+                ?? Type.GetType($"UnityEngine.{typeName}, UnityEngine.PhysicsModule");
 
             if (type == null)
             {
                 foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
                 {
-                    type = assembly.GetType(typeName) ?? assembly.GetType($"UnityEngine.{typeName}");
-                    if (type != null) break;
+                    type =
+                        assembly.GetType(typeName) ?? assembly.GetType($"UnityEngine.{typeName}");
+                    if (type != null)
+                        break;
                 }
             }
 
@@ -142,12 +157,14 @@ namespace UnityMCP.Editor
                 var comp = obj as Component;
                 if (comp != null)
                 {
-                    results.Add(new Dictionary<string, object>
-                    {
-                        { "gameObject", comp.gameObject.name },
-                        { "instanceId", comp.gameObject.GetInstanceID() },
-                        { "path", MCPGameObjectCommands.GetHierarchyPath(comp.gameObject) },
-                    });
+                    results.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "gameObject", comp.gameObject.name },
+                            { "instanceId", comp.gameObject.GetInstanceID() },
+                            { "path", MCPGameObjectCommands.GetHierarchyPath(comp.gameObject) },
+                        }
+                    );
                 }
             }
 

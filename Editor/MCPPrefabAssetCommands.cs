@@ -88,14 +88,16 @@ namespace UnityMCP.Editor
                 {
                     do
                     {
-                        properties.Add(new Dictionary<string, object>
-                        {
-                            { "name", iterator.name },
-                            { "displayName", iterator.displayName },
-                            { "type", iterator.propertyType.ToString() },
-                            { "value", MCPComponentCommands.GetSerializedValue(iterator) },
-                            { "editable", iterator.editable },
-                        });
+                        properties.Add(
+                            new Dictionary<string, object>
+                            {
+                                { "name", iterator.name },
+                                { "displayName", iterator.displayName },
+                                { "type", iterator.propertyType.ToString() },
+                                { "value", MCPComponentCommands.GetSerializedValue(iterator) },
+                                { "editable", iterator.editable },
+                            }
+                        );
                     } while (iterator.NextVisible(false));
                 }
 
@@ -155,7 +157,10 @@ namespace UnityMCP.Editor
                 var serialized = new SerializedObject(component);
                 var prop = serialized.FindProperty(propertyName);
                 if (prop == null)
-                    return new { error = $"Property '{propertyName}' not found on '{componentType}'" };
+                    return new
+                    {
+                        error = $"Property '{propertyName}' not found on '{componentType}'",
+                    };
 
                 MCPComponentCommands.SetSerializedValue(prop, args["value"]);
                 serialized.ApplyModifiedProperties();
@@ -265,7 +270,10 @@ namespace UnityMCP.Editor
 
                 var components = go.GetComponents(type);
                 if (components == null || index >= components.Length)
-                    return new { error = $"Component '{componentType}' at index {index} not found on '{go.name}'" };
+                    return new
+                    {
+                        error = $"Component '{componentType}' at index {index} not found on '{go.name}'",
+                    };
 
                 UnityEngine.Object.DestroyImmediate(components[index]);
                 PrefabUtility.SaveAsPrefabAsset(root, assetPath);
@@ -327,13 +335,15 @@ namespace UnityMCP.Editor
                 if (!string.IsNullOrEmpty(componentType))
                 {
                     Type type = MCPComponentCommands.FindType(componentType);
-                    if (type != null) component = go.GetComponent(type);
+                    if (type != null)
+                        component = go.GetComponent(type);
                 }
                 else
                 {
                     foreach (var comp in go.GetComponents<Component>())
                     {
-                        if (comp == null) continue;
+                        if (comp == null)
+                            continue;
                         var so = new SerializedObject(comp);
                         if (so.FindProperty(propertyName) != null)
                         {
@@ -344,7 +354,10 @@ namespace UnityMCP.Editor
                 }
 
                 if (component == null)
-                    return new { error = $"Component '{componentType}' not found on '{go.name}', or no component has property '{propertyName}'" };
+                    return new
+                    {
+                        error = $"Component '{componentType}' not found on '{go.name}', or no component has property '{propertyName}'",
+                    };
 
                 var serialized = new SerializedObject(component);
                 var prop = serialized.FindProperty(propertyName);
@@ -352,7 +365,10 @@ namespace UnityMCP.Editor
                     return new { error = $"Property '{propertyName}' not found" };
 
                 if (prop.propertyType != SerializedPropertyType.ObjectReference)
-                    return new { error = $"Property '{propertyName}' is not an ObjectReference (type: {prop.propertyType})" };
+                    return new
+                    {
+                        error = $"Property '{propertyName}' is not an ObjectReference (type: {prop.propertyType})",
+                    };
 
                 // Resolve reference
                 UnityEngine.Object targetRef = null;
@@ -364,7 +380,9 @@ namespace UnityMCP.Editor
                 }
                 else if (!string.IsNullOrEmpty(referenceAssetPath))
                 {
-                    targetRef = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(referenceAssetPath);
+                    targetRef = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(
+                        referenceAssetPath
+                    );
                     if (targetRef == null)
                         return new { error = $"Asset not found at '{referenceAssetPath}'" };
 
@@ -375,7 +393,10 @@ namespace UnityMCP.Editor
                 {
                     var refGo = FindInPrefab(root, referencePrefabPath);
                     if (refGo == null)
-                        return new { error = $"GameObject '{referencePrefabPath}' not found in prefab" };
+                        return new
+                        {
+                            error = $"GameObject '{referencePrefabPath}' not found in prefab",
+                        };
 
                     if (!string.IsNullOrEmpty(referenceComponentType))
                     {
@@ -385,7 +406,10 @@ namespace UnityMCP.Editor
 
                         targetRef = refGo.GetComponent(refType);
                         if (targetRef == null)
-                            return new { error = $"Component '{referenceComponentType}' not found on '{refGo.name}'" };
+                            return new
+                            {
+                                error = $"Component '{referenceComponentType}' not found on '{refGo.name}'",
+                            };
                     }
                     else
                     {
@@ -397,7 +421,10 @@ namespace UnityMCP.Editor
                 }
                 else
                 {
-                    return new { error = "Provide referenceAssetPath, referencePrefabPath, or clear=true" };
+                    return new
+                    {
+                        error = "Provide referenceAssetPath, referencePrefabPath, or clear=true",
+                    };
                 }
 
                 serialized.ApplyModifiedProperties();
@@ -452,7 +479,10 @@ namespace UnityMCP.Editor
                     return new { error = $"Parent '{parentPrefabPath}' not found in prefab" };
 
                 GameObject newGo;
-                if (!string.IsNullOrEmpty(primitiveType) && Enum.TryParse<PrimitiveType>(primitiveType, true, out var pt))
+                if (
+                    !string.IsNullOrEmpty(primitiveType)
+                    && Enum.TryParse<PrimitiveType>(primitiveType, true, out var pt)
+                )
                 {
                     newGo = GameObject.CreatePrimitive(pt);
                     newGo.name = name;
@@ -479,7 +509,10 @@ namespace UnityMCP.Editor
                     { "success", true },
                     { "prefab", root.name },
                     { "createdGameObject", name },
-                    { "parent", string.IsNullOrEmpty(parentPrefabPath) ? "root" : parentPrefabPath },
+                    {
+                        "parent",
+                        string.IsNullOrEmpty(parentPrefabPath) ? "root" : parentPrefabPath
+                    },
                 };
             }
             catch (Exception ex)
@@ -592,10 +625,12 @@ namespace UnityMCP.Editor
             foreach (var guid in allPrefabs)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
-                if (path == searchBasePath) continue;
+                if (path == searchBasePath)
+                    continue;
 
                 var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
-                if (go == null) continue;
+                if (go == null)
+                    continue;
 
                 if (PrefabUtility.GetPrefabAssetType(go) != PrefabAssetType.Variant)
                     continue;
@@ -603,11 +638,13 @@ namespace UnityMCP.Editor
                 var source = PrefabUtility.GetCorrespondingObjectFromOriginalSource(go);
                 if (source != null && AssetDatabase.GetAssetPath(source) == searchBasePath)
                 {
-                    variants.Add(new Dictionary<string, object>
-                    {
-                        { "name", go.name },
-                        { "assetPath", path },
-                    });
+                    variants.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", go.name },
+                            { "assetPath", path },
+                        }
+                    );
                 }
             }
 
@@ -642,7 +679,8 @@ namespace UnityMCP.Editor
             try
             {
                 var basePrefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(asset);
-                string basePath = basePrefab != null ? AssetDatabase.GetAssetPath(basePrefab) : "unknown";
+                string basePath =
+                    basePrefab != null ? AssetDatabase.GetAssetPath(basePrefab) : "unknown";
 
                 // Property overrides
                 var propertyOverrides = PrefabUtility.GetPropertyModifications(asset);
@@ -651,15 +689,18 @@ namespace UnityMCP.Editor
                 {
                     foreach (var mod in propertyOverrides)
                     {
-                        if (mod.target == null) continue;
+                        if (mod.target == null)
+                            continue;
                         // Skip internal Transform position/rotation on root (always present)
-                        overrideList.Add(new Dictionary<string, object>
-                        {
-                            { "targetType", mod.target.GetType().Name },
-                            { "targetName", mod.target.name },
-                            { "propertyPath", mod.propertyPath },
-                            { "value", mod.value ?? "null" },
-                        });
+                        overrideList.Add(
+                            new Dictionary<string, object>
+                            {
+                                { "targetType", mod.target.GetType().Name },
+                                { "targetName", mod.target.name },
+                                { "propertyPath", mod.propertyPath },
+                                { "value", mod.value ?? "null" },
+                            }
+                        );
                     }
                 }
 
@@ -668,11 +709,13 @@ namespace UnityMCP.Editor
                 var addedCompList = new List<Dictionary<string, object>>();
                 foreach (var added in addedComponents)
                 {
-                    addedCompList.Add(new Dictionary<string, object>
-                    {
-                        { "componentType", added.instanceComponent.GetType().Name },
-                        { "gameObject", added.instanceComponent.gameObject.name },
-                    });
+                    addedCompList.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "componentType", added.instanceComponent.GetType().Name },
+                            { "gameObject", added.instanceComponent.gameObject.name },
+                        }
+                    );
                 }
 
                 // Removed components
@@ -680,11 +723,13 @@ namespace UnityMCP.Editor
                 var removedCompList = new List<Dictionary<string, object>>();
                 foreach (var removed in removedComponents)
                 {
-                    removedCompList.Add(new Dictionary<string, object>
-                    {
-                        { "componentType", removed.assetComponent.GetType().Name },
-                        { "gameObject", removed.assetComponent.gameObject.name },
-                    });
+                    removedCompList.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "componentType", removed.assetComponent.GetType().Name },
+                            { "gameObject", removed.assetComponent.gameObject.name },
+                        }
+                    );
                 }
 
                 // Added GameObjects
@@ -692,11 +737,13 @@ namespace UnityMCP.Editor
                 var addedGOList = new List<Dictionary<string, object>>();
                 foreach (var added in addedGOs)
                 {
-                    addedGOList.Add(new Dictionary<string, object>
-                    {
-                        { "name", added.instanceGameObject.name },
-                        { "childCount", added.instanceGameObject.transform.childCount },
-                    });
+                    addedGOList.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", added.instanceGameObject.name },
+                            { "childCount", added.instanceGameObject.transform.childCount },
+                        }
+                    );
                 }
 
                 // Removed GameObjects
@@ -704,10 +751,9 @@ namespace UnityMCP.Editor
                 var removedGOList = new List<Dictionary<string, object>>();
                 foreach (var removed in removedGOs)
                 {
-                    removedGOList.Add(new Dictionary<string, object>
-                    {
-                        { "name", removed.assetGameObject.name },
-                    });
+                    removedGOList.Add(
+                        new Dictionary<string, object> { { "name", removed.assetGameObject.name } }
+                    );
                 }
 
                 return new Dictionary<string, object>
@@ -758,7 +804,8 @@ namespace UnityMCP.Editor
             try
             {
                 var basePrefab = PrefabUtility.GetCorrespondingObjectFromOriginalSource(asset);
-                string basePath = basePrefab != null ? AssetDatabase.GetAssetPath(basePrefab) : null;
+                string basePath =
+                    basePrefab != null ? AssetDatabase.GetAssetPath(basePrefab) : null;
                 if (string.IsNullOrEmpty(basePath))
                     return new { error = "Could not determine base prefab path" };
 
@@ -787,7 +834,10 @@ namespace UnityMCP.Editor
                         {
                             var comp = ov.instanceObject as Component;
                             var go = ov.instanceObject as GameObject;
-                            string goName = comp != null ? comp.gameObject.name : go != null ? go.name : "";
+                            string goName =
+                                comp != null ? comp.gameObject.name
+                                : go != null ? go.name
+                                : "";
                             if (goName != targetGameObject)
                                 matches = false;
                         }
@@ -803,9 +853,15 @@ namespace UnityMCP.Editor
                     foreach (var ac in addedComps)
                     {
                         bool matches = true;
-                        if (!string.IsNullOrEmpty(targetComponentType) && ac.instanceComponent.GetType().Name != targetComponentType)
+                        if (
+                            !string.IsNullOrEmpty(targetComponentType)
+                            && ac.instanceComponent.GetType().Name != targetComponentType
+                        )
                             matches = false;
-                        if (!string.IsNullOrEmpty(targetGameObject) && ac.instanceComponent.gameObject.name != targetGameObject)
+                        if (
+                            !string.IsNullOrEmpty(targetGameObject)
+                            && ac.instanceComponent.gameObject.name != targetGameObject
+                        )
                             matches = false;
                         if (matches)
                         {
@@ -819,7 +875,10 @@ namespace UnityMCP.Editor
                     foreach (var ag in addedGOs)
                     {
                         bool matches = true;
-                        if (!string.IsNullOrEmpty(targetGameObject) && ag.instanceGameObject.name != targetGameObject)
+                        if (
+                            !string.IsNullOrEmpty(targetGameObject)
+                            && ag.instanceGameObject.name != targetGameObject
+                        )
                             matches = false;
                         if (matches)
                         {
@@ -897,7 +956,10 @@ namespace UnityMCP.Editor
                         {
                             var comp = ov.instanceObject as Component;
                             var go = ov.instanceObject as GameObject;
-                            string goName = comp != null ? comp.gameObject.name : go != null ? go.name : "";
+                            string goName =
+                                comp != null ? comp.gameObject.name
+                                : go != null ? go.name
+                                : "";
                             if (goName != targetGameObject)
                                 matches = false;
                         }
@@ -912,9 +974,15 @@ namespace UnityMCP.Editor
                     foreach (var ac in addedComps)
                     {
                         bool matches = true;
-                        if (!string.IsNullOrEmpty(targetComponentType) && ac.instanceComponent.GetType().Name != targetComponentType)
+                        if (
+                            !string.IsNullOrEmpty(targetComponentType)
+                            && ac.instanceComponent.GetType().Name != targetComponentType
+                        )
                             matches = false;
-                        if (!string.IsNullOrEmpty(targetGameObject) && ac.instanceComponent.gameObject.name != targetGameObject)
+                        if (
+                            !string.IsNullOrEmpty(targetGameObject)
+                            && ac.instanceComponent.gameObject.name != targetGameObject
+                        )
                             matches = false;
                         if (matches)
                         {
@@ -927,7 +995,10 @@ namespace UnityMCP.Editor
                     foreach (var ag in addedGOs)
                     {
                         bool matches = true;
-                        if (!string.IsNullOrEmpty(targetGameObject) && ag.instanceGameObject.name != targetGameObject)
+                        if (
+                            !string.IsNullOrEmpty(targetGameObject)
+                            && ag.instanceGameObject.name != targetGameObject
+                        )
                             matches = false;
                         if (matches)
                         {
@@ -974,8 +1045,10 @@ namespace UnityMCP.Editor
             var sourceAsset = AssetDatabase.LoadAssetAtPath<GameObject>(sourceAssetPath);
             var targetAsset = AssetDatabase.LoadAssetAtPath<GameObject>(targetAssetPath);
 
-            if (sourceAsset == null) return new { error = $"Source prefab not found at '{sourceAssetPath}'" };
-            if (targetAsset == null) return new { error = $"Target prefab not found at '{targetAssetPath}'" };
+            if (sourceAsset == null)
+                return new { error = $"Source prefab not found at '{sourceAssetPath}'" };
+            if (targetAsset == null)
+                return new { error = $"Target prefab not found at '{targetAssetPath}'" };
 
             // Get source overrides
             var sourceMods = PrefabUtility.GetPropertyModifications(sourceAsset);
@@ -997,32 +1070,44 @@ namespace UnityMCP.Editor
 
                 // Get the existing modifications on target
                 var targetMods = PrefabUtility.GetPropertyModifications(targetAsset);
-                var newMods = new List<PropertyModification>(targetMods ?? new PropertyModification[0]);
+                var newMods = new List<PropertyModification>(
+                    targetMods ?? new PropertyModification[0]
+                );
 
                 foreach (var mod in sourceMods)
                 {
-                    if (mod.target == null) continue;
+                    if (mod.target == null)
+                        continue;
 
                     // Apply filters
-                    if (!string.IsNullOrEmpty(filterComponentType) && mod.target.GetType().Name != filterComponentType)
+                    if (
+                        !string.IsNullOrEmpty(filterComponentType)
+                        && mod.target.GetType().Name != filterComponentType
+                    )
                         continue;
-                    if (!string.IsNullOrEmpty(filterPropertyPath) && !mod.propertyPath.Contains(filterPropertyPath))
+                    if (
+                        !string.IsNullOrEmpty(filterPropertyPath)
+                        && !mod.propertyPath.Contains(filterPropertyPath)
+                    )
                         continue;
 
                     // Check if this override already exists on target, replace or add
                     bool found = false;
                     for (int i = 0; i < newMods.Count; i++)
                     {
-                        if (newMods[i].target != null &&
-                            newMods[i].target.GetType() == mod.target.GetType() &&
-                            newMods[i].propertyPath == mod.propertyPath)
+                        if (
+                            newMods[i].target != null
+                            && newMods[i].target.GetType() == mod.target.GetType()
+                            && newMods[i].propertyPath == mod.propertyPath
+                        )
                         {
                             newMods[i] = mod;
                             found = true;
                             break;
                         }
                     }
-                    if (!found) newMods.Add(mod);
+                    if (!found)
+                        newMods.Add(mod);
                     transferred++;
                 }
 
@@ -1057,14 +1142,20 @@ namespace UnityMCP.Editor
             Transform current = root.transform;
             foreach (var part in prefabPath.Split('/'))
             {
-                if (string.IsNullOrEmpty(part)) continue;
+                if (string.IsNullOrEmpty(part))
+                    continue;
                 current = current.Find(part);
-                if (current == null) return null;
+                if (current == null)
+                    return null;
             }
             return current.gameObject;
         }
 
-        private static Dictionary<string, object> BuildHierarchyNode(GameObject go, int depth, int maxDepth)
+        private static Dictionary<string, object> BuildHierarchyNode(
+            GameObject go,
+            int depth,
+            int maxDepth
+        )
         {
             var components = new List<string>();
             foreach (var comp in go.GetComponents<Component>())
@@ -1090,7 +1181,9 @@ namespace UnityMCP.Editor
                 var children = new List<object>();
                 for (int i = 0; i < go.transform.childCount; i++)
                 {
-                    children.Add(BuildHierarchyNode(go.transform.GetChild(i).gameObject, depth + 1, maxDepth));
+                    children.Add(
+                        BuildHierarchyNode(go.transform.GetChild(i).gameObject, depth + 1, maxDepth)
+                    );
                 }
                 node["children"] = children;
                 node["childCount"] = go.transform.childCount;
@@ -1111,7 +1204,12 @@ namespace UnityMCP.Editor
 
         private static Dictionary<string, object> VectorToDict(Vector3 v)
         {
-            return new Dictionary<string, object> { { "x", v.x }, { "y", v.y }, { "z", v.z } };
+            return new Dictionary<string, object>
+            {
+                { "x", v.x },
+                { "y", v.y },
+                { "z", v.z },
+            };
         }
 
         private static Vector3 ParseVector3(object value)

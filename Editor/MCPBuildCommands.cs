@@ -11,9 +11,12 @@ namespace UnityMCP.Editor
     {
         public static object StartBuild(Dictionary<string, object> args)
         {
-            string targetStr = args.ContainsKey("target") ? args["target"].ToString() : "StandaloneWindows64";
+            string targetStr = args.ContainsKey("target")
+                ? args["target"].ToString()
+                : "StandaloneWindows64";
             string outputPath = args.ContainsKey("outputPath") ? args["outputPath"].ToString() : "";
-            bool devBuild = args.ContainsKey("developmentBuild") && Convert.ToBoolean(args["developmentBuild"]);
+            bool devBuild =
+                args.ContainsKey("developmentBuild") && Convert.ToBoolean(args["developmentBuild"]);
 
             if (string.IsNullOrEmpty(outputPath))
                 return new { error = "outputPath is required" };
@@ -30,14 +33,17 @@ namespace UnityMCP.Editor
             }
             else
             {
-                scenes = EditorBuildSettings.scenes
-                    .Where(s => s.enabled)
+                scenes = EditorBuildSettings
+                    .scenes.Where(s => s.enabled)
                     .Select(s => s.path)
                     .ToArray();
             }
 
             if (scenes.Length == 0)
-                return new { error = "No scenes to build. Add scenes to Build Settings or provide them." };
+                return new
+                {
+                    error = "No scenes to build. Add scenes to Build Settings or provide them.",
+                };
 
             var options = new BuildPlayerOptions
             {

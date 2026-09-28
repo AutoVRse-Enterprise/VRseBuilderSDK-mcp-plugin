@@ -10,10 +10,18 @@ namespace UnityMCP.Editor
     {
         public static object InteractableConvert(Dictionary<string, object> args)
         {
-            string methodName = args.ContainsKey("methodName") ? args["methodName"]?.ToString() : string.Empty;
-            string targetHint = args.ContainsKey("targetHint") ? args["targetHint"]?.ToString() : string.Empty;
-            string objectPath = args.ContainsKey("objectPath") ? args["objectPath"]?.ToString() : string.Empty;
-            string newName = args.ContainsKey("newName") ? args["newName"]?.ToString() : string.Empty;
+            string methodName = args.ContainsKey("methodName")
+                ? args["methodName"]?.ToString()
+                : string.Empty;
+            string targetHint = args.ContainsKey("targetHint")
+                ? args["targetHint"]?.ToString()
+                : string.Empty;
+            string objectPath = args.ContainsKey("objectPath")
+                ? args["objectPath"]?.ToString()
+                : string.Empty;
+            string newName = args.ContainsKey("newName")
+                ? args["newName"]?.ToString()
+                : string.Empty;
 
             if (string.IsNullOrEmpty(methodName))
             {
@@ -23,7 +31,11 @@ namespace UnityMCP.Editor
             GameObject target = GetTargetGameObject(targetHint, objectPath);
             if (target == null)
             {
-                return new { success = false, error = $"Could not find target object. Hint: '{targetHint}', Path: '{objectPath}'" };
+                return new
+                {
+                    success = false,
+                    error = $"Could not find target object. Hint: '{targetHint}', Path: '{objectPath}'",
+                };
             }
 
             try
@@ -39,10 +51,14 @@ namespace UnityMCP.Editor
                         result = true; // Returns void
                         break;
                     case "ConvertToGrabbable":
-                        result = MetaXRInteractableConverter.ConvertToNetworkMetaXRGrabbable(target);
+                        result = MetaXRInteractableConverter.ConvertToNetworkMetaXRGrabbable(
+                            target
+                        );
                         break;
                     case "ConvertToPlacePoint":
-                        result = MetaXRInteractableConverter.ConvertToNetworkMetaXRPlacePoint(target);
+                        result = MetaXRInteractableConverter.ConvertToNetworkMetaXRPlacePoint(
+                            target
+                        );
                         break;
                     case "CreatePlacePoint":
                         // CreateNetworkMetaXRPlacePoint has no name overload; it creates the
@@ -57,23 +73,32 @@ namespace UnityMCP.Editor
                         result = true; // Returns void
                         break;
                     default:
-                        return new { success = false, error = $"Unknown conversion method: {methodName}" };
+                        return new
+                        {
+                            success = false,
+                            error = $"Unknown conversion method: {methodName}",
+                        };
                 }
 
                 if (!result)
                 {
-                    return new { success = false, error = $"Conversion {methodName} failed on backend." };
+                    return new
+                    {
+                        success = false,
+                        error = $"Conversion {methodName} failed on backend.",
+                    };
                 }
 
                 // If selected object changes during conversion, use active selection as resolved.
-                GameObject resolved = Selection.activeGameObject != null ? Selection.activeGameObject : target;
+                GameObject resolved =
+                    Selection.activeGameObject != null ? Selection.activeGameObject : target;
                 string newPath = GetHierarchyPath(resolved.transform);
 
                 return new
                 {
                     success = true,
                     resolvedObject = newPath,
-                    message = $"Successfully executed {methodName}"
+                    message = $"Successfully executed {methodName}",
                 };
             }
             catch (Exception ex)
@@ -88,7 +113,8 @@ namespace UnityMCP.Editor
             if (!string.IsNullOrEmpty(path))
             {
                 var target = GameObject.Find(path);
-                if (target != null) return target;
+                if (target != null)
+                    return target;
             }
 
             // If a hint is provided, search for it
@@ -103,7 +129,7 @@ namespace UnityMCP.Editor
                         return obj;
                     }
                 }
-                
+
                 // Try contains
                 foreach (var obj in allObjects)
                 {
@@ -120,8 +146,10 @@ namespace UnityMCP.Editor
 
         private static string GetHierarchyPath(Transform transform)
         {
-            if (transform == null) return string.Empty;
-            if (transform.parent == null) return transform.name;
+            if (transform == null)
+                return string.Empty;
+            if (transform.parent == null)
+                return transform.name;
             return GetHierarchyPath(transform.parent) + "/" + transform.name;
         }
     }

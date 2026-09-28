@@ -17,7 +17,10 @@ namespace UnityMCP.Editor
         {
             string typeName = args.ContainsKey("type") ? args["type"].ToString() : "";
             if (string.IsNullOrEmpty(typeName))
-                return new { error = "type is required (e.g. 'MyGameSettings' or 'MyNamespace.MyData')" };
+                return new
+                {
+                    error = "type is required (e.g. 'MyGameSettings' or 'MyNamespace.MyData')",
+                };
 
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             if (string.IsNullOrEmpty(path))
@@ -31,11 +34,15 @@ namespace UnityMCP.Editor
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 soType = assembly.GetType(typeName, false, true);
-                if (soType != null) break;
+                if (soType != null)
+                    break;
             }
 
             if (soType == null)
-                return new { error = $"Type '{typeName}' not found. Make sure the script is compiled." };
+                return new
+                {
+                    error = $"Type '{typeName}' not found. Make sure the script is compiled.",
+                };
 
             if (!typeof(ScriptableObject).IsAssignableFrom(soType))
                 return new { error = $"Type '{typeName}' is not a ScriptableObject" };
@@ -87,17 +94,20 @@ namespace UnityMCP.Editor
             {
                 do
                 {
-                    if (prop.name == "m_Script") continue;
+                    if (prop.name == "m_Script")
+                        continue;
 
-                    properties.Add(new Dictionary<string, object>
-                    {
-                        { "name", prop.name },
-                        { "displayName", prop.displayName },
-                        { "type", prop.propertyType.ToString() },
-                        { "value", GetPropertyValue(prop) },
-                        { "isArray", prop.isArray },
-                        { "depth", prop.depth },
-                    });
+                    properties.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", prop.name },
+                            { "displayName", prop.displayName },
+                            { "type", prop.propertyType.ToString() },
+                            { "value", GetPropertyValue(prop) },
+                            { "isArray", prop.isArray },
+                            { "depth", prop.depth },
+                        }
+                    );
                 } while (prop.NextVisible(false));
             }
 
@@ -138,7 +148,10 @@ namespace UnityMCP.Editor
 
             bool success = SetPropertyValue(prop, args["value"]);
             if (!success)
-                return new { error = $"Failed to set property '{fieldName}' of type {prop.propertyType}" };
+                return new
+                {
+                    error = $"Failed to set property '{fieldName}' of type {prop.propertyType}",
+                };
 
             serialized.ApplyModifiedProperties();
             EditorUtility.SetDirty(so);
@@ -158,7 +171,8 @@ namespace UnityMCP.Editor
         public static object ListScriptableObjectTypes(Dictionary<string, object> args)
         {
             string filter = args.ContainsKey("filter") ? args["filter"].ToString() : "";
-            bool projectOnly = !args.ContainsKey("includeEngine") || !Convert.ToBoolean(args["includeEngine"]);
+            bool projectOnly =
+                !args.ContainsKey("includeEngine") || !Convert.ToBoolean(args["includeEngine"]);
 
             var types = new List<Dictionary<string, object>>();
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
@@ -166,9 +180,14 @@ namespace UnityMCP.Editor
                 if (projectOnly)
                 {
                     string asmName = assembly.GetName().Name;
-                    if (asmName.StartsWith("Unity") || asmName.StartsWith("System") ||
-                        asmName.StartsWith("mscorlib") || asmName.StartsWith("netstandard") ||
-                        asmName.StartsWith("Mono") || asmName.StartsWith("nunit"))
+                    if (
+                        asmName.StartsWith("Unity")
+                        || asmName.StartsWith("System")
+                        || asmName.StartsWith("mscorlib")
+                        || asmName.StartsWith("netstandard")
+                        || asmName.StartsWith("Mono")
+                        || asmName.StartsWith("nunit")
+                    )
                         continue;
                 }
 
@@ -176,19 +195,27 @@ namespace UnityMCP.Editor
                 {
                     foreach (var type in assembly.GetTypes())
                     {
-                        if (!type.IsAbstract && typeof(ScriptableObject).IsAssignableFrom(type) &&
-                            !type.IsGenericType && type.IsPublic)
+                        if (
+                            !type.IsAbstract
+                            && typeof(ScriptableObject).IsAssignableFrom(type)
+                            && !type.IsGenericType
+                            && type.IsPublic
+                        )
                         {
-                            if (!string.IsNullOrEmpty(filter) &&
-                                type.Name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0)
+                            if (
+                                !string.IsNullOrEmpty(filter)
+                                && type.Name.IndexOf(filter, StringComparison.OrdinalIgnoreCase) < 0
+                            )
                                 continue;
 
-                            types.Add(new Dictionary<string, object>
-                            {
-                                { "name", type.Name },
-                                { "fullName", type.FullName },
-                                { "assembly", assembly.GetName().Name },
-                            });
+                            types.Add(
+                                new Dictionary<string, object>
+                                {
+                                    { "name", type.Name },
+                                    { "fullName", type.FullName },
+                                    { "assembly", assembly.GetName().Name },
+                                }
+                            );
                         }
                     }
                 }
@@ -208,20 +235,28 @@ namespace UnityMCP.Editor
         {
             switch (prop.propertyType)
             {
-                case SerializedPropertyType.Integer: return prop.intValue;
-                case SerializedPropertyType.Boolean: return prop.boolValue;
-                case SerializedPropertyType.Float: return prop.floatValue;
-                case SerializedPropertyType.String: return prop.stringValue;
-                case SerializedPropertyType.Enum: return prop.enumNames[prop.enumValueIndex];
+                case SerializedPropertyType.Integer:
+                    return prop.intValue;
+                case SerializedPropertyType.Boolean:
+                    return prop.boolValue;
+                case SerializedPropertyType.Float:
+                    return prop.floatValue;
+                case SerializedPropertyType.String:
+                    return prop.stringValue;
+                case SerializedPropertyType.Enum:
+                    return prop.enumNames[prop.enumValueIndex];
                 case SerializedPropertyType.ObjectReference:
-                    return prop.objectReferenceValue != null ? prop.objectReferenceValue.name : null;
+                    return prop.objectReferenceValue != null
+                        ? prop.objectReferenceValue.name
+                        : null;
                 case SerializedPropertyType.Vector2:
                     return $"({prop.vector2Value.x}, {prop.vector2Value.y})";
                 case SerializedPropertyType.Vector3:
                     return $"({prop.vector3Value.x}, {prop.vector3Value.y}, {prop.vector3Value.z})";
                 case SerializedPropertyType.Color:
                     return $"({prop.colorValue.r}, {prop.colorValue.g}, {prop.colorValue.b}, {prop.colorValue.a})";
-                default: return prop.propertyType.ToString();
+                default:
+                    return prop.propertyType.ToString();
             }
         }
 
@@ -247,7 +282,10 @@ namespace UnityMCP.Editor
                         string enumStr = value.ToString();
                         for (int i = 0; i < prop.enumNames.Length; i++)
                         {
-                            if (prop.enumNames[i].Equals(enumStr, StringComparison.OrdinalIgnoreCase))
+                            if (
+                                prop.enumNames[i]
+                                    .Equals(enumStr, StringComparison.OrdinalIgnoreCase)
+                            )
                             {
                                 prop.enumValueIndex = i;
                                 return true;
@@ -258,7 +296,10 @@ namespace UnityMCP.Editor
                         return false;
                 }
             }
-            catch { return false; }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

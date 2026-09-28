@@ -1,0 +1,5 @@
+# Ignore generated files and samples inside this package
+**/Samples~/
+**/Samples/
+**/*.g.cs
+**/*.designer.cs

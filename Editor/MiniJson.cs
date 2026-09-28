@@ -14,7 +14,8 @@ namespace UnityMCP.Editor
     {
         public static object Deserialize(string json)
         {
-            if (json == null) return null;
+            if (json == null)
+                return null;
             return Parser.Parse(json);
         }
 
@@ -28,7 +29,10 @@ namespace UnityMCP.Editor
             const string WORD_BREAK = "{}[],:\"";
             StringReader json;
 
-            Parser(string jsonString) { json = new StringReader(jsonString); }
+            Parser(string jsonString)
+            {
+                json = new StringReader(jsonString);
+            }
 
             public static object Parse(string jsonString)
             {
@@ -36,7 +40,10 @@ namespace UnityMCP.Editor
                     return instance.ParseValue();
             }
 
-            public void Dispose() { json.Dispose(); }
+            public void Dispose()
+            {
+                json.Dispose();
+            }
 
             Dictionary<string, object> ParseObject()
             {
@@ -46,13 +53,18 @@ namespace UnityMCP.Editor
                 {
                     switch (NextToken)
                     {
-                        case TOKEN.NONE: return null;
-                        case TOKEN.CURLY_CLOSE: return table;
-                        case TOKEN.COMMA: continue;
+                        case TOKEN.NONE:
+                            return null;
+                        case TOKEN.CURLY_CLOSE:
+                            return table;
+                        case TOKEN.COMMA:
+                            continue;
                         default:
                             string name = ParseString();
-                            if (name == null) return null;
-                            if (NextToken != TOKEN.COLON) return null;
+                            if (name == null)
+                                return null;
+                            if (NextToken != TOKEN.COLON)
+                                return null;
                             json.Read(); // :
                             table[name] = ParseValue();
                             break;
@@ -70,9 +82,13 @@ namespace UnityMCP.Editor
                     TOKEN nextToken = NextToken;
                     switch (nextToken)
                     {
-                        case TOKEN.NONE: return null;
-                        case TOKEN.SQUARED_CLOSE: parsing = false; break;
-                        case TOKEN.COMMA: continue;
+                        case TOKEN.NONE:
+                            return null;
+                        case TOKEN.SQUARED_CLOSE:
+                            parsing = false;
+                            break;
+                        case TOKEN.COMMA:
+                            continue;
                         default:
                             object value = ParseByToken(nextToken);
                             array.Add(value);
@@ -92,14 +108,22 @@ namespace UnityMCP.Editor
             {
                 switch (token)
                 {
-                    case TOKEN.STRING: return ParseString();
-                    case TOKEN.NUMBER: return ParseNumber();
-                    case TOKEN.CURLY_OPEN: return ParseObject();
-                    case TOKEN.SQUARED_OPEN: return ParseArray();
-                    case TOKEN.TRUE: return true;
-                    case TOKEN.FALSE: return false;
-                    case TOKEN.NULL: return null;
-                    default: return null;
+                    case TOKEN.STRING:
+                        return ParseString();
+                    case TOKEN.NUMBER:
+                        return ParseNumber();
+                    case TOKEN.CURLY_OPEN:
+                        return ParseObject();
+                    case TOKEN.SQUARED_OPEN:
+                        return ParseArray();
+                    case TOKEN.TRUE:
+                        return true;
+                    case TOKEN.FALSE:
+                        return false;
+                    case TOKEN.NULL:
+                        return null;
+                    default:
+                        return null;
                 }
             }
 
@@ -111,30 +135,57 @@ namespace UnityMCP.Editor
                 bool parsing = true;
                 while (parsing)
                 {
-                    if (json.Peek() == -1) { parsing = false; break; }
+                    if (json.Peek() == -1)
+                    {
+                        parsing = false;
+                        break;
+                    }
                     c = NextChar;
                     switch (c)
                     {
-                        case '"': parsing = false; break;
+                        case '"':
+                            parsing = false;
+                            break;
                         case '\\':
-                            if (json.Peek() == -1) { parsing = false; break; }
+                            if (json.Peek() == -1)
+                            {
+                                parsing = false;
+                                break;
+                            }
                             c = NextChar;
                             switch (c)
                             {
-                                case '"': case '\\': case '/': s.Append(c); break;
-                                case 'b': s.Append('\b'); break;
-                                case 'f': s.Append('\f'); break;
-                                case 'n': s.Append('\n'); break;
-                                case 'r': s.Append('\r'); break;
-                                case 't': s.Append('\t'); break;
+                                case '"':
+                                case '\\':
+                                case '/':
+                                    s.Append(c);
+                                    break;
+                                case 'b':
+                                    s.Append('\b');
+                                    break;
+                                case 'f':
+                                    s.Append('\f');
+                                    break;
+                                case 'n':
+                                    s.Append('\n');
+                                    break;
+                                case 'r':
+                                    s.Append('\r');
+                                    break;
+                                case 't':
+                                    s.Append('\t');
+                                    break;
                                 case 'u':
                                     var hex = new char[4];
-                                    for (int i = 0; i < 4; i++) hex[i] = NextChar;
+                                    for (int i = 0; i < 4; i++)
+                                        hex[i] = NextChar;
                                     s.Append((char)Convert.ToInt32(new string(hex), 16));
                                     break;
                             }
                             break;
-                        default: s.Append(c); break;
+                        default:
+                            s.Append(c);
+                            break;
                     }
                 }
                 return s.ToString();
@@ -143,24 +194,46 @@ namespace UnityMCP.Editor
             object ParseNumber()
             {
                 string number = NextWord;
-                if (number.IndexOf('.') == -1 && number.IndexOf('E') == -1 && number.IndexOf('e') == -1)
+                if (
+                    number.IndexOf('.') == -1
+                    && number.IndexOf('E') == -1
+                    && number.IndexOf('e') == -1
+                )
                 {
-                    if (long.TryParse(number, System.Globalization.NumberStyles.Any,
-                        System.Globalization.CultureInfo.InvariantCulture, out long l))
+                    if (
+                        long.TryParse(
+                            number,
+                            System.Globalization.NumberStyles.Any,
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            out long l
+                        )
+                    )
                     {
-                        if (l >= int.MinValue && l <= int.MaxValue) return (int)l;
+                        if (l >= int.MinValue && l <= int.MaxValue)
+                            return (int)l;
                         return l;
                     }
                 }
-                if (double.TryParse(number, System.Globalization.NumberStyles.Any,
-                    System.Globalization.CultureInfo.InvariantCulture, out double d))
+                if (
+                    double.TryParse(
+                        number,
+                        System.Globalization.NumberStyles.Any,
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        out double d
+                    )
+                )
                     return d;
                 return 0;
             }
 
             void EatWhitespace()
             {
-                while (Char.IsWhiteSpace(PeekChar)) { json.Read(); if (json.Peek() == -1) break; }
+                while (Char.IsWhiteSpace(PeekChar))
+                {
+                    json.Read();
+                    if (json.Peek() == -1)
+                        break;
+                }
             }
 
             char PeekChar => Convert.ToChar(json.Peek());
@@ -174,7 +247,8 @@ namespace UnityMCP.Editor
                     while (!IsWordBreak(PeekChar))
                     {
                         word.Append(NextChar);
-                        if (json.Peek() == -1) break;
+                        if (json.Peek() == -1)
+                            break;
                     }
                     return word.ToString();
                 }
@@ -185,40 +259,84 @@ namespace UnityMCP.Editor
                 get
                 {
                     EatWhitespace();
-                    if (json.Peek() == -1) return TOKEN.NONE;
+                    if (json.Peek() == -1)
+                        return TOKEN.NONE;
                     switch (PeekChar)
                     {
-                        case '{': return TOKEN.CURLY_OPEN;
-                        case '}': json.Read(); return TOKEN.CURLY_CLOSE;
-                        case '[': return TOKEN.SQUARED_OPEN;
-                        case ']': json.Read(); return TOKEN.SQUARED_CLOSE;
-                        case ',': json.Read(); return TOKEN.COMMA;
-                        case '"': return TOKEN.STRING;
-                        case ':': return TOKEN.COLON;
-                        case '0': case '1': case '2': case '3': case '4':
-                        case '5': case '6': case '7': case '8': case '9':
-                        case '-': return TOKEN.NUMBER;
+                        case '{':
+                            return TOKEN.CURLY_OPEN;
+                        case '}':
+                            json.Read();
+                            return TOKEN.CURLY_CLOSE;
+                        case '[':
+                            return TOKEN.SQUARED_OPEN;
+                        case ']':
+                            json.Read();
+                            return TOKEN.SQUARED_CLOSE;
+                        case ',':
+                            json.Read();
+                            return TOKEN.COMMA;
+                        case '"':
+                            return TOKEN.STRING;
+                        case ':':
+                            return TOKEN.COLON;
+                        case '0':
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                        case '6':
+                        case '7':
+                        case '8':
+                        case '9':
+                        case '-':
+                            return TOKEN.NUMBER;
                     }
                     string word = NextWord;
                     switch (word)
                     {
-                        case "false": return TOKEN.FALSE;
-                        case "true": return TOKEN.TRUE;
-                        case "null": return TOKEN.NULL;
+                        case "false":
+                            return TOKEN.FALSE;
+                        case "true":
+                            return TOKEN.TRUE;
+                        case "null":
+                            return TOKEN.NULL;
                     }
                     return TOKEN.NONE;
                 }
             }
 
-            static bool IsWordBreak(char c) { return Char.IsWhiteSpace(c) || WORD_BREAK.IndexOf(c) != -1; }
+            static bool IsWordBreak(char c)
+            {
+                return Char.IsWhiteSpace(c) || WORD_BREAK.IndexOf(c) != -1;
+            }
 
-            enum TOKEN { NONE, CURLY_OPEN, CURLY_CLOSE, SQUARED_OPEN, SQUARED_CLOSE, COLON, COMMA, STRING, NUMBER, TRUE, FALSE, NULL }
+            enum TOKEN
+            {
+                NONE,
+                CURLY_OPEN,
+                CURLY_CLOSE,
+                SQUARED_OPEN,
+                SQUARED_CLOSE,
+                COLON,
+                COMMA,
+                STRING,
+                NUMBER,
+                TRUE,
+                FALSE,
+                NULL,
+            }
         }
 
         sealed class Serializer
         {
             StringBuilder builder;
-            Serializer() { builder = new StringBuilder(); }
+
+            Serializer()
+            {
+                builder = new StringBuilder();
+            }
 
             public static string Serialize(object obj)
             {
@@ -229,19 +347,51 @@ namespace UnityMCP.Editor
 
             void SerializeValue(object value)
             {
-                if (value == null) { builder.Append("null"); return; }
+                if (value == null)
+                {
+                    builder.Append("null");
+                    return;
+                }
 
-                if (value is string s) { SerializeString(s); return; }
-                if (value is bool b) { builder.Append(b ? "true" : "false"); return; }
+                if (value is string s)
+                {
+                    SerializeString(s);
+                    return;
+                }
+                if (value is bool b)
+                {
+                    builder.Append(b ? "true" : "false");
+                    return;
+                }
 
-                if (value is IDictionary dict) { SerializeDictionary(dict); return; }
-                if (value is IList list) { SerializeArray(list); return; }
+                if (value is IDictionary dict)
+                {
+                    SerializeDictionary(dict);
+                    return;
+                }
+                if (value is IList list)
+                {
+                    SerializeArray(list);
+                    return;
+                }
 
-                if (value is char c) { SerializeString(c.ToString()); return; }
+                if (value is char c)
+                {
+                    SerializeString(c.ToString());
+                    return;
+                }
 
                 // Numbers
-                if (value is int || value is long || value is short || value is byte
-                    || value is uint || value is ulong || value is ushort || value is sbyte)
+                if (
+                    value is int
+                    || value is long
+                    || value is short
+                    || value is byte
+                    || value is uint
+                    || value is ulong
+                    || value is ushort
+                    || value is sbyte
+                )
                 {
                     builder.Append(value);
                     return;
@@ -249,13 +399,17 @@ namespace UnityMCP.Editor
 
                 if (value is float f)
                 {
-                    builder.Append(f.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                    builder.Append(
+                        f.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+                    );
                     return;
                 }
 
                 if (value is double d)
                 {
-                    builder.Append(d.ToString("R", System.Globalization.CultureInfo.InvariantCulture));
+                    builder.Append(
+                        d.ToString("R", System.Globalization.CultureInfo.InvariantCulture)
+                    );
                     return;
                 }
 
@@ -274,10 +428,17 @@ namespace UnityMCP.Editor
                 builder.Append('{');
                 bool first = true;
                 var type = obj.GetType();
-                foreach (var prop in type.GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance))
+                foreach (
+                    var prop in type.GetProperties(
+                        System.Reflection.BindingFlags.Public
+                            | System.Reflection.BindingFlags.Instance
+                    )
+                )
                 {
-                    if (!prop.CanRead) continue;
-                    if (!first) builder.Append(',');
+                    if (!prop.CanRead)
+                        continue;
+                    if (!first)
+                        builder.Append(',');
                     SerializeString(prop.Name);
                     builder.Append(':');
                     try
@@ -299,7 +460,8 @@ namespace UnityMCP.Editor
                 bool first = true;
                 foreach (DictionaryEntry entry in obj)
                 {
-                    if (!first) builder.Append(',');
+                    if (!first)
+                        builder.Append(',');
                     SerializeString(entry.Key.ToString());
                     builder.Append(':');
                     SerializeValue(entry.Value);
@@ -314,7 +476,8 @@ namespace UnityMCP.Editor
                 bool first = true;
                 foreach (var item in array)
                 {
-                    if (!first) builder.Append(',');
+                    if (!first)
+                        builder.Append(',');
                     SerializeValue(item);
                     first = false;
                 }
@@ -328,20 +491,35 @@ namespace UnityMCP.Editor
                 {
                     switch (c)
                     {
-                        case '"': builder.Append("\\\""); break;
-                        case '\\': builder.Append("\\\\"); break;
-                        case '\b': builder.Append("\\b"); break;
-                        case '\f': builder.Append("\\f"); break;
-                        case '\n': builder.Append("\\n"); break;
-                        case '\r': builder.Append("\\r"); break;
-                        case '\t': builder.Append("\\t"); break;
+                        case '"':
+                            builder.Append("\\\"");
+                            break;
+                        case '\\':
+                            builder.Append("\\\\");
+                            break;
+                        case '\b':
+                            builder.Append("\\b");
+                            break;
+                        case '\f':
+                            builder.Append("\\f");
+                            break;
+                        case '\n':
+                            builder.Append("\\n");
+                            break;
+                        case '\r':
+                            builder.Append("\\r");
+                            break;
+                        case '\t':
+                            builder.Append("\\t");
+                            break;
                         default:
                             if (c < ' ')
                             {
                                 builder.Append("\\u");
                                 builder.Append(((int)c).ToString("x4"));
                             }
-                            else builder.Append(c);
+                            else
+                                builder.Append(c);
                             break;
                     }
                 }

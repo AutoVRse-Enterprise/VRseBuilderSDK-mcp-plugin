@@ -18,21 +18,40 @@ namespace UnityMCP.Editor
         {
             try
             {
-                var reportType = FindTypeAcrossAssemblies("VRseBuilder.Tools.Editor.StoryReportEditor");
+                var reportType = FindTypeAcrossAssemblies(
+                    "VRseBuilder.Tools.Editor.StoryReportEditor"
+                );
                 if (reportType == null)
-                    return new Dictionary<string, object> { { "error", "StoryReportEditor not found" } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "StoryReportEditor not found" },
+                    };
 
-                var method = reportType.GetMethod("GetReportJson", BindingFlags.Public | BindingFlags.Static);
+                var method = reportType.GetMethod(
+                    "GetReportJson",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 if (method == null)
-                    return new Dictionary<string, object> { { "error", "GetReportJson method not found" } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "GetReportJson method not found" },
+                    };
 
                 string json = (string)method.Invoke(null, null);
                 var parsed = MiniJson.Deserialize(json);
-                return parsed ?? new Dictionary<string, object> { { "error", "GetReportJson returned null" } };
+                return parsed
+                    ?? new Dictionary<string, object>
+                    {
+                        { "error", "GetReportJson returned null" },
+                    };
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", ex.Message }, { "stackTrace", ex.StackTrace } };
+                return new Dictionary<string, object>
+                {
+                    { "error", ex.Message },
+                    { "stackTrace", ex.StackTrace },
+                };
             }
         }
 
@@ -43,7 +62,8 @@ namespace UnityMCP.Editor
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 var t = asm.GetType(typeName);
-                if (t != null) return t;
+                if (t != null)
+                    return t;
             }
             return null;
         }

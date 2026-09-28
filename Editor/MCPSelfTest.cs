@@ -19,7 +19,13 @@ namespace UnityMCP.Editor
         public DateTime Timestamp;
         public double DurationMs;
 
-        public enum TestStatus { Untested, Passed, Warning, Failed }
+        public enum TestStatus
+        {
+            Untested,
+            Passed,
+            Warning,
+            Failed,
+        }
     }
 
     /// <summary>
@@ -58,19 +64,24 @@ namespace UnityMCP.Editor
         public static IReadOnlyDictionary<string, MCPTestResult> AllResults => _results;
 
         /// <summary>Quick aggregate: number of tests that passed.</summary>
-        public static int PassedCount => _results.Values.Count(r => r.Status == MCPTestResult.TestStatus.Passed);
+        public static int PassedCount =>
+            _results.Values.Count(r => r.Status == MCPTestResult.TestStatus.Passed);
 
         /// <summary>Quick aggregate: number of tests that failed.</summary>
-        public static int FailedCount => _results.Values.Count(r => r.Status == MCPTestResult.TestStatus.Failed);
+        public static int FailedCount =>
+            _results.Values.Count(r => r.Status == MCPTestResult.TestStatus.Failed);
 
         /// <summary>Quick aggregate: number of tests with warnings.</summary>
-        public static int WarningCount => _results.Values.Count(r => r.Status == MCPTestResult.TestStatus.Warning);
+        public static int WarningCount =>
+            _results.Values.Count(r => r.Status == MCPTestResult.TestStatus.Warning);
 
         /// <summary>True if any test has failed.</summary>
-        public static bool HasFailures => _results.Values.Any(r => r.Status == MCPTestResult.TestStatus.Failed);
+        public static bool HasFailures =>
+            _results.Values.Any(r => r.Status == MCPTestResult.TestStatus.Failed);
 
         /// <summary>True if any test has warnings.</summary>
-        public static bool HasWarnings => _results.Values.Any(r => r.Status == MCPTestResult.TestStatus.Warning);
+        public static bool HasWarnings =>
+            _results.Values.Any(r => r.Status == MCPTestResult.TestStatus.Warning);
 
         // ─── Static init ─────────────────────────────────────────────
 
@@ -96,30 +107,32 @@ namespace UnityMCP.Editor
         /// without creating/deleting anything. Returns null on success
         /// or an error string on failure.
         /// </summary>
-        private static readonly Dictionary<string, Func<string>> TestProbes =
-            new Dictionary<string, Func<string>>
+        private static readonly Dictionary<string, Func<string>> TestProbes = new Dictionary<
+            string,
+            Func<string>
+        >
         {
-            { "editor",     TestEditor },
-            { "scene",      TestScene },
+            { "editor", TestEditor },
+            { "scene", TestScene },
             { "gameobject", TestGameObject },
-            { "component",  TestComponent },
-            { "asset",      TestAsset },
-            { "script",     TestScript },
-            { "renderer",   TestRenderer },
-            { "build",      TestBuild },
-            { "console",    TestConsole },
-            { "project",    TestProject },
-            { "animation",  TestAnimation },
-            { "prefab",     TestPrefab },
-            { "physics",    TestPhysics },
-            { "lighting",   TestLighting },
-            { "audio",      TestAudio },
-            { "taglayer",   TestTagLayer },
-            { "selection",  TestSelection },
-            { "input",      TestInput },
-            { "asmdef",     TestAssemblyDef },
-            { "profiler",   TestProfiler },
-            { "debugger",   TestDebugger },
+            { "component", TestComponent },
+            { "asset", TestAsset },
+            { "script", TestScript },
+            { "renderer", TestRenderer },
+            { "build", TestBuild },
+            { "console", TestConsole },
+            { "project", TestProject },
+            { "animation", TestAnimation },
+            { "prefab", TestPrefab },
+            { "physics", TestPhysics },
+            { "lighting", TestLighting },
+            { "audio", TestAudio },
+            { "taglayer", TestTagLayer },
+            { "selection", TestSelection },
+            { "input", TestInput },
+            { "asmdef", TestAssemblyDef },
+            { "profiler", TestProfiler },
+            { "debugger", TestDebugger },
         };
 
         // ─── Run tests ──────────────────────────────────────────────
@@ -130,7 +143,8 @@ namespace UnityMCP.Editor
         /// </summary>
         public static void RunAllAsync()
         {
-            if (_running) return;
+            if (_running)
+                return;
             _running = true;
             _progress = 0f;
 
@@ -258,7 +272,8 @@ namespace UnityMCP.Editor
 
         private static string TruncateMessage(string msg)
         {
-            if (msg == null) return "";
+            if (msg == null)
+                return "";
             return msg.Length > 80 ? msg.Substring(0, 77) + "..." : msg;
         }
 
@@ -271,7 +286,8 @@ namespace UnityMCP.Editor
 
         private static string AssertNotNull(object result, string label)
         {
-            if (result == null) return $"{label} returned null";
+            if (result == null)
+                return $"{label} returned null";
             // Check for error property in anonymous objects or dicts
             if (result is Dictionary<string, object> dict && dict.ContainsKey("error"))
                 return $"{label}: {dict["error"]}";
@@ -324,7 +340,11 @@ namespace UnityMCP.Editor
         // --- Asset ---
         private static string TestAsset()
         {
-            var args = new Dictionary<string, object> { { "folder", "Assets" }, { "recursive", false } };
+            var args = new Dictionary<string, object>
+            {
+                { "folder", "Assets" },
+                { "recursive", false },
+            };
             var result = MCPAssetCommands.List(args);
             return AssertNotNull(result, "AssetList");
         }
@@ -333,7 +353,10 @@ namespace UnityMCP.Editor
         private static string TestScript()
         {
             // Try to read a script we know should exist (any .cs in Editor/)
-            string[] guids = UnityEditor.AssetDatabase.FindAssets("t:MonoScript", new[] { "Packages/com.autovrse.vrsebuilder.unity-mcp/Editor" });
+            string[] guids = UnityEditor.AssetDatabase.FindAssets(
+                "t:MonoScript",
+                new[] { "Packages/com.autovrse.vrsebuilder.unity-mcp/Editor" }
+            );
             if (guids.Length == 0)
             {
                 // Fallback: look in Assets
@@ -356,7 +379,8 @@ namespace UnityMCP.Editor
             try
             {
                 var type = typeof(MCPRendererCommands);
-                if (type == null) return "MCPRendererCommands class not found";
+                if (type == null)
+                    return "MCPRendererCommands class not found";
                 return null;
             }
             catch (Exception ex)
@@ -372,7 +396,8 @@ namespace UnityMCP.Editor
             try
             {
                 var type = typeof(MCPBuildCommands);
-                if (type == null) return "MCPBuildCommands class not found";
+                if (type == null)
+                    return "MCPBuildCommands class not found";
                 return null;
             }
             catch (Exception ex)
@@ -403,10 +428,14 @@ namespace UnityMCP.Editor
             // (should return an error dict, not throw)
             try
             {
-                var args = new Dictionary<string, object> { { "path", "Assets/__mcp_test_nonexistent.controller" } };
+                var args = new Dictionary<string, object>
+                {
+                    { "path", "Assets/__mcp_test_nonexistent.controller" },
+                };
                 var result = MCPAnimationCommands.GetControllerInfo(args);
                 // Result should be an error dict, not a crash
-                if (result == null) return "GetControllerInfo returned null (expected error dict)";
+                if (result == null)
+                    return "GetControllerInfo returned null (expected error dict)";
                 return null;
             }
             catch (Exception ex)
@@ -420,9 +449,13 @@ namespace UnityMCP.Editor
         {
             try
             {
-                var args = new Dictionary<string, object> { { "path", "Assets/__mcp_test_nonexistent.prefab" } };
+                var args = new Dictionary<string, object>
+                {
+                    { "path", "Assets/__mcp_test_nonexistent.prefab" },
+                };
                 var result = MCPPrefabCommands.GetPrefabInfo(args);
-                if (result == null) return "GetPrefabInfo returned null";
+                if (result == null)
+                    return "GetPrefabInfo returned null";
                 return null;
             }
             catch (Exception ex)
@@ -439,8 +472,24 @@ namespace UnityMCP.Editor
             {
                 var args = new Dictionary<string, object>
                 {
-                    { "origin", new Dictionary<string, object> { {"x", 0}, {"y", 100}, {"z", 0} } },
-                    { "direction", new Dictionary<string, object> { {"x", 0}, {"y", -1}, {"z", 0} } },
+                    {
+                        "origin",
+                        new Dictionary<string, object>
+                        {
+                            { "x", 0 },
+                            { "y", 100 },
+                            { "z", 0 },
+                        }
+                    },
+                    {
+                        "direction",
+                        new Dictionary<string, object>
+                        {
+                            { "x", 0 },
+                            { "y", -1 },
+                            { "z", 0 },
+                        }
+                    },
                 };
                 var result = MCPPhysicsCommands.Raycast(args);
                 return AssertNotNull(result, "Raycast");
@@ -513,9 +562,13 @@ namespace UnityMCP.Editor
             try
             {
                 // Test info on a non-existent file (should return error dict, not throw)
-                var args = new Dictionary<string, object> { { "path", "Assets/__mcp_test_nonexistent.inputactions" } };
+                var args = new Dictionary<string, object>
+                {
+                    { "path", "Assets/__mcp_test_nonexistent.inputactions" },
+                };
                 var result = MCPInputCommands.GetInputActionsInfo(args);
-                if (result == null) return "GetInputActionsInfo returned null";
+                if (result == null)
+                    return "GetInputActionsInfo returned null";
                 return null;
             }
             catch (Exception ex)
@@ -532,7 +585,8 @@ namespace UnityMCP.Editor
                 // Test rendering stats (always available, no side effects)
                 var result = MCPProfilerCommands.GetRenderingStats(EmptyArgs());
                 string err = AssertNotNull(result, "GetRenderingStats");
-                if (err != null) return err;
+                if (err != null)
+                    return err;
 
                 // Test memory info (always available, no side effects)
                 result = MCPProfilerCommands.GetMemoryInfo(EmptyArgs());
@@ -553,7 +607,8 @@ namespace UnityMCP.Editor
                 // Don't actually enable/disable the debugger to avoid side effects
                 var result = MCPProfilerCommands.GetFrameEvents(EmptyArgs());
                 // This will likely return an error (debugger not enabled) which is fine
-                if (result == null) return "GetFrameEvents returned null";
+                if (result == null)
+                    return "GetFrameEvents returned null";
                 return null;
             }
             catch (Exception ex)
@@ -570,12 +625,17 @@ namespace UnityMCP.Editor
                 // 1. Test listing — safe read-only operation
                 var listResult = MCPAssemblyDefCommands.ListAssemblyDefs(EmptyArgs());
                 string listErr = AssertNotNull(listResult, "ListAssemblyDefs");
-                if (listErr != null) return listErr;
+                if (listErr != null)
+                    return listErr;
 
                 // 2. Test info on a non-existent path (should return error dict, not throw)
-                var infoArgs = new Dictionary<string, object> { { "path", "Assets/__mcp_test_nonexistent.asmdef" } };
+                var infoArgs = new Dictionary<string, object>
+                {
+                    { "path", "Assets/__mcp_test_nonexistent.asmdef" },
+                };
                 var infoResult = MCPAssemblyDefCommands.GetAssemblyDefInfo(infoArgs);
-                if (infoResult == null) return "GetAssemblyDefInfo returned null";
+                if (infoResult == null)
+                    return "GetAssemblyDefInfo returned null";
 
                 // 3. Test create + add reference + info + cleanup (full round-trip)
                 string testPath = "Assets/__mcp_selftest_temp.asmdef";
@@ -590,7 +650,8 @@ namespace UnityMCP.Editor
                     };
                     var createResult = MCPAssemblyDefCommands.CreateAssemblyDef(createArgs);
                     string createErr = AssertNotNull(createResult, "CreateAssemblyDef");
-                    if (createErr != null) return createErr;
+                    if (createErr != null)
+                        return createErr;
 
                     // Verify file exists
                     if (!System.IO.File.Exists(testPath))
@@ -598,9 +659,15 @@ namespace UnityMCP.Editor
 
                     // Read back info
                     var readArgs = new Dictionary<string, object> { { "path", testPath } };
-                    var readResult = MCPAssemblyDefCommands.GetAssemblyDefInfo(readArgs) as Dictionary<string, object>;
-                    if (readResult == null) return "GetAssemblyDefInfo returned null for created file";
-                    if (!readResult.ContainsKey("name") || readResult["name"].ToString() != "MCP.SelfTest.Temp")
+                    var readResult =
+                        MCPAssemblyDefCommands.GetAssemblyDefInfo(readArgs)
+                        as Dictionary<string, object>;
+                    if (readResult == null)
+                        return "GetAssemblyDefInfo returned null for created file";
+                    if (
+                        !readResult.ContainsKey("name")
+                        || readResult["name"].ToString() != "MCP.SelfTest.Temp"
+                    )
                         return $"Name mismatch: expected 'MCP.SelfTest.Temp', got '{readResult["name"]}'";
 
                     // Update settings
@@ -612,12 +679,19 @@ namespace UnityMCP.Editor
                     };
                     var updateResult = MCPAssemblyDefCommands.UpdateSettings(updateArgs);
                     string updateErr = AssertNotNull(updateResult, "UpdateSettings");
-                    if (updateErr != null) return updateErr;
+                    if (updateErr != null)
+                        return updateErr;
 
                     // Verify update
-                    readResult = MCPAssemblyDefCommands.GetAssemblyDefInfo(readArgs) as Dictionary<string, object>;
-                    if (readResult == null) return "GetAssemblyDefInfo returned null after update";
-                    if (readResult.ContainsKey("rootNamespace") && readResult["rootNamespace"].ToString() != "MCP.SelfTest.Updated")
+                    readResult =
+                        MCPAssemblyDefCommands.GetAssemblyDefInfo(readArgs)
+                        as Dictionary<string, object>;
+                    if (readResult == null)
+                        return "GetAssemblyDefInfo returned null after update";
+                    if (
+                        readResult.ContainsKey("rootNamespace")
+                        && readResult["rootNamespace"].ToString() != "MCP.SelfTest.Updated"
+                    )
                         return "rootNamespace was not updated";
 
                     return null; // All passed

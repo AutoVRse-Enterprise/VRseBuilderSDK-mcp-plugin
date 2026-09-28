@@ -18,16 +18,18 @@ namespace UnityMCP.Editor
                 foreach (var go in scene.GetRootGameObjects())
                     rootObjects.Add(go.name);
 
-                scenes.Add(new Dictionary<string, object>
-                {
-                    { "name", scene.name },
-                    { "path", scene.path },
-                    { "isDirty", scene.isDirty },
-                    { "isLoaded", scene.isLoaded },
-                    { "rootObjectCount", scene.rootCount },
-                    { "rootObjects", rootObjects },
-                    { "buildIndex", scene.buildIndex },
-                });
+                scenes.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "name", scene.name },
+                        { "path", scene.path },
+                        { "isDirty", scene.isDirty },
+                        { "isLoaded", scene.isLoaded },
+                        { "rootObjectCount", scene.rootCount },
+                        { "rootObjects", rootObjects },
+                        { "buildIndex", scene.buildIndex },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -48,12 +50,20 @@ namespace UnityMCP.Editor
             // build preflight). Backward-compatible: callers that omit `additive` get Single mode as before.
             bool additive = false;
             if (args.ContainsKey("additive") && args["additive"] != null)
-                additive = args["additive"] is bool b ? b : args["additive"].ToString().ToLowerInvariant() == "true";
+                additive = args["additive"] is bool b
+                    ? b
+                    : args["additive"].ToString().ToLowerInvariant() == "true";
 
             if (additive)
             {
                 var addScene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
-                return new { success = true, name = addScene.name, path = addScene.path, additive = true };
+                return new
+                {
+                    success = true,
+                    name = addScene.name,
+                    path = addScene.path,
+                    additive = true,
+                };
             }
 
             // Check for unsaved changes (Single mode replaces the current scene)
@@ -62,25 +72,43 @@ namespace UnityMCP.Editor
                 if (EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                 {
                     var scene = EditorSceneManager.OpenScene(path);
-                    return new { success = true, name = scene.name, path = scene.path };
+                    return new
+                    {
+                        success = true,
+                        name = scene.name,
+                        path = scene.path,
+                    };
                 }
                 return new { error = "Scene has unsaved changes and user cancelled" };
             }
 
             var openedScene = EditorSceneManager.OpenScene(path);
-            return new { success = true, name = openedScene.name, path = openedScene.path };
+            return new
+            {
+                success = true,
+                name = openedScene.name,
+                path = openedScene.path,
+            };
         }
 
         public static object SaveScene()
         {
             var scene = SceneManager.GetActiveScene();
             bool saved = EditorSceneManager.SaveScene(scene);
-            return new { success = saved, scene = scene.name, path = scene.path };
+            return new
+            {
+                success = saved,
+                scene = scene.name,
+                path = scene.path,
+            };
         }
 
         public static object NewScene()
         {
-            var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+            var scene = EditorSceneManager.NewScene(
+                NewSceneSetup.DefaultGameObjects,
+                NewSceneMode.Single
+            );
             return new { success = true, name = scene.name };
         }
 
@@ -143,8 +171,9 @@ namespace UnityMCP.Editor
             if (nodeCount >= maxNodes)
             {
                 result["truncated"] = true;
-                result["message"] = $"Hierarchy truncated at {maxNodes} nodes (scene has {totalSceneObjects} total objects). " +
-                    "Use parentPath to explore specific subtrees, or increase maxNodes.";
+                result["message"] =
+                    $"Hierarchy truncated at {maxNodes} nodes (scene has {totalSceneObjects} total objects). "
+                    + "Use parentPath to explore specific subtrees, or increase maxNodes.";
             }
 
             if (!string.IsNullOrEmpty(parentPath))
@@ -170,7 +199,12 @@ namespace UnityMCP.Editor
         }
 
         private static Dictionary<string, object> BuildHierarchyNode(
-            GameObject go, int depth, int maxDepth, ref int nodeCount, int maxNodes)
+            GameObject go,
+            int depth,
+            int maxDepth,
+            ref int nodeCount,
+            int maxNodes
+        )
         {
             if (nodeCount >= maxNodes)
                 return null;
@@ -208,7 +242,13 @@ namespace UnityMCP.Editor
                         node["childrenTruncated"] = true;
                         break;
                     }
-                    var childNode = BuildHierarchyNode(go.transform.GetChild(i).gameObject, depth + 1, maxDepth, ref nodeCount, maxNodes);
+                    var childNode = BuildHierarchyNode(
+                        go.transform.GetChild(i).gameObject,
+                        depth + 1,
+                        maxDepth,
+                        ref nodeCount,
+                        maxNodes
+                    );
                     if (childNode != null)
                         children.Add(childNode);
                 }
@@ -228,7 +268,12 @@ namespace UnityMCP.Editor
 
         private static Dictionary<string, object> VectorToDict(Vector3 v)
         {
-            return new Dictionary<string, object> { { "x", v.x }, { "y", v.y }, { "z", v.z } };
+            return new Dictionary<string, object>
+            {
+                { "x", v.x },
+                { "y", v.y },
+                { "z", v.z },
+            };
         }
     }
 }

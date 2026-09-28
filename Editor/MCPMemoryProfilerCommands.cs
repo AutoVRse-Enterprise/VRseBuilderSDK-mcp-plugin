@@ -28,12 +28,18 @@ namespace UnityMCP.Editor
         /// </summary>
         public static bool IsMemoryProfilerPackageInstalled()
         {
-            if (_packageChecked) return _packageInstalled;
+            if (_packageChecked)
+                return _packageInstalled;
             _packageChecked = true;
 
             try
             {
-                string manifestPath = Path.Combine(Application.dataPath, "..", "Packages", "manifest.json");
+                string manifestPath = Path.Combine(
+                    Application.dataPath,
+                    "..",
+                    "Packages",
+                    "manifest.json"
+                );
                 if (File.Exists(manifestPath))
                 {
                     string content = File.ReadAllText(manifestPath);
@@ -59,13 +65,21 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "memoryProfilerPackageInstalled", hasPkg },
-                { "availableCommands", new string[] {
-                    "profiler/memory-status",
-                    "profiler/memory-breakdown",
-                    "profiler/memory-top-assets",
-                    hasPkg ? "profiler/memory-snapshot" : null
-                }.Where(s => s != null).ToArray() },
-                { "quickSummary", new Dictionary<string, object>
+                {
+                    "availableCommands",
+                    new string[]
+                    {
+                        "profiler/memory-status",
+                        "profiler/memory-breakdown",
+                        "profiler/memory-top-assets",
+                        hasPkg ? "profiler/memory-snapshot" : null,
+                    }
+                        .Where(s => s != null)
+                        .ToArray()
+                },
+                {
+                    "quickSummary",
+                    new Dictionary<string, object>
                     {
                         { "totalAllocatedMB", Math.Round(totalAllocated / (1024.0 * 1024.0), 2) },
                         { "totalReservedMB", Math.Round(totalReserved / (1024.0 * 1024.0), 2) },
@@ -83,50 +97,81 @@ namespace UnityMCP.Editor
         /// </summary>
         public static object GetMemoryBreakdown(Dictionary<string, object> args)
         {
-            bool includeDetails = args.ContainsKey("includeDetails") && GetBool(args, "includeDetails", false);
+            bool includeDetails =
+                args.ContainsKey("includeDetails") && GetBool(args, "includeDetails", false);
             int maxPerCategory = args.ContainsKey("maxPerCategory")
-                ? Convert.ToInt32(args["maxPerCategory"]) : 5;
+                ? Convert.ToInt32(args["maxPerCategory"])
+                : 5;
 
             var categories = new Dictionary<string, object>();
             long grandTotal = 0;
 
             // Textures (Texture2D + RenderTexture)
-            var texResult = ProfileAssetType<Texture2D>("Textures", includeDetails, maxPerCategory,
-                t => $"{t.width}x{t.height} {t.format}");
+            var texResult = ProfileAssetType<Texture2D>(
+                "Textures",
+                includeDetails,
+                maxPerCategory,
+                t => $"{t.width}x{t.height} {t.format}"
+            );
             categories["textures"] = texResult;
             grandTotal += (long)((Dictionary<string, object>)texResult)["totalBytes"];
 
-            var rtResult = ProfileAssetType<RenderTexture>("RenderTextures", includeDetails, maxPerCategory,
-                rt => $"{rt.width}x{rt.height} {rt.format} depth={rt.depth}");
+            var rtResult = ProfileAssetType<RenderTexture>(
+                "RenderTextures",
+                includeDetails,
+                maxPerCategory,
+                rt => $"{rt.width}x{rt.height} {rt.format} depth={rt.depth}"
+            );
             categories["renderTextures"] = rtResult;
             grandTotal += (long)((Dictionary<string, object>)rtResult)["totalBytes"];
 
             // Meshes
-            var meshResult = ProfileAssetType<Mesh>("Meshes", includeDetails, maxPerCategory,
-                m => $"{m.vertexCount} verts, {m.triangles.Length / 3} tris");
+            var meshResult = ProfileAssetType<Mesh>(
+                "Meshes",
+                includeDetails,
+                maxPerCategory,
+                m => $"{m.vertexCount} verts, {m.triangles.Length / 3} tris"
+            );
             categories["meshes"] = meshResult;
             grandTotal += (long)((Dictionary<string, object>)meshResult)["totalBytes"];
 
             // Materials
-            var matResult = ProfileAssetType<Material>("Materials", includeDetails, maxPerCategory,
-                m => m.shader != null ? m.shader.name : "no shader");
+            var matResult = ProfileAssetType<Material>(
+                "Materials",
+                includeDetails,
+                maxPerCategory,
+                m => m.shader != null ? m.shader.name : "no shader"
+            );
             categories["materials"] = matResult;
             grandTotal += (long)((Dictionary<string, object>)matResult)["totalBytes"];
 
             // Shaders
-            var shaderResult = ProfileAssetType<Shader>("Shaders", includeDetails, maxPerCategory, null);
+            var shaderResult = ProfileAssetType<Shader>(
+                "Shaders",
+                includeDetails,
+                maxPerCategory,
+                null
+            );
             categories["shaders"] = shaderResult;
             grandTotal += (long)((Dictionary<string, object>)shaderResult)["totalBytes"];
 
             // Audio Clips
-            var audioResult = ProfileAssetType<AudioClip>("AudioClips", includeDetails, maxPerCategory,
-                a => $"{a.length:F1}s {a.frequency}Hz {a.channels}ch");
+            var audioResult = ProfileAssetType<AudioClip>(
+                "AudioClips",
+                includeDetails,
+                maxPerCategory,
+                a => $"{a.length:F1}s {a.frequency}Hz {a.channels}ch"
+            );
             categories["audioClips"] = audioResult;
             grandTotal += (long)((Dictionary<string, object>)audioResult)["totalBytes"];
 
             // Animation Clips
-            var animResult = ProfileAssetType<AnimationClip>("AnimationClips", includeDetails, maxPerCategory,
-                a => $"{a.length:F1}s {(a.isLooping ? "loop" : "once")}");
+            var animResult = ProfileAssetType<AnimationClip>(
+                "AnimationClips",
+                includeDetails,
+                maxPerCategory,
+                a => $"{a.length:F1}s {(a.isLooping ? "loop" : "once")}"
+            );
             categories["animationClips"] = animResult;
             grandTotal += (long)((Dictionary<string, object>)animResult)["totalBytes"];
 
@@ -136,8 +181,12 @@ namespace UnityMCP.Editor
             grandTotal += (long)((Dictionary<string, object>)fontResult)["totalBytes"];
 
             // Scriptable Objects
-            var soResult = ProfileAssetType<ScriptableObject>("ScriptableObjects", includeDetails, maxPerCategory,
-                so => so.GetType().Name);
+            var soResult = ProfileAssetType<ScriptableObject>(
+                "ScriptableObjects",
+                includeDetails,
+                maxPerCategory,
+                so => so.GetType().Name
+            );
             categories["scriptableObjects"] = soResult;
             grandTotal += (long)((Dictionary<string, object>)soResult)["totalBytes"];
 
@@ -151,7 +200,9 @@ namespace UnityMCP.Editor
                 { "categories", categories },
                 { "scannedAssetTotalMB", Math.Round(grandTotal / (1024.0 * 1024.0), 2) },
                 { "scannedAssetTotalBytes", grandTotal },
-                { "systemMemory", new Dictionary<string, object>
+                {
+                    "systemMemory",
+                    new Dictionary<string, object>
                     {
                         { "totalAllocatedMB", Math.Round(totalAllocated / (1024.0 * 1024.0), 2) },
                         { "gfxDriverMB", Math.Round(gfxDriver / (1024.0 * 1024.0), 2) },
@@ -162,8 +213,13 @@ namespace UnityMCP.Editor
             };
         }
 
-        private static object ProfileAssetType<T>(string categoryName, bool includeDetails, int maxPerCategory,
-            Func<T, string> detailFunc) where T : UnityEngine.Object
+        private static object ProfileAssetType<T>(
+            string categoryName,
+            bool includeDetails,
+            int maxPerCategory,
+            Func<T, string> detailFunc
+        )
+            where T : UnityEngine.Object
         {
             var objects = Resources.FindObjectsOfTypeAll<T>();
             long totalBytes = 0;
@@ -176,13 +232,15 @@ namespace UnityMCP.Editor
 
                 if (includeDetails)
                 {
-                    items.Add(new AssetMemInfo
-                    {
-                        name = obj.name,
-                        sizeBytes = size,
-                        detail = detailFunc != null ? detailFunc(obj) : null,
-                        assetPath = AssetDatabase.GetAssetPath(obj),
-                    });
+                    items.Add(
+                        new AssetMemInfo
+                        {
+                            name = obj.name,
+                            sizeBytes = size,
+                            detail = detailFunc != null ? detailFunc(obj) : null,
+                            assetPath = AssetDatabase.GetAssetPath(obj),
+                        }
+                    );
                 }
             }
 
@@ -196,18 +254,23 @@ namespace UnityMCP.Editor
             if (includeDetails && items.Count > 0)
             {
                 items.Sort((a, b) => b.sizeBytes.CompareTo(a.sizeBytes));
-                var topItems = items.Take(maxPerCategory).Select(item =>
-                {
-                    var d = new Dictionary<string, object>
+                var topItems = items
+                    .Take(maxPerCategory)
+                    .Select(item =>
                     {
-                        { "name", string.IsNullOrEmpty(item.name) ? "(unnamed)" : item.name },
-                        { "sizeMB", Math.Round(item.sizeBytes / (1024.0 * 1024.0), 3) },
-                        { "sizeBytes", item.sizeBytes },
-                    };
-                    if (!string.IsNullOrEmpty(item.detail)) d["detail"] = item.detail;
-                    if (!string.IsNullOrEmpty(item.assetPath)) d["assetPath"] = item.assetPath;
-                    return d;
-                }).ToArray();
+                        var d = new Dictionary<string, object>
+                        {
+                            { "name", string.IsNullOrEmpty(item.name) ? "(unnamed)" : item.name },
+                            { "sizeMB", Math.Round(item.sizeBytes / (1024.0 * 1024.0), 3) },
+                            { "sizeBytes", item.sizeBytes },
+                        };
+                        if (!string.IsNullOrEmpty(item.detail))
+                            d["detail"] = item.detail;
+                        if (!string.IsNullOrEmpty(item.assetPath))
+                            d["assetPath"] = item.assetPath;
+                        return d;
+                    })
+                    .ToArray();
 
                 result["topAssets"] = topItems;
             }
@@ -270,24 +333,28 @@ namespace UnityMCP.Editor
             };
         }
 
-        private static void ScanType<T>(List<Dictionary<string, object>> output, string typeName) where T : UnityEngine.Object
+        private static void ScanType<T>(List<Dictionary<string, object>> output, string typeName)
+            where T : UnityEngine.Object
         {
             var objects = Resources.FindObjectsOfTypeAll<T>();
             foreach (var obj in objects)
             {
                 long size = Profiler.GetRuntimeMemorySizeLong(obj);
-                if (size <= 0) continue;
+                if (size <= 0)
+                    continue;
 
                 string path = AssetDatabase.GetAssetPath(obj);
 
-                output.Add(new Dictionary<string, object>
-                {
-                    { "name", string.IsNullOrEmpty(obj.name) ? "(unnamed)" : obj.name },
-                    { "type", typeName },
-                    { "sizeMB", Math.Round(size / (1024.0 * 1024.0), 3) },
-                    { "sizeBytes", size },
-                    { "assetPath", path ?? "" },
-                });
+                output.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "name", string.IsNullOrEmpty(obj.name) ? "(unnamed)" : obj.name },
+                        { "type", typeName },
+                        { "sizeMB", Math.Round(size / (1024.0 * 1024.0), 3) },
+                        { "sizeBytes", size },
+                        { "assetPath", path ?? "" },
+                    }
+                );
             }
         }
 
@@ -304,12 +371,19 @@ namespace UnityMCP.Editor
             {
                 return new Dictionary<string, object>
                 {
-                    { "error", "com.unity.memoryprofiler package is not installed. Install it via Package Manager to use memory snapshots." },
-                    { "alternatives", new string[] {
-                        "profiler/memory-breakdown - Get per-asset-type memory breakdown (built-in, always available)",
-                        "profiler/memory-top-assets - Get top N memory consumers (built-in, always available)",
-                        "profiler/memory - Get basic memory stats (built-in, always available)",
-                    }},
+                    {
+                        "error",
+                        "com.unity.memoryprofiler package is not installed. Install it via Package Manager to use memory snapshots."
+                    },
+                    {
+                        "alternatives",
+                        new string[]
+                        {
+                            "profiler/memory-breakdown - Get per-asset-type memory breakdown (built-in, always available)",
+                            "profiler/memory-top-assets - Get top N memory consumers (built-in, always available)",
+                            "profiler/memory - Get basic memory stats (built-in, always available)",
+                        }
+                    },
                 };
             }
 
@@ -317,16 +391,22 @@ namespace UnityMCP.Editor
             {
                 // Use reflection to call the experimental MemoryProfiler API
                 // UnityEditor.Profiling.Memory.Experimental.MemoryProfiler.TakeSnapshot(path, callback, captureFlags)
-                var memProfilerType = Type.GetType(
-                    "UnityEditor.Profiling.Memory.Experimental.MemoryProfiler, UnityEditor.CoreModule")
+                var memProfilerType =
+                    Type.GetType(
+                        "UnityEditor.Profiling.Memory.Experimental.MemoryProfiler, UnityEditor.CoreModule"
+                    )
                     ?? Type.GetType(
-                    "UnityEditor.Profiling.Memory.Experimental.MemoryProfiler, UnityEditor");
+                        "UnityEditor.Profiling.Memory.Experimental.MemoryProfiler, UnityEditor"
+                    );
 
                 if (memProfilerType == null)
                 {
                     return new Dictionary<string, object>
                     {
-                        { "error", "MemoryProfiler experimental API not found in this Unity version." },
+                        {
+                            "error",
+                            "MemoryProfiler experimental API not found in this Unity version."
+                        },
                     };
                 }
 
@@ -341,7 +421,8 @@ namespace UnityMCP.Editor
                 string snapshotPath = Path.Combine(snapshotDir, $"snapshot_{timestamp}.snap");
 
                 // Find the TakeSnapshot method
-                var takeSnapshot = memProfilerType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                var takeSnapshot = memProfilerType
+                    .GetMethods(BindingFlags.Public | BindingFlags.Static)
                     .FirstOrDefault(m => m.Name == "TakeSnapshot" && m.GetParameters().Length >= 2);
 
                 if (takeSnapshot == null)
@@ -355,16 +436,20 @@ namespace UnityMCP.Editor
                 // Call TakeSnapshot - the callback is complex, so we do a fire-and-forget approach
                 // and report the path where the snapshot will be saved
                 var captureFlags = 0x1F; // CaptureFlags.ManagedObjects | NativeObjects | NativeAllocations | NativeAllocationSites | NativeStackTraces
-                var captureFlagsType = Type.GetType(
-                    "UnityEditor.Profiling.Memory.Experimental.CaptureFlags, UnityEditor.CoreModule")
+                var captureFlagsType =
+                    Type.GetType(
+                        "UnityEditor.Profiling.Memory.Experimental.CaptureFlags, UnityEditor.CoreModule"
+                    )
                     ?? Type.GetType(
-                    "UnityEditor.Profiling.Memory.Experimental.CaptureFlags, UnityEditor");
+                        "UnityEditor.Profiling.Memory.Experimental.CaptureFlags, UnityEditor"
+                    );
 
                 if (captureFlagsType != null)
                     captureFlags = Convert.ToInt32(Enum.ToObject(captureFlagsType, 0x1F));
 
                 // Use the simple overload: TakeSnapshot(string path, Action<string, bool> finishCallback)
-                var simpleOverload = memProfilerType.GetMethods(BindingFlags.Public | BindingFlags.Static)
+                var simpleOverload = memProfilerType
+                    .GetMethods(BindingFlags.Public | BindingFlags.Static)
                     .Where(m => m.Name == "TakeSnapshot")
                     .OrderBy(m => m.GetParameters().Length)
                     .FirstOrDefault();
@@ -383,14 +468,25 @@ namespace UnityMCP.Editor
                     if (parameters.Length == 2)
                         simpleOverload.Invoke(null, new object[] { snapshotPath, callback });
                     else if (parameters.Length == 3)
-                        simpleOverload.Invoke(null, new object[] { snapshotPath, callback, Enum.ToObject(captureFlagsType, 0x1F) });
+                        simpleOverload.Invoke(
+                            null,
+                            new object[]
+                            {
+                                snapshotPath,
+                                callback,
+                                Enum.ToObject(captureFlagsType, 0x1F),
+                            }
+                        );
                 }
 
                 return new Dictionary<string, object>
                 {
                     { "success", true },
                     { "snapshotPath", snapshotPath },
-                    { "note", "Snapshot capture initiated. It may take a few seconds to complete. Open the Memory Profiler window to inspect it." },
+                    {
+                        "note",
+                        "Snapshot capture initiated. It may take a few seconds to complete. Open the Memory Profiler window to inspect it."
+                    },
                 };
             }
             catch (Exception ex)
@@ -406,10 +502,13 @@ namespace UnityMCP.Editor
 
         private static bool GetBool(Dictionary<string, object> args, string key, bool defaultValue)
         {
-            if (!args.ContainsKey(key)) return defaultValue;
+            if (!args.ContainsKey(key))
+                return defaultValue;
             var val = args[key];
-            if (val is bool b) return b;
-            if (val is string s) return s.ToLowerInvariant() == "true";
+            if (val is bool b)
+                return b;
+            if (val is string s)
+                return s.ToLowerInvariant() == "true";
             return defaultValue;
         }
     }

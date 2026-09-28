@@ -41,7 +41,8 @@ namespace UnityMCP.Editor
         public static bool HasContextFiles()
         {
             string folder = GetContextFolderPath();
-            if (!Directory.Exists(folder)) return false;
+            if (!Directory.Exists(folder))
+                return false;
             return Directory.GetFiles(folder, "*.md", SearchOption.AllDirectories).Length > 0;
         }
 
@@ -61,14 +62,16 @@ namespace UnityMCP.Editor
             foreach (var cat in StandardCategories)
             {
                 string filePath = Path.Combine(folder, cat + ".md");
-                results.Add(new ContextFileInfo
-                {
-                    Category = cat,
-                    FilePath = filePath,
-                    Exists = File.Exists(filePath),
-                    IsStandard = true,
-                    SizeBytes = File.Exists(filePath) ? new FileInfo(filePath).Length : 0,
-                });
+                results.Add(
+                    new ContextFileInfo
+                    {
+                        Category = cat,
+                        FilePath = filePath,
+                        Exists = File.Exists(filePath),
+                        IsStandard = true,
+                        SizeBytes = File.Exists(filePath) ? new FileInfo(filePath).Length : 0,
+                    }
+                );
             }
 
             // Custom folder
@@ -78,14 +81,16 @@ namespace UnityMCP.Editor
                 foreach (var file in Directory.GetFiles(customFolder, "*.md"))
                 {
                     string name = Path.GetFileNameWithoutExtension(file);
-                    results.Add(new ContextFileInfo
-                    {
-                        Category = $"Custom/{name}",
-                        FilePath = file,
-                        Exists = true,
-                        IsStandard = false,
-                        SizeBytes = new FileInfo(file).Length,
-                    });
+                    results.Add(
+                        new ContextFileInfo
+                        {
+                            Category = $"Custom/{name}",
+                            FilePath = file,
+                            Exists = true,
+                            IsStandard = false,
+                            SizeBytes = new FileInfo(file).Length,
+                        }
+                    );
                 }
             }
 
@@ -93,16 +98,20 @@ namespace UnityMCP.Editor
             foreach (var file in Directory.GetFiles(folder, "*.md"))
             {
                 string name = Path.GetFileNameWithoutExtension(file);
-                if (name == "README") continue; // Skip README
-                if (StandardCategories.Contains(name)) continue; // Already listed
-                results.Add(new ContextFileInfo
-                {
-                    Category = name,
-                    FilePath = file,
-                    Exists = true,
-                    IsStandard = false,
-                    SizeBytes = new FileInfo(file).Length,
-                });
+                if (name == "README")
+                    continue; // Skip README
+                if (StandardCategories.Contains(name))
+                    continue; // Already listed
+                results.Add(
+                    new ContextFileInfo
+                    {
+                        Category = name,
+                        FilePath = file,
+                        Exists = true,
+                        IsStandard = false,
+                        SizeBytes = new FileInfo(file).Length,
+                    }
+                );
             }
 
             return results;
@@ -149,7 +158,8 @@ namespace UnityMCP.Editor
 
             foreach (var file in files)
             {
-                if (!file.Exists || file.SizeBytes == 0) continue;
+                if (!file.Exists || file.SizeBytes == 0)
+                    continue;
 
                 try
                 {
@@ -159,7 +169,9 @@ namespace UnityMCP.Editor
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[VRSE-UMCP] Failed to read context file {file.Category}: {ex.Message}");
+                    Debug.LogWarning(
+                        $"[VRSE-UMCP] Failed to read context file {file.Category}: {ex.Message}"
+                    );
                 }
             }
 
@@ -176,7 +188,10 @@ namespace UnityMCP.Editor
                 return new Dictionary<string, object>
                 {
                     { "enabled", false },
-                    { "message", "Project context is disabled. Enable it in Window > VRseBuilder Unity MCP." },
+                    {
+                        "message",
+                        "Project context is disabled. Enable it in Window > VRseBuilder Unity MCP."
+                    },
                 };
             }
 
@@ -205,11 +220,13 @@ namespace UnityMCP.Editor
 
             foreach (var kvp in allContext)
             {
-                entries.Add(new Dictionary<string, object>
-                {
-                    { "category", kvp.Key },
-                    { "content", kvp.Value },
-                });
+                entries.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "category", kvp.Key },
+                        { "content", kvp.Value },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -227,10 +244,12 @@ namespace UnityMCP.Editor
         /// </summary>
         public static string GetContextSummary()
         {
-            if (!MCPSettingsManager.ContextEnabled) return null;
+            if (!MCPSettingsManager.ContextEnabled)
+                return null;
 
             var allContext = GetAllContext();
-            if (allContext.Count == 0) return null;
+            if (allContext.Count == 0)
+                return null;
 
             var sb = new System.Text.StringBuilder();
             sb.AppendLine("=== PROJECT CONTEXT (auto-provided by VRseBuilder Unity MCP) ===");
@@ -242,7 +261,9 @@ namespace UnityMCP.Editor
                 // Truncate very long files to keep auto-inject reasonable
                 string content = kvp.Value;
                 if (content.Length > 2000)
-                    content = content.Substring(0, 2000) + "\n... [truncated — use unity_get_project_context for full content]";
+                    content =
+                        content.Substring(0, 2000)
+                        + "\n... [truncated — use unity_get_project_context for full content]";
                 sb.AppendLine(content);
                 sb.AppendLine();
             }
@@ -315,7 +336,8 @@ namespace UnityMCP.Editor
 
         // ─── Template Content ───
 
-        private static string GetReadmeTemplate() => @"# VRseBuilder Unity MCP — Project Context
+        private static string GetReadmeTemplate() =>
+            @"# VRseBuilder Unity MCP — Project Context
 
 This folder contains project-specific context files that are automatically
 provided to AI agents when they connect via the VRseBuilder Unity MCP plugin.
@@ -349,7 +371,8 @@ All `.md` files will be discovered and served to agents.
 - This folder is designed to be version-controlled with your project
 ";
 
-        private static string GetProjectGuidelinesTemplate() => @"# Project Guidelines
+        private static string GetProjectGuidelinesTemplate() =>
+            @"# Project Guidelines
 
 <!-- Fill in your project's coding standards and conventions below -->
 <!-- Delete sections that don't apply, add your own -->
@@ -389,7 +412,8 @@ All `.md` files will be discovered and served to agents.
 - Render pipeline: <!-- URP / HDRP / Built-in -->
 ";
 
-        private static string GetArchitectureTemplate() => @"# Project Architecture
+        private static string GetArchitectureTemplate() =>
+            @"# Project Architecture
 
 <!-- Describe your project's technical architecture below -->
 
@@ -425,7 +449,8 @@ All `.md` files will be discovered and served to agents.
 <!-- Platforms you're targeting and any platform-specific considerations -->
 ";
 
-        private static string GetGameDesignTemplate() => @"# Game Design Document
+        private static string GetGameDesignTemplate() =>
+            @"# Game Design Document
 
 <!-- Describe your game's design below -->
 
@@ -452,7 +477,8 @@ All `.md` files will be discovered and served to agents.
 <!-- UI style, interaction patterns, accessibility considerations -->
 ";
 
-        private static string GetNetworkingGuidelinesTemplate() => @"# Networking Guidelines
+        private static string GetNetworkingGuidelinesTemplate() =>
+            @"# Networking Guidelines
 
 <!-- Describe your networking architecture below -->
 <!-- Delete this file if your project doesn't use networking -->
@@ -481,7 +507,8 @@ All `.md` files will be discovered and served to agents.
 <!-- Update rates, compression, delta sync, etc. -->
 ";
 
-        private static string GetNetworkingCSPTemplate() => @"# Networking Content Security Policy
+        private static string GetNetworkingCSPTemplate() =>
+            @"# Networking Content Security Policy
 
 <!-- Define your networking security rules below -->
 <!-- Delete this file if not applicable -->

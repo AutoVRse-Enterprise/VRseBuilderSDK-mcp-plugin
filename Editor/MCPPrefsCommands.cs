@@ -27,10 +27,18 @@ namespace UnityMCP.Editor
             {
                 switch (type)
                 {
-                    case "int": value = EditorPrefs.GetInt(key); break;
-                    case "float": value = EditorPrefs.GetFloat(key); break;
-                    case "bool": value = EditorPrefs.GetBool(key); break;
-                    default: value = EditorPrefs.GetString(key); break;
+                    case "int":
+                        value = EditorPrefs.GetInt(key);
+                        break;
+                    case "float":
+                        value = EditorPrefs.GetFloat(key);
+                        break;
+                    case "bool":
+                        value = EditorPrefs.GetBool(key);
+                        break;
+                    default:
+                        value = EditorPrefs.GetString(key);
+                        break;
                 }
             }
 
@@ -117,9 +125,15 @@ namespace UnityMCP.Editor
             {
                 switch (type)
                 {
-                    case "int": value = PlayerPrefs.GetInt(key); break;
-                    case "float": value = PlayerPrefs.GetFloat(key); break;
-                    default: value = PlayerPrefs.GetString(key); break;
+                    case "int":
+                        value = PlayerPrefs.GetInt(key);
+                        break;
+                    case "float":
+                        value = PlayerPrefs.GetFloat(key);
+                        break;
+                    default:
+                        value = PlayerPrefs.GetString(key);
+                        break;
                 }
             }
 

@@ -17,7 +17,10 @@ namespace UnityMCP.Editor
         {
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             if (string.IsNullOrEmpty(path))
-                path = "Assets/Screenshots/GameView_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".png";
+                path =
+                    "Assets/Screenshots/GameView_"
+                    + DateTime.Now.ToString("yyyyMMdd_HHmmss")
+                    + ".png";
 
             int superSize = args.ContainsKey("superSize") ? Convert.ToInt32(args["superSize"]) : 1;
 
@@ -43,7 +46,10 @@ namespace UnityMCP.Editor
         {
             string path = args.ContainsKey("path") ? args["path"].ToString() : "";
             if (string.IsNullOrEmpty(path))
-                path = "Assets/Screenshots/SceneView_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".png";
+                path =
+                    "Assets/Screenshots/SceneView_"
+                    + DateTime.Now.ToString("yyyyMMdd_HHmmss")
+                    + ".png";
 
             int width = args.ContainsKey("width") ? Convert.ToInt32(args["width"]) : 1920;
             int height = args.ContainsKey("height") ? Convert.ToInt32(args["height"]) : 1080;
@@ -101,14 +107,22 @@ namespace UnityMCP.Editor
 
             return new Dictionary<string, object>
             {
-                { "pivot", new Dictionary<string, object>
+                {
+                    "pivot",
+                    new Dictionary<string, object>
                     {
-                        { "x", pivot.x }, { "y", pivot.y }, { "z", pivot.z },
+                        { "x", pivot.x },
+                        { "y", pivot.y },
+                        { "z", pivot.z },
                     }
                 },
-                { "rotation", new Dictionary<string, object>
+                {
+                    "rotation",
+                    new Dictionary<string, object>
                     {
-                        { "x", rotation.x }, { "y", rotation.y }, { "z", rotation.z },
+                        { "x", rotation.x },
+                        { "y", rotation.y },
+                        { "z", rotation.z },
                     }
                 },
                 { "size", sceneView.size },
@@ -130,14 +144,23 @@ namespace UnityMCP.Editor
 
             if (args.ContainsKey("pivot") && args["pivot"] is Dictionary<string, object> pivotDict)
             {
-                float x = pivotDict.ContainsKey("x") ? Convert.ToSingle(pivotDict["x"]) : sceneView.pivot.x;
-                float y = pivotDict.ContainsKey("y") ? Convert.ToSingle(pivotDict["y"]) : sceneView.pivot.y;
-                float z = pivotDict.ContainsKey("z") ? Convert.ToSingle(pivotDict["z"]) : sceneView.pivot.z;
+                float x = pivotDict.ContainsKey("x")
+                    ? Convert.ToSingle(pivotDict["x"])
+                    : sceneView.pivot.x;
+                float y = pivotDict.ContainsKey("y")
+                    ? Convert.ToSingle(pivotDict["y"])
+                    : sceneView.pivot.y;
+                float z = pivotDict.ContainsKey("z")
+                    ? Convert.ToSingle(pivotDict["z"])
+                    : sceneView.pivot.z;
                 sceneView.pivot = new Vector3(x, y, z);
                 updated.Add("pivot");
             }
 
-            if (args.ContainsKey("rotation") && args["rotation"] is Dictionary<string, object> rotDict)
+            if (
+                args.ContainsKey("rotation")
+                && args["rotation"] is Dictionary<string, object> rotDict
+            )
             {
                 float x = rotDict.ContainsKey("x") ? Convert.ToSingle(rotDict["x"]) : 0;
                 float y = rotDict.ContainsKey("y") ? Convert.ToSingle(rotDict["y"]) : 0;
@@ -169,7 +192,9 @@ namespace UnityMCP.Editor
                 float x = lookDict.ContainsKey("x") ? Convert.ToSingle(lookDict["x"]) : 0;
                 float y = lookDict.ContainsKey("y") ? Convert.ToSingle(lookDict["y"]) : 0;
                 float z = lookDict.ContainsKey("z") ? Convert.ToSingle(lookDict["z"]) : 0;
-                float sz = args.ContainsKey("lookAtSize") ? Convert.ToSingle(args["lookAtSize"]) : 10f;
+                float sz = args.ContainsKey("lookAtSize")
+                    ? Convert.ToSingle(args["lookAtSize"])
+                    : 10f;
                 sceneView.LookAt(new Vector3(x, y, z), sceneView.rotation, sz);
                 updated.Add("lookAt");
             }
@@ -182,11 +207,7 @@ namespace UnityMCP.Editor
 
             sceneView.Repaint();
 
-            return new Dictionary<string, object>
-            {
-                { "success", true },
-                { "updated", updated },
-            };
+            return new Dictionary<string, object> { { "success", true }, { "updated", updated } };
         }
     }
 }

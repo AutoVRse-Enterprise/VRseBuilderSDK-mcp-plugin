@@ -2,10 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-#if VRSE_BACKEND_ENABLED
-using System.Net.Http;
-using System.Text;
-#endif
 using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -13,13 +9,18 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-#if VRSE_BACKEND_ENABLED
-using VRseBuilder.Backend.Editor.Auth;
-#endif
 using VRseBuilder.Core.Framework;
 using VRseBuilder.Core.Systems.TextToSpeech;
 using VRseBuilder.Tools.Editor;
 using VRseBuilder.Tools.Editor.BuildTool;
+#if VRSE_BACKEND_ENABLED
+using System.Net.Http;
+using System.Text;
+#endif
+
+#if VRSE_BACKEND_ENABLED
+using VRseBuilder.Backend.Editor.Auth;
+#endif
 
 namespace UnityMCP.Editor
 {
@@ -32,7 +33,8 @@ namespace UnityMCP.Editor
         private const bool BackendEnabled = false;
 #endif
 #if !VRSE_BACKEND_ENABLED
-        private const string BackendDisabledMessage = "VRse backend support is disabled. Add VRSE_BACKEND_ENABLED to scripting define symbols to enable backend tools.";
+        private const string BackendDisabledMessage =
+            "VRse backend support is disabled. Add VRSE_BACKEND_ENABLED to scripting define symbols to enable backend tools.";
 #endif
 #if VRSE_BACKEND_ENABLED
         private static readonly HttpClient HttpClient = new HttpClient();
@@ -59,14 +61,20 @@ namespace UnityMCP.Editor
                 { "userName", userName },
                 { "baseUrl", baseUrl },
                 { "selectedProject", selectedProject },
-                { "activeScene", new Dictionary<string, object>
+                {
+                    "activeScene",
+                    new Dictionary<string, object>
                     {
                         { "name", activeScene.name },
                         { "path", activeScene.path },
-                        { "isLoaded", activeScene.isLoaded }
+                        { "isLoaded", activeScene.isLoaded },
                     }
                 },
-                { "hasSelectedProjectConfig", !string.IsNullOrEmpty(selectedProject) && TryGetRoomManagerConfig(selectedProject, out _) }
+                {
+                    "hasSelectedProjectConfig",
+                    !string.IsNullOrEmpty(selectedProject)
+                        && TryGetRoomManagerConfig(selectedProject, out _)
+                },
             };
         }
 
@@ -76,11 +84,15 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "error", BackendDisabledMessage },
-                { "backendEnabled", false }
+                { "backendEnabled", false },
             };
 #else
-            string username = args.ContainsKey("username") ? args["username"]?.ToString()?.Trim() : string.Empty;
-            string password = args.ContainsKey("password") ? args["password"]?.ToString() ?? string.Empty : string.Empty;
+            string username = args.ContainsKey("username")
+                ? args["username"]?.ToString()?.Trim()
+                : string.Empty;
+            string password = args.ContainsKey("password")
+                ? args["password"]?.ToString() ?? string.Empty
+                : string.Empty;
 
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return new { error = "username and password are required" };
@@ -88,22 +100,33 @@ namespace UnityMCP.Editor
             try
             {
                 LoginResponse response = PerformLogin(username, password);
-                if (!response.success || response.user == null || string.IsNullOrEmpty(response.user.token))
-                    return new { error = string.IsNullOrEmpty(response.message) ? "Login failed" : response.message };
+                if (
+                    !response.success
+                    || response.user == null
+                    || string.IsNullOrEmpty(response.user.token)
+                )
+                    return new
+                    {
+                        error = string.IsNullOrEmpty(response.message)
+                            ? "Login failed"
+                            : response.message,
+                    };
 
                 DateTime? expiry = ParseJwtExpiry(response.user.token);
                 if (expiry == null)
                     return new { error = "Login succeeded but token expiry could not be parsed" };
 
                 LicenseManager.SaveToken(response.user.token, expiry.Value.ToString("o"));
-                LicenseManager.SaveName(string.IsNullOrEmpty(response.user.name) ? username : response.user.name);
+                LicenseManager.SaveName(
+                    string.IsNullOrEmpty(response.user.name) ? username : response.user.name
+                );
 
                 return new Dictionary<string, object>
                 {
                     { "success", true },
                     { "loggedIn", AuthUtility.IsLoggedIn() },
                     { "userName", AuthUtility.GetUserName() },
-                    { "expiresAtUtc", expiry.Value.ToString("o") }
+                    { "expiresAtUtc", expiry.Value.ToString("o") },
                 };
             }
             catch (Exception ex)
@@ -132,13 +155,18 @@ namespace UnityMCP.Editor
                     {
                         foreach (AccessProject project in response.projects)
                         {
-                            accessibleProjects.Add(new Dictionary<string, object>
-                            {
-                                { "id", project._id },
-                                { "name", project.name },
-                                { "description", project.description },
-                                { "moduleCount", project.modules != null ? project.modules.Count : 0 }
-                            });
+                            accessibleProjects.Add(
+                                new Dictionary<string, object>
+                                {
+                                    { "id", project._id },
+                                    { "name", project.name },
+                                    { "description", project.description },
+                                    {
+                                        "moduleCount",
+                                        project.modules != null ? project.modules.Count : 0
+                                    },
+                                }
+                            );
                         }
                     }
                 }
@@ -156,26 +184,38 @@ namespace UnityMCP.Editor
             string studioProjectsRoot = Path.Combine(Application.dataPath, "StudioProjects");
             if (Directory.Exists(studioProjectsRoot))
             {
-                foreach (string directory in Directory.GetDirectories(studioProjectsRoot).OrderBy(d => d, StringComparer.OrdinalIgnoreCase))
+                foreach (
+                    string directory in Directory
+                        .GetDirectories(studioProjectsRoot)
+                        .OrderBy(d => d, StringComparer.OrdinalIgnoreCase)
+                )
                 {
                     string name = Path.GetFileName(directory);
                     bool hasConfig = TryGetRoomManagerConfig(name, out RoomManagerConfig config);
                     if (!hasConfig)
                     {
-                        ignoredLocalProjectFolders.Add(new Dictionary<string, object>
-                        {
-                            { "name", name },
-                            { "reason", "RoomManagerConfig asset not found" }
-                        });
+                        ignoredLocalProjectFolders.Add(
+                            new Dictionary<string, object>
+                            {
+                                { "name", name },
+                                { "reason", "RoomManagerConfig asset not found" },
+                            }
+                        );
                         continue;
                     }
 
-                    localProjects.Add(new Dictionary<string, object>
-                    {
-                        { "name", name },
-                        { "hasRoomManagerConfig", true },
-                        { "hasMenuScene", !string.IsNullOrEmpty(config.MainMenuScene) && File.Exists(config.MainMenuScene) }
-                    });
+                    localProjects.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", name },
+                            { "hasRoomManagerConfig", true },
+                            {
+                                "hasMenuScene",
+                                !string.IsNullOrEmpty(config.MainMenuScene)
+                                    && File.Exists(config.MainMenuScene)
+                            },
+                        }
+                    );
                 }
             }
 
@@ -188,7 +228,7 @@ namespace UnityMCP.Editor
                 { "accessibleProjects", accessibleProjects },
                 { "accessibleProjectsError", accessibleProjectsError },
                 { "localProjects", localProjects },
-                { "ignoredLocalProjectFolders", ignoredLocalProjectFolders }
+                { "ignoredLocalProjectFolders", ignoredLocalProjectFolders },
             };
         }
 
@@ -198,18 +238,33 @@ namespace UnityMCP.Editor
             bool confirm = GetBoolArg(args, "confirm", false);
 
             if (!confirm)
-                return new { error = "Creating a project writes assets. Retry with confirm=true.", name };
+                return new
+                {
+                    error = "Creating a project writes assets. Retry with confirm=true.",
+                    name,
+                };
 
             if (string.IsNullOrWhiteSpace(name))
                 return new { error = "name is required." };
 
             name = name.Trim();
-            if (name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 || name.Contains("/") || name.Contains("\\") || name == "." || name == "..")
+            if (
+                name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0
+                || name.Contains("/")
+                || name.Contains("\\")
+                || name == "."
+                || name == ".."
+            )
                 return new { error = "name must be a single valid folder name.", name };
 
             string projectPath = $"Assets/StudioProjects/{name}";
             if (AssetDatabase.IsValidFolder(projectPath))
-                return new { error = "A project folder with that name already exists.", name, projectPath };
+                return new
+                {
+                    error = "A project folder with that name already exists.",
+                    name,
+                    projectPath,
+                };
 
             RoomManagerConfig config;
             try
@@ -218,11 +273,21 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                return new { error = $"Project creation failed: {ex.Message}", name, projectPath };
+                return new
+                {
+                    error = $"Project creation failed: {ex.Message}",
+                    name,
+                    projectPath,
+                };
             }
 
             if (config == null)
-                return new { error = "The VRseBuilder SDK did not create a RoomManagerConfig.", name, projectPath };
+                return new
+                {
+                    error = "The VRseBuilder SDK did not create a RoomManagerConfig.",
+                    name,
+                    projectPath,
+                };
 
             AssetDatabase.Refresh();
             EditorPrefs.SetString(SelectedProjectKey, name);
@@ -234,15 +299,22 @@ namespace UnityMCP.Editor
                 { "projectPath", projectPath },
                 { "roomManagerConfig", AssetDatabase.GetAssetPath(config) },
                 { "projectConfig", $"{projectPath}/ProjectSettings/ProjectConfig_{name}.asset" },
-                { "brandManagerConfig", $"{projectPath}/ProjectSettings/BrandManagerConfig_{name}.asset" },
-                { "selectedProject", name }
+                {
+                    "brandManagerConfig",
+                    $"{projectPath}/ProjectSettings/BrandManagerConfig_{name}.asset"
+                },
+                { "selectedProject", name },
             };
         }
 
         public static object SelectProject(Dictionary<string, object> args)
         {
-            string requestedName = args.ContainsKey("projectName") ? args["projectName"]?.ToString()?.Trim() : string.Empty;
-            string requestedId = args.ContainsKey("projectId") ? args["projectId"]?.ToString()?.Trim() : string.Empty;
+            string requestedName = args.ContainsKey("projectName")
+                ? args["projectName"]?.ToString()?.Trim()
+                : string.Empty;
+            string requestedId = args.ContainsKey("projectId")
+                ? args["projectId"]?.ToString()?.Trim()
+                : string.Empty;
 
             object listResult = ListProjects(args);
             if (!(listResult is Dictionary<string, object> payload))
@@ -250,7 +322,10 @@ namespace UnityMCP.Editor
 
             string selectedName = null;
 
-            if (payload.TryGetValue("accessibleProjects", out object accessibleObj) && accessibleObj is List<object> accessibleProjects)
+            if (
+                payload.TryGetValue("accessibleProjects", out object accessibleObj)
+                && accessibleObj is List<object> accessibleProjects
+            )
             {
                 foreach (object item in accessibleProjects)
                 {
@@ -258,10 +333,28 @@ namespace UnityMCP.Editor
                         continue;
 
                     string projectId = project.ContainsKey("id") ? project["id"]?.ToString() : null;
-                    string projectName = project.ContainsKey("name") ? project["name"]?.ToString() : null;
+                    string projectName = project.ContainsKey("name")
+                        ? project["name"]?.ToString()
+                        : null;
 
-                    if ((!string.IsNullOrEmpty(requestedId) && string.Equals(projectId, requestedId, StringComparison.OrdinalIgnoreCase)) ||
-                        (!string.IsNullOrEmpty(requestedName) && string.Equals(projectName, requestedName, StringComparison.OrdinalIgnoreCase)))
+                    if (
+                        (
+                            !string.IsNullOrEmpty(requestedId)
+                            && string.Equals(
+                                projectId,
+                                requestedId,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        )
+                        || (
+                            !string.IsNullOrEmpty(requestedName)
+                            && string.Equals(
+                                projectName,
+                                requestedName,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        )
+                    )
                     {
                         selectedName = projectName;
                         break;
@@ -269,15 +362,28 @@ namespace UnityMCP.Editor
                 }
             }
 
-            if (string.IsNullOrEmpty(selectedName) && payload.TryGetValue("localProjects", out object localObj) && localObj is List<object> localProjects)
+            if (
+                string.IsNullOrEmpty(selectedName)
+                && payload.TryGetValue("localProjects", out object localObj)
+                && localObj is List<object> localProjects
+            )
             {
                 foreach (object item in localProjects)
                 {
                     if (!(item is Dictionary<string, object> project))
                         continue;
 
-                    string projectName = project.ContainsKey("name") ? project["name"]?.ToString() : null;
-                    if (!string.IsNullOrEmpty(requestedName) && string.Equals(projectName, requestedName, StringComparison.OrdinalIgnoreCase))
+                    string projectName = project.ContainsKey("name")
+                        ? project["name"]?.ToString()
+                        : null;
+                    if (
+                        !string.IsNullOrEmpty(requestedName)
+                        && string.Equals(
+                            projectName,
+                            requestedName,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
                     {
                         selectedName = projectName;
                         break;
@@ -286,14 +392,17 @@ namespace UnityMCP.Editor
             }
 
             if (string.IsNullOrEmpty(selectedName))
-                return new { error = "Project not found. Provide a valid projectName or projectId." };
+                return new
+                {
+                    error = "Project not found. Provide a valid projectName or projectId.",
+                };
 
             EditorPrefs.SetString(SelectedProjectKey, selectedName);
             VRseProjectWindowUI.RefreshAllOpenWindows();
             return new Dictionary<string, object>
             {
                 { "success", true },
-                { "selectedProject", selectedName }
+                { "selectedProject", selectedName },
             };
         }
 
@@ -301,7 +410,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             string remoteError = null;
             bool remoteSourceAvailable = false;
@@ -324,7 +436,9 @@ namespace UnityMCP.Editor
 #endif
 
 #if VRSE_BACKEND_ENABLED
-            AccessProject remoteProject = remoteResponse?.projects?.FirstOrDefault(project => string.Equals(project.name, projectName, StringComparison.OrdinalIgnoreCase));
+            AccessProject remoteProject = remoteResponse?.projects?.FirstOrDefault(project =>
+                string.Equals(project.name, projectName, StringComparison.OrdinalIgnoreCase)
+            );
             remoteSourceAvailable = remoteProject != null;
             if (remoteProject != null && remoteProject.modules != null)
             {
@@ -335,25 +449,29 @@ namespace UnityMCP.Editor
                     {
                         foreach (AccessExperience experience in module.experiences)
                         {
-                            experiences.Add(new Dictionary<string, object>
-                            {
-                                { "id", experience._id },
-                                { "name", experience.name },
-                                { "description", experience.description },
-                                { "type", experience.type },
-                                { "jsonFileUrl", experience.jsonFileUrl }
-                            });
+                            experiences.Add(
+                                new Dictionary<string, object>
+                                {
+                                    { "id", experience._id },
+                                    { "name", experience.name },
+                                    { "description", experience.description },
+                                    { "type", experience.type },
+                                    { "jsonFileUrl", experience.jsonFileUrl },
+                                }
+                            );
                         }
                     }
 
-                    remoteModules.Add(new Dictionary<string, object>
-                    {
-                        { "id", module._id },
-                        { "name", module.name },
-                        { "description", module.description },
-                        { "type", module.type },
-                        { "experiences", experiences }
-                    });
+                    remoteModules.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "id", module._id },
+                            { "name", module.name },
+                            { "description", module.description },
+                            { "type", module.type },
+                            { "experiences", experiences },
+                        }
+                    );
                 }
             }
 #endif
@@ -370,27 +488,39 @@ namespace UnityMCP.Editor
                     {
                         foreach (ModuleData.ExperienceData experience in module.ExperienceDataList)
                         {
-                            experiences.Add(new Dictionary<string, object>
-                            {
-                                { "id", experience.ExperienceId },
-                                { "name", experience.Name },
-                                { "type", experience.Type.ToString() },
-                                { "devScene", experience.DevScene },
-                                { "artScene", experience.ArtScene },
-                                { "storyJsonPath", experience.StoryJsonPath },
-                                { "hasDevScene", !string.IsNullOrEmpty(experience.DevScene) && File.Exists(experience.DevScene) },
-                                { "hasArtScene", !string.IsNullOrEmpty(experience.ArtScene) && File.Exists(experience.ArtScene) }
-                            });
+                            experiences.Add(
+                                new Dictionary<string, object>
+                                {
+                                    { "id", experience.ExperienceId },
+                                    { "name", experience.Name },
+                                    { "type", experience.Type.ToString() },
+                                    { "devScene", experience.DevScene },
+                                    { "artScene", experience.ArtScene },
+                                    { "storyJsonPath", experience.StoryJsonPath },
+                                    {
+                                        "hasDevScene",
+                                        !string.IsNullOrEmpty(experience.DevScene)
+                                            && File.Exists(experience.DevScene)
+                                    },
+                                    {
+                                        "hasArtScene",
+                                        !string.IsNullOrEmpty(experience.ArtScene)
+                                            && File.Exists(experience.ArtScene)
+                                    },
+                                }
+                            );
                         }
                     }
 
-                    configModules.Add(new Dictionary<string, object>
-                    {
-                        { "id", module.ModuleId },
-                        { "name", module.GetModuleName() },
-                        { "includeInBuild", module.IncludeInBuild },
-                        { "experiences", experiences }
-                    });
+                    configModules.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "id", module.ModuleId },
+                            { "name", module.GetModuleName() },
+                            { "includeInBuild", module.IncludeInBuild },
+                            { "experiences", experiences },
+                        }
+                    );
                 }
             }
 
@@ -401,7 +531,7 @@ namespace UnityMCP.Editor
                 { "remoteSourceError", remoteError },
                 { "configSourceAvailable", roomManagerConfig != null },
                 { "remoteModules", remoteModules },
-                { "configModules", configModules }
+                { "configModules", configModules },
             };
         }
 
@@ -409,24 +539,36 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
 
             if (string.IsNullOrEmpty(roomManagerConfig.MainMenuScene))
-                return new { error = $"Main menu scene is not configured for project '{projectName}'." };
+                return new
+                {
+                    error = $"Main menu scene is not configured for project '{projectName}'.",
+                };
 
             if (!File.Exists(roomManagerConfig.MainMenuScene))
-                return new { error = $"Main menu scene file does not exist: {roomManagerConfig.MainMenuScene}" };
+                return new
+                {
+                    error = $"Main menu scene file does not exist: {roomManagerConfig.MainMenuScene}",
+                };
 
-            Scene openedScene = EditorSceneManager.OpenScene(roomManagerConfig.MainMenuScene, OpenSceneMode.Single);
+            Scene openedScene = EditorSceneManager.OpenScene(
+                roomManagerConfig.MainMenuScene,
+                OpenSceneMode.Single
+            );
             return new Dictionary<string, object>
             {
                 { "success", true },
                 { "projectName", projectName },
                 { "menuScenePath", roomManagerConfig.MainMenuScene },
-                { "openedSceneName", openedScene.name }
+                { "openedSceneName", openedScene.name },
             };
         }
 
@@ -434,7 +576,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
@@ -443,14 +588,17 @@ namespace UnityMCP.Editor
             bool applySettings = GetBoolArg(args, "applySettings", true);
             const string targetFolder = "Assets/VRseBuilder/MenuScene";
             const string targetPath = targetFolder + "/MenuGlassUI.unity";
-            const string sourcePath = "Packages/com.autovrse.vrsebuilder.core/Core/Runtime/MainMenu/Scenes/MenuGlassUI.unity";
+            const string sourcePath =
+                "Packages/com.autovrse.vrsebuilder.core/Core/Runtime/MainMenu/Scenes/MenuGlassUI.unity";
             const string managedFolder = targetFolder + "/";
 
             if (AssetDatabase.LoadAssetAtPath<SceneAsset>(sourcePath) == null)
                 return new { error = $"Could not find packaged menu scene: {sourcePath}" };
 
-            bool hasAssignedScene = !string.IsNullOrEmpty(roomManagerConfig.MainMenuScene) &&
-                AssetDatabase.LoadAssetAtPath<SceneAsset>(roomManagerConfig.MainMenuScene) != null;
+            bool hasAssignedScene =
+                !string.IsNullOrEmpty(roomManagerConfig.MainMenuScene)
+                && AssetDatabase.LoadAssetAtPath<SceneAsset>(roomManagerConfig.MainMenuScene)
+                    != null;
             if (hasAssignedScene && !overwrite)
             {
                 return new Dictionary<string, object>
@@ -461,24 +609,37 @@ namespace UnityMCP.Editor
                     { "alreadyConfigured", true },
                     { "copied", false },
                     { "assigned", false },
-                    { "message", "A valid menu scene is already configured. Pass overwrite=true only if you intentionally want to replace the managed VRseBuilder menu scene." }
+                    {
+                        "message",
+                        "A valid menu scene is already configured. Pass overwrite=true only if you intentionally want to replace the managed VRseBuilder menu scene."
+                    },
                 };
             }
 
-            if (hasAssignedScene && overwrite && !roomManagerConfig.MainMenuScene.StartsWith(managedFolder, StringComparison.OrdinalIgnoreCase))
+            if (
+                hasAssignedScene
+                && overwrite
+                && !roomManagerConfig.MainMenuScene.StartsWith(
+                    managedFolder,
+                    StringComparison.OrdinalIgnoreCase
+                )
+            )
             {
                 return new
                 {
                     error = "A custom/external menu scene is already configured. Refusing to overwrite it. Clear MainMenuScene or reassign manually if you want to use the default managed menu scene.",
                     projectName,
-                    menuScenePath = roomManagerConfig.MainMenuScene
+                    menuScenePath = roomManagerConfig.MainMenuScene,
                 };
             }
 
             bool copied = false;
             bool assigned = false;
-            string effectiveTargetPath = hasAssignedScene ? roomManagerConfig.MainMenuScene : targetPath;
-            bool alreadyExisted = AssetDatabase.LoadAssetAtPath<SceneAsset>(effectiveTargetPath) != null;
+            string effectiveTargetPath = hasAssignedScene
+                ? roomManagerConfig.MainMenuScene
+                : targetPath;
+            bool alreadyExisted =
+                AssetDatabase.LoadAssetAtPath<SceneAsset>(effectiveTargetPath) != null;
 
             try
             {
@@ -487,14 +648,20 @@ namespace UnityMCP.Editor
                     Directory.CreateDirectory(targetFolder);
                     AssetDatabase.Refresh();
                     if (!AssetDatabase.CopyAsset(sourcePath, effectiveTargetPath))
-                        return new { error = $"Could not copy the menu scene to {effectiveTargetPath}.", projectName };
+                        return new
+                        {
+                            error = $"Could not copy the menu scene to {effectiveTargetPath}.",
+                            projectName,
+                        };
                     copied = true;
                 }
                 else if (overwrite)
                 {
                     string projectRoot = Path.GetDirectoryName(Application.dataPath);
-                    string absoluteSource = Path.Combine(projectRoot, sourcePath).Replace("/", Path.DirectorySeparatorChar.ToString());
-                    string absoluteTarget = Path.Combine(projectRoot, effectiveTargetPath).Replace("/", Path.DirectorySeparatorChar.ToString());
+                    string absoluteSource = Path.Combine(projectRoot, sourcePath)
+                        .Replace("/", Path.DirectorySeparatorChar.ToString());
+                    string absoluteTarget = Path.Combine(projectRoot, effectiveTargetPath)
+                        .Replace("/", Path.DirectorySeparatorChar.ToString());
                     File.Copy(absoluteSource, absoluteTarget, true);
                     AssetDatabase.ImportAsset(effectiveTargetPath, ImportAssetOptions.ForceUpdate);
                     copied = true;
@@ -507,7 +674,13 @@ namespace UnityMCP.Editor
                     importer.SaveAndReimport();
                 }
 
-                if (!string.Equals(roomManagerConfig.MainMenuScene, effectiveTargetPath, StringComparison.OrdinalIgnoreCase))
+                if (
+                    !string.Equals(
+                        roomManagerConfig.MainMenuScene,
+                        effectiveTargetPath,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                )
                 {
                     roomManagerConfig.MainMenuScene = effectiveTargetPath;
                     EditorUtility.SetDirty(roomManagerConfig);
@@ -517,7 +690,13 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                return new { error = $"Menu scene creation failed: {ex.Message}", projectName, sourcePath, targetPath };
+                return new
+                {
+                    error = $"Menu scene creation failed: {ex.Message}",
+                    projectName,
+                    sourcePath,
+                    targetPath,
+                };
             }
 
             object applySettingsResult = applySettings
@@ -533,7 +712,7 @@ namespace UnityMCP.Editor
                 { "alreadyExisted", alreadyExisted },
                 { "copied", copied },
                 { "assigned", assigned },
-                { "applySettingsResult", applySettingsResult }
+                { "applySettingsResult", applySettingsResult },
             };
         }
 
@@ -541,7 +720,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
@@ -552,15 +734,24 @@ namespace UnityMCP.Editor
 
             ModuleData.ExperienceData experience = ResolveExperience(module, args);
             if (experience == null)
-                return new { error = "Experience not found. Provide experienceId, experienceName, or experienceType." };
+                return new
+                {
+                    error = "Experience not found. Provide experienceId, experienceName, or experienceType.",
+                };
 
             if (string.IsNullOrEmpty(experience.DevScene))
-                return new { error = $"Experience '{experience.Name}' does not have a dev scene configured." };
+                return new
+                {
+                    error = $"Experience '{experience.Name}' does not have a dev scene configured.",
+                };
 
             if (!File.Exists(experience.DevScene))
                 return new { error = $"Dev scene file does not exist: {experience.DevScene}" };
 
-            Scene devScene = EditorSceneManager.OpenScene(experience.DevScene, OpenSceneMode.Single);
+            Scene devScene = EditorSceneManager.OpenScene(
+                experience.DevScene,
+                OpenSceneMode.Single
+            );
             bool artSceneLoaded = false;
             if (!string.IsNullOrEmpty(experience.ArtScene) && File.Exists(experience.ArtScene))
             {
@@ -572,12 +763,27 @@ namespace UnityMCP.Editor
             {
                 { "success", true },
                 { "projectName", projectName },
-                { "module", new Dictionary<string, object> { { "id", module.ModuleId }, { "name", module.GetModuleName() } } },
-                { "experience", new Dictionary<string, object> { { "id", experience.ExperienceId }, { "name", experience.Name }, { "type", experience.Type.ToString() } } },
+                {
+                    "module",
+                    new Dictionary<string, object>
+                    {
+                        { "id", module.ModuleId },
+                        { "name", module.GetModuleName() },
+                    }
+                },
+                {
+                    "experience",
+                    new Dictionary<string, object>
+                    {
+                        { "id", experience.ExperienceId },
+                        { "name", experience.Name },
+                        { "type", experience.Type.ToString() },
+                    }
+                },
                 { "devScenePath", experience.DevScene },
                 { "openedSceneName", devScene.name },
                 { "artScenePath", experience.ArtScene },
-                { "artSceneLoaded", artSceneLoaded }
+                { "artSceneLoaded", artSceneLoaded },
             };
         }
 
@@ -585,7 +791,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
@@ -597,7 +806,7 @@ namespace UnityMCP.Editor
             {
                 { "success", true },
                 { "projectName", projectName },
-                { "assetName", roomManagerConfig.name }
+                { "assetName", roomManagerConfig.name },
             };
         }
 
@@ -605,13 +814,18 @@ namespace UnityMCP.Editor
         {
             string projectName = GetSelectedProjectName();
             RoomManagerConfig config = null;
-            bool hasConfig = !string.IsNullOrEmpty(projectName) && TryGetRoomManagerConfig(projectName, out config);
-            bool hasMenuScene = hasConfig && !string.IsNullOrEmpty(config.MainMenuScene) && File.Exists(config.MainMenuScene);
+            bool hasConfig =
+                !string.IsNullOrEmpty(projectName)
+                && TryGetRoomManagerConfig(projectName, out config);
+            bool hasMenuScene =
+                hasConfig
+                && !string.IsNullOrEmpty(config.MainMenuScene)
+                && File.Exists(config.MainMenuScene);
             return new Dictionary<string, object>
             {
                 { "selectedProject", projectName },
                 { "hasRoomManagerConfig", hasConfig },
-                { "hasMenuScene", hasMenuScene }
+                { "hasMenuScene", hasMenuScene },
             };
         }
 
@@ -619,7 +833,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
@@ -632,10 +849,13 @@ namespace UnityMCP.Editor
                 { "liveLinkEnabled", roomManagerConfig.LiveLinkEnabled },
                 { "useCustomAvatars", roomManagerConfig.UseCustomAvatars },
                 { "stepNavigationDataEnabled", roomManagerConfig.StepNavigationDataEnabled },
-                { "moduleCount", roomManagerConfig.experiences != null ? roomManagerConfig.experiences.Length : 0 },
+                {
+                    "moduleCount",
+                    roomManagerConfig.experiences != null ? roomManagerConfig.experiences.Length : 0
+                },
                 { "photonAppSettings", roomManagerConfig.photonAppSettings },
                 { "loginAccessSettings", roomManagerConfig.loginAccessSettings },
-                { "buildSettings", roomManagerConfig.buildSettings }
+                { "buildSettings", roomManagerConfig.buildSettings },
             };
         }
 
@@ -643,14 +863,19 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
-            bool created = VRseProjectWindowProjectSettingsController.EnsureProjectSettingsExist(projectName);
+            bool created = VRseProjectWindowProjectSettingsController.EnsureProjectSettingsExist(
+                projectName
+            );
             return new Dictionary<string, object>
             {
                 { "success", true },
                 { "projectName", projectName },
-                { "newSettingsCreated", created }
+                { "newSettingsCreated", created },
             };
         }
 
@@ -658,7 +883,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             return VRseProjectConfigAutoApply.AutoApplyAllSettingsOnProjectChange(projectName);
         }
@@ -669,7 +897,7 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "success", true },
-                { "window", "VRse Studio Projects" }
+                { "window", "VRse Studio Projects" },
             };
         }
 
@@ -679,7 +907,7 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "success", true },
-                { "window", "VRse Project Config" }
+                { "window", "VRse Project Config" },
             };
         }
 
@@ -689,7 +917,7 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "success", true },
-                { "window", "VRse Build Tool" }
+                { "window", "VRse Build Tool" },
             };
         }
 
@@ -697,7 +925,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             string moduleName = GetStringArg(args, "moduleName");
             string experienceName = GetStringArg(args, "experienceName");
@@ -711,32 +942,55 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(jsonFileUrl))
                 jsonFileUrl = ResolveExperienceJsonFileUrl(projectName, args);
 
-            if (!string.IsNullOrEmpty(jsonFileUrl) &&
-                (!Uri.TryCreate(jsonFileUrl, UriKind.Absolute, out Uri jsonUri) ||
-                 (jsonUri.Scheme != Uri.UriSchemeHttp && jsonUri.Scheme != Uri.UriSchemeHttps)))
+            if (
+                !string.IsNullOrEmpty(jsonFileUrl)
+                && (
+                    !Uri.TryCreate(jsonFileUrl, UriKind.Absolute, out Uri jsonUri)
+                    || (jsonUri.Scheme != Uri.UriSchemeHttp && jsonUri.Scheme != Uri.UriSchemeHttps)
+                )
+            )
             {
-                return new { error = "jsonFileUrl must be an absolute http or https URL when supplied." };
+                return new
+                {
+                    error = "jsonFileUrl must be an absolute http or https URL when supplied.",
+                };
             }
 
             // No cloud URL is a supported local-first workflow. The SDK creates a blank story JSON.
-            if (string.IsNullOrEmpty(moduleId)) moduleId = Guid.NewGuid().ToString("N");
-            if (string.IsNullOrEmpty(experienceId)) experienceId = Guid.NewGuid().ToString("N");
+            if (string.IsNullOrEmpty(moduleId))
+                moduleId = Guid.NewGuid().ToString("N");
+            if (string.IsNullOrEmpty(experienceId))
+                experienceId = Guid.NewGuid().ToString("N");
 
             ModuleData.ExperienceType experienceType = ResolveExperienceType(args);
             var controller = new VRseProjectWindowController();
 
             // The SDK controller still defaults to its pre-UPM template location. When installed
             // as a package, point it at the equivalent template in the embedded core package.
-            string packagedTemplatePath = "Packages/com.autovrse.vrsebuilder.core/Core/Runtime/Scenes/TemplateScene/VrseBuilderTemplateScene.unity";
+            string packagedTemplatePath =
+                "Packages/com.autovrse.vrsebuilder.core/Core/Runtime/Scenes/TemplateScene/VrseBuilderTemplateScene.unity";
             if (File.Exists(packagedTemplatePath))
             {
-                var templateField = typeof(VRseProjectWindowController).GetField("templateDevScenePath", BindingFlags.Instance | BindingFlags.NonPublic);
+                var templateField = typeof(VRseProjectWindowController).GetField(
+                    "templateDevScenePath",
+                    BindingFlags.Instance | BindingFlags.NonPublic
+                );
                 templateField?.SetValue(controller, packagedTemplatePath);
             }
 
             try
             {
-                controller.CreateExperienceDevScene(projectName, moduleName, experienceName, jsonFileUrl, moduleId, experienceId, experienceType, openArtSceneAfterCreate: false, interactive: false);
+                controller.CreateExperienceDevScene(
+                    projectName,
+                    moduleName,
+                    experienceName,
+                    jsonFileUrl,
+                    moduleId,
+                    experienceId,
+                    experienceType,
+                    openArtSceneAfterCreate: false,
+                    interactive: false
+                );
             }
             catch (Exception ex)
             {
@@ -746,8 +1000,10 @@ namespace UnityMCP.Editor
             AssetDatabase.Refresh();
 
             TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig);
-            ModuleData module = roomManagerConfig != null ? ResolveModule(roomManagerConfig, args) : null;
-            ModuleData.ExperienceData experience = module != null ? ResolveExperience(module, args) : null;
+            ModuleData module =
+                roomManagerConfig != null ? ResolveModule(roomManagerConfig, args) : null;
+            ModuleData.ExperienceData experience =
+                module != null ? ResolveExperience(module, args) : null;
 
             return new Dictionary<string, object>
             {
@@ -756,9 +1012,20 @@ namespace UnityMCP.Editor
                 { "jsonFileUrl", jsonFileUrl },
                 { "storySource", string.IsNullOrEmpty(jsonFileUrl) ? "local-empty" : "remote" },
                 { "module", BuildModulePayload(module, moduleId, moduleName) },
-                { "experience", BuildExperiencePayload(experience, experienceId, experienceName, experienceType) },
-                { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) },
-                { "warning", experience == null ? "The creation flow ran, but the experience could not be resolved from RoomManagerConfig. Provide moduleId and experienceId for reliable config tracking." : null }
+                {
+                    "experience",
+                    BuildExperiencePayload(experience, experienceId, experienceName, experienceType)
+                },
+                {
+                    "creationStatus",
+                    BuildExperienceCreationStatus(projectName, module, experience)
+                },
+                {
+                    "warning",
+                    experience == null
+                        ? "The creation flow ran, but the experience could not be resolved from RoomManagerConfig. Provide moduleId and experienceId for reliable config tracking."
+                        : null
+                },
             };
         }
 
@@ -766,7 +1033,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
@@ -777,14 +1047,28 @@ namespace UnityMCP.Editor
 
             ModuleData.ExperienceData experience = ResolveExperience(module, args);
             if (experience == null)
-                return new { error = "Experience not found. Provide experienceId, experienceName, or experienceType." };
+                return new
+                {
+                    error = "Experience not found. Provide experienceId, experienceName, or experienceType.",
+                };
 
             return new Dictionary<string, object>
             {
                 { "projectName", projectName },
                 { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
-                { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
-                { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) }
+                {
+                    "experience",
+                    BuildExperiencePayload(
+                        experience,
+                        experience.ExperienceId,
+                        experience.Name,
+                        experience.Type
+                    )
+                },
+                {
+                    "creationStatus",
+                    BuildExperienceCreationStatus(projectName, module, experience)
+                },
             };
         }
 
@@ -792,7 +1076,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
@@ -803,17 +1090,37 @@ namespace UnityMCP.Editor
 
             ModuleData.ExperienceData experience = ResolveExperience(module, args);
             if (experience == null)
-                return new { error = "Experience not found. Provide experienceId, experienceName, or experienceType." };
+                return new
+                {
+                    error = "Experience not found. Provide experienceId, experienceName, or experienceType.",
+                };
 
             if (string.IsNullOrEmpty(experience.ArtScene))
             {
                 return new Dictionary<string, object>
                 {
-                    { "error", $"Experience '{experience.Name}' does not have an art scene configured." },
+                    {
+                        "error",
+                        $"Experience '{experience.Name}' does not have an art scene configured."
+                    },
                     { "projectName", projectName },
-                    { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
-                    { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
-                    { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) }
+                    {
+                        "module",
+                        BuildModulePayload(module, module.ModuleId, module.GetModuleName())
+                    },
+                    {
+                        "experience",
+                        BuildExperiencePayload(
+                            experience,
+                            experience.ExperienceId,
+                            experience.Name,
+                            experience.Type
+                        )
+                    },
+                    {
+                        "creationStatus",
+                        BuildExperienceCreationStatus(projectName, module, experience)
+                    },
                 };
             }
 
@@ -823,27 +1130,61 @@ namespace UnityMCP.Editor
                 {
                     { "error", $"Art scene file does not exist: {experience.ArtScene}" },
                     { "projectName", projectName },
-                    { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
-                    { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
-                    { "creationStatus", BuildExperienceCreationStatus(projectName, module, experience) }
+                    {
+                        "module",
+                        BuildModulePayload(module, module.ModuleId, module.GetModuleName())
+                    },
+                    {
+                        "experience",
+                        BuildExperiencePayload(
+                            experience,
+                            experience.ExperienceId,
+                            experience.Name,
+                            experience.Type
+                        )
+                    },
+                    {
+                        "creationStatus",
+                        BuildExperienceCreationStatus(projectName, module, experience)
+                    },
                 };
             }
 
-            Scene artScene = EditorSceneManager.OpenScene(experience.ArtScene, OpenSceneMode.Additive);
+            Scene artScene = EditorSceneManager.OpenScene(
+                experience.ArtScene,
+                OpenSceneMode.Additive
+            );
             return new Dictionary<string, object>
             {
                 { "success", true },
                 { "projectName", projectName },
                 { "module", BuildModulePayload(module, module.ModuleId, module.GetModuleName()) },
-                { "experience", BuildExperiencePayload(experience, experience.ExperienceId, experience.Name, experience.Type) },
+                {
+                    "experience",
+                    BuildExperiencePayload(
+                        experience,
+                        experience.ExperienceId,
+                        experience.Name,
+                        experience.Type
+                    )
+                },
                 { "artScenePath", experience.ArtScene },
-                { "openedSceneName", artScene.name }
+                { "openedSceneName", artScene.name },
             };
         }
 
         public static object StoryAddTriggerSet(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string section = NormalizeSectionName(GetStringArg(args, "section"));
@@ -853,7 +1194,7 @@ namespace UnityMCP.Editor
             var newTriggerActionSet = new TriggerActionSet
             {
                 trigger = CreateDefaultNode(isAction: false),
-                actions = new Node[0]
+                actions = new Node[0],
             };
 
             int triggerSetIndex;
@@ -872,8 +1213,10 @@ namespace UnityMCP.Editor
                 {
                     moment.onRight = new TriggerActionSetsWithMode
                     {
-                        mode = string.IsNullOrEmpty(GetStringArg(args, "mode")) ? _Constants.IN_ORDER : GetStringArg(args, "mode"),
-                        triggerActionSets = new TriggerActionSet[0]
+                        mode = string.IsNullOrEmpty(GetStringArg(args, "mode"))
+                            ? _Constants.IN_ORDER
+                            : GetStringArg(args, "mode"),
+                        triggerActionSets = new TriggerActionSet[0],
                     };
                 }
 
@@ -881,9 +1224,14 @@ namespace UnityMCP.Editor
                     moment.onRight.triggerActionSets = new TriggerActionSet[0];
 
                 if (string.IsNullOrEmpty(moment.onRight.mode))
-                    moment.onRight.mode = string.IsNullOrEmpty(GetStringArg(args, "mode")) ? _Constants.IN_ORDER : GetStringArg(args, "mode");
+                    moment.onRight.mode = string.IsNullOrEmpty(GetStringArg(args, "mode"))
+                        ? _Constants.IN_ORDER
+                        : GetStringArg(args, "mode");
 
-                Array.Resize(ref moment.onRight.triggerActionSets, moment.onRight.triggerActionSets.Length + 1);
+                Array.Resize(
+                    ref moment.onRight.triggerActionSets,
+                    moment.onRight.triggerActionSets.Length + 1
+                );
                 triggerSetIndex = moment.onRight.triggerActionSets.Length - 1;
                 moment.onRight.triggerActionSets[triggerSetIndex] = newTriggerActionSet;
             }
@@ -898,13 +1246,22 @@ namespace UnityMCP.Editor
                 { "section", section },
                 { "triggerSetIndex", triggerSetIndex },
                 { "trigger", SerializeNode(newTriggerActionSet.trigger) },
-                { "actionCount", 0 }
+                { "actionCount", 0 },
             };
         }
 
         public static object StoryAddAction(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string section = NormalizeSectionName(GetStringArg(args, "section"));
@@ -924,7 +1281,15 @@ namespace UnityMCP.Editor
             else if (section == "onWrong" || section == "onRight")
             {
                 int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
-                if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out string triggerSetError))
+                if (
+                    !TryGetTriggerActionSet(
+                        moment,
+                        section,
+                        triggerSetIndex,
+                        out TriggerActionSet triggerActionSet,
+                        out string triggerSetError
+                    )
+                )
                     return new { error = triggerSetError };
 
                 if (triggerActionSet.actions == null)
@@ -944,12 +1309,15 @@ namespace UnityMCP.Editor
                     { "section", section },
                     { "triggerSetIndex", triggerSetIndex },
                     { "nodeIndex", nodeIndex },
-                    { "node", SerializeNode(newNode) }
+                    { "node", SerializeNode(newNode) },
                 };
             }
             else
             {
-                return new { error = "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight." };
+                return new
+                {
+                    error = "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight.",
+                };
             }
 
             MarkStoryChanged(storyCreator);
@@ -961,13 +1329,22 @@ namespace UnityMCP.Editor
                 { "momentIndex", momentIndex },
                 { "section", section },
                 { "nodeIndex", nodeIndex },
-                { "node", SerializeNode(newNode) }
+                { "node", SerializeNode(newNode) },
             };
         }
 
         public static object StoryUpdateNode(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string section = NormalizeSectionName(GetStringArg(args, "section"));
@@ -975,7 +1352,17 @@ namespace UnityMCP.Editor
             int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
             int nodeIndex = GetIntArg(args, "nodeIndex", -1);
 
-            if (!TryResolveNode(moment, section, nodeKind, triggerSetIndex, nodeIndex, out Node node, out string nodeError))
+            if (
+                !TryResolveNode(
+                    moment,
+                    section,
+                    nodeKind,
+                    triggerSetIndex,
+                    nodeIndex,
+                    out Node node,
+                    out string nodeError
+                )
+            )
                 return new { error = nodeError };
 
             if (args.ContainsKey("name"))
@@ -1007,7 +1394,10 @@ namespace UnityMCP.Editor
             {
                 GameObject targetGameObject = GameObject.Find(targetSpecifier);
                 if (targetGameObject == null)
-                    return new { error = $"Target GameObject not found in the open scene(s): {targetSpecifier}" };
+                    return new
+                    {
+                        error = $"Target GameObject not found in the open scene(s): {targetSpecifier}",
+                    };
 
                 SetNodeTargetGameObject(node, targetGameObject);
             }
@@ -1023,7 +1413,7 @@ namespace UnityMCP.Editor
                 { "triggerSetIndex", triggerSetIndex },
                 { "nodeIndex", nodeIndex },
                 { "nodeKind", string.IsNullOrEmpty(nodeKind) ? "action" : nodeKind },
-                { "node", SerializeNode(node) }
+                { "node", SerializeNode(node) },
             };
         }
 
@@ -1049,7 +1439,7 @@ namespace UnityMCP.Editor
                 { "storyCreator", storyCreator.gameObject.name },
                 { "fileName", storyCreator._fileName },
                 { "filePath", storyCreator._FilePath },
-                { "isSavedToFile", storyCreator.GetIsStorySavedToFileCached() }
+                { "isSavedToFile", storyCreator.GetIsStorySavedToFileCached() },
             };
         }
 
@@ -1070,16 +1460,26 @@ namespace UnityMCP.Editor
                     helper.AutoAssignDefaultNodeTargetObjects(storyCreator._story);
                 }
 
-                Type validatorType = typeof(StoryReportEditor).GetNestedType("StoryFlowValidator", BindingFlags.NonPublic);
+                Type validatorType = typeof(StoryReportEditor).GetNestedType(
+                    "StoryFlowValidator",
+                    BindingFlags.NonPublic
+                );
                 if (validatorType == null)
-                    return new { error = "Could not locate the StoryFlowValidator implementation." };
+                    return new
+                    {
+                        error = "Could not locate the StoryFlowValidator implementation.",
+                    };
 
                 object validatorInstance = Activator.CreateInstance(validatorType, true);
-                MethodInfo validateMethod = validatorType.GetMethod("Validate", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+                MethodInfo validateMethod = validatorType.GetMethod(
+                    "Validate",
+                    BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic
+                );
                 if (validateMethod == null)
                     return new { error = "Could not locate StoryFlowValidator.Validate." };
 
-                var validationResult = validateMethod.Invoke(validatorInstance, new object[] { storyCreator._story })
+                var validationResult =
+                    validateMethod.Invoke(validatorInstance, new object[] { storyCreator._story })
                     as Dictionary<Moment, Dictionary<string, List<string>>>;
 
                 if (validationResult == null)
@@ -1088,7 +1488,9 @@ namespace UnityMCP.Editor
                 List<object> issues = BuildValidationIssues(storyCreator._story, validationResult);
                 int totalIssueCount = issues
                     .OfType<Dictionary<string, object>>()
-                    .Sum(entry => entry.ContainsKey("issueCount") ? Convert.ToInt32(entry["issueCount"]) : 0);
+                    .Sum(entry =>
+                        entry.ContainsKey("issueCount") ? Convert.ToInt32(entry["issueCount"]) : 0
+                    );
 
                 return new Dictionary<string, object>
                 {
@@ -1097,7 +1499,7 @@ namespace UnityMCP.Editor
                     { "isValid", totalIssueCount == 0 },
                     { "totalMomentsWithIssues", issues.Count },
                     { "totalIssueCount", totalIssueCount },
-                    { "issues", issues }
+                    { "issues", issues },
                 };
             }
             catch (Exception ex)
@@ -1108,7 +1510,16 @@ namespace UnityMCP.Editor
 
         public static object StoryRemoveNodeByName(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string section = NormalizeSectionName(GetStringArg(args, "section"));
@@ -1118,11 +1529,24 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(nodeName))
                 return new { error = "nodeName is required." };
 
-            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+            if (
+                !TryGetActionNodeArray(
+                    moment,
+                    section,
+                    triggerSetIndex,
+                    out Node[] nodeArray,
+                    out string arrayError
+                )
+            )
                 return new { error = arrayError };
 
             int originalCount = nodeArray.Length;
-            Node[] filtered = nodeArray.Where(node => node == null || !string.Equals(node.Name, nodeName, StringComparison.OrdinalIgnoreCase)).ToArray();
+            Node[] filtered = nodeArray
+                .Where(node =>
+                    node == null
+                    || !string.Equals(node.Name, nodeName, StringComparison.OrdinalIgnoreCase)
+                )
+                .ToArray();
 
             SetActionNodeArray(moment, section, triggerSetIndex, filtered);
             MarkStoryChanged(storyCreator);
@@ -1135,21 +1559,34 @@ namespace UnityMCP.Editor
                 { "section", section },
                 { "triggerSetIndex", triggerSetIndex },
                 { "nodeName", nodeName },
-                { "removedCount", originalCount - filtered.Length }
+                { "removedCount", originalCount - filtered.Length },
             };
         }
 
         public static object ApplyMomentWeightage(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             MomentDefaults defaults = LoadMomentDefaults(moment.defaults);
 
             bool weightageProvided = args.ContainsKey("weightage");
             bool wrongReductionProvided = args.ContainsKey("wrongReduction");
-            defaults.weightage = weightageProvided ? GetFloatArg(args, "weightage", defaults.weightage) : defaults.weightage;
-            defaults.wrongReduction = wrongReductionProvided ? GetFloatArg(args, "wrongReduction", defaults.wrongReduction) : defaults.wrongReduction;
+            defaults.weightage = weightageProvided
+                ? GetFloatArg(args, "weightage", defaults.weightage)
+                : defaults.weightage;
+            defaults.wrongReduction = wrongReductionProvided
+                ? GetFloatArg(args, "wrongReduction", defaults.wrongReduction)
+                : defaults.wrongReduction;
 
             moment.defaults = JsonUtility.ToJson(defaults);
             MarkStoryChanged(storyCreator);
@@ -1160,7 +1597,7 @@ namespace UnityMCP.Editor
                 { "chapterIndex", chapterIndex },
                 { "momentIndex", momentIndex },
                 { "weightage", defaults.weightage },
-                { "wrongReduction", defaults.wrongReduction }
+                { "wrongReduction", defaults.wrongReduction },
             };
         }
 
@@ -1174,7 +1611,7 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "hasPendingVOs", hasPendingVOs },
-                { "storyCreator", storyCreator.gameObject.name }
+                { "storyCreator", storyCreator.gameObject.name },
             };
         }
 
@@ -1198,36 +1635,49 @@ namespace UnityMCP.Editor
 
             for (int ci = 0; ci < (story.chapters?.Length ?? 0); ci++)
             {
-                if (filterChapter >= 0 && ci != filterChapter) continue;
+                if (filterChapter >= 0 && ci != filterChapter)
+                    continue;
                 Chapter chapter = story.chapters[ci];
-                if (chapter == null) continue;
+                if (chapter == null)
+                    continue;
 
                 var moments = new List<object>();
                 for (int mi = 0; mi < (chapter.moments?.Length ?? 0); mi++)
                 {
-                    if (filterMoment >= 0 && mi != filterMoment) continue;
+                    if (filterMoment >= 0 && mi != filterMoment)
+                        continue;
                     Moment moment = chapter.moments[mi];
-                    if (moment == null) continue;
+                    if (moment == null)
+                        continue;
 
                     var momentData = new Dictionary<string, object>
                     {
                         { "index", mi },
                         { "name", moment.name },
-                        { "defaults", moment.defaults }
+                        { "defaults", moment.defaults },
                     };
 
                     var sections = new Dictionary<string, object>();
-                    string[] sectionNames = { "onAwake", "onStart", "onFirstWarning", "onLastWarning", "onEnd" };
+                    string[] sectionNames =
+                    {
+                        "onAwake",
+                        "onStart",
+                        "onFirstWarning",
+                        "onLastWarning",
+                        "onEnd",
+                    };
                     foreach (string sectionName in sectionNames)
                     {
-                        if (!string.IsNullOrEmpty(filterSection) && filterSection != sectionName) continue;
+                        if (!string.IsNullOrEmpty(filterSection) && filterSection != sectionName)
+                            continue;
                         ActionSet actionSet = GetOrCreateActionSet(moment, sectionName);
                         if (actionSet?.actions != null && actionSet.actions.Length > 0)
                         {
                             var nodes = new List<object>();
                             foreach (Node node in actionSet.actions)
                             {
-                                if (nodeCount >= maxNodes) break;
+                                if (nodeCount >= maxNodes)
+                                    break;
                                 nodes.Add(SerializeNode(node));
                                 nodeCount++;
                             }
@@ -1244,8 +1694,11 @@ namespace UnityMCP.Editor
                             for (int tsi = 0; tsi < moment.onWrong.Length; tsi++)
                             {
                                 TriggerActionSet tas = moment.onWrong[tsi];
-                                if (tas == null) continue;
-                                wrongSets.Add(SerializeTriggerActionSet(tas, tsi, ref nodeCount, maxNodes));
+                                if (tas == null)
+                                    continue;
+                                wrongSets.Add(
+                                    SerializeTriggerActionSet(tas, tsi, ref nodeCount, maxNodes)
+                                );
                             }
                             sections["onWrong"] = wrongSets;
                         }
@@ -1254,19 +1707,25 @@ namespace UnityMCP.Editor
                     // onRight
                     if (string.IsNullOrEmpty(filterSection) || filterSection == "onRight")
                     {
-                        if (moment.onRight?.triggerActionSets != null && moment.onRight.triggerActionSets.Length > 0)
+                        if (
+                            moment.onRight?.triggerActionSets != null
+                            && moment.onRight.triggerActionSets.Length > 0
+                        )
                         {
                             var rightSets = new List<object>();
                             for (int tsi = 0; tsi < moment.onRight.triggerActionSets.Length; tsi++)
                             {
                                 TriggerActionSet tas = moment.onRight.triggerActionSets[tsi];
-                                if (tas == null) continue;
-                                rightSets.Add(SerializeTriggerActionSet(tas, tsi, ref nodeCount, maxNodes));
+                                if (tas == null)
+                                    continue;
+                                rightSets.Add(
+                                    SerializeTriggerActionSet(tas, tsi, ref nodeCount, maxNodes)
+                                );
                             }
                             var onRightData = new Dictionary<string, object>
                             {
                                 { "mode", moment.onRight.mode },
-                                { "triggerActionSets", rightSets }
+                                { "triggerActionSets", rightSets },
                             };
                             sections["onRight"] = onRightData;
                         }
@@ -1276,13 +1735,15 @@ namespace UnityMCP.Editor
                     moments.Add(momentData);
                 }
 
-                chapters.Add(new Dictionary<string, object>
-                {
-                    { "index", ci },
-                    { "name", chapter.name },
-                    { "momentCount", chapter.moments?.Length ?? 0 },
-                    { "moments", moments }
-                });
+                chapters.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "index", ci },
+                        { "name", chapter.name },
+                        { "momentCount", chapter.moments?.Length ?? 0 },
+                        { "moments", moments },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -1294,7 +1755,7 @@ namespace UnityMCP.Editor
                 { "totalChapters", story.chapters?.Length ?? 0 },
                 { "totalNodesReturned", nodeCount },
                 { "maxNodes", maxNodes },
-                { "chapters", chapters }
+                { "chapters", chapters },
             };
         }
 
@@ -1313,24 +1774,28 @@ namespace UnityMCP.Editor
             for (int ci = 0; ci < (story.chapters?.Length ?? 0); ci++)
             {
                 Chapter chapter = story.chapters[ci];
-                if (chapter == null) continue;
+                if (chapter == null)
+                    continue;
 
                 var moments = new List<object>();
                 for (int mi = 0; mi < (chapter.moments?.Length ?? 0); mi++)
                 {
                     Moment moment = chapter.moments[mi];
-                    if (moment == null) continue;
+                    if (moment == null)
+                        continue;
 
                     moments.Add(new { index = mi, name = moment.name });
                 }
 
-                chapters.Add(new Dictionary<string, object>
-                {
-                    { "index", ci },
-                    { "name", chapter.name },
-                    { "momentCount", moments.Count },
-                    { "moments", moments }
-                });
+                chapters.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "index", ci },
+                        { "name", chapter.name },
+                        { "momentCount", moments.Count },
+                        { "moments", moments },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -1341,7 +1806,7 @@ namespace UnityMCP.Editor
                 { "filePath", storyCreator._FilePath },
                 { "isDirty", !storyCreator.GetIsStorySavedToFileCached() },
                 { "totalChapters", story.chapters?.Length ?? 0 },
-                { "chapters", chapters }
+                { "chapters", chapters },
             };
         }
 
@@ -1362,7 +1827,10 @@ namespace UnityMCP.Editor
                 // Create backup before applying
                 if (System.IO.File.Exists(storyCreator._FilePath))
                 {
-                    VRseBuilder.Tools.Editor.StoryVersioning.CreateVersion(storyCreator._FilePath, "MCP Apply Story JSON");
+                    VRseBuilder.Tools.Editor.StoryVersioning.CreateVersion(
+                        storyCreator._FilePath,
+                        "MCP Apply Story JSON"
+                    );
                 }
 
                 Story newStory = JsonConvert.DeserializeObject<Story>(json);
@@ -1376,7 +1844,7 @@ namespace UnityMCP.Editor
                 {
                     { "success", true },
                     { "storyCreator", storyCreator.gameObject.name },
-                    { "chapterCount", newStory.chapters?.Length ?? 0 }
+                    { "chapterCount", newStory.chapters?.Length ?? 0 },
                 };
             }
             catch (Exception ex)
@@ -1402,15 +1870,21 @@ namespace UnityMCP.Editor
                 var currentObj = Newtonsoft.Json.Linq.JObject.Parse(currentJson);
                 var patchObj = Newtonsoft.Json.Linq.JObject.Parse(patchJson);
 
-                currentObj.Merge(patchObj, new Newtonsoft.Json.Linq.JsonMergeSettings
-                {
-                    MergeArrayHandling = Newtonsoft.Json.Linq.MergeArrayHandling.Replace
-                });
+                currentObj.Merge(
+                    patchObj,
+                    new Newtonsoft.Json.Linq.JsonMergeSettings
+                    {
+                        MergeArrayHandling = Newtonsoft.Json.Linq.MergeArrayHandling.Replace,
+                    }
+                );
 
                 // Create backup before applying
                 if (System.IO.File.Exists(storyCreator._FilePath))
                 {
-                    VRseBuilder.Tools.Editor.StoryVersioning.CreateVersion(storyCreator._FilePath, "MCP Patch Story");
+                    VRseBuilder.Tools.Editor.StoryVersioning.CreateVersion(
+                        storyCreator._FilePath,
+                        "MCP Patch Story"
+                    );
                 }
 
                 Story patchedStory = currentObj.ToObject<Story>();
@@ -1420,7 +1894,7 @@ namespace UnityMCP.Editor
                 return new Dictionary<string, object>
                 {
                     { "success", true },
-                    { "storyCreator", storyCreator.gameObject.name }
+                    { "storyCreator", storyCreator.gameObject.name },
                 };
             }
             catch (Exception ex)
@@ -1448,7 +1922,7 @@ namespace UnityMCP.Editor
                 // Restore the most recent version
                 string backupPath = history[0].filePath;
                 VRseBuilder.Tools.Editor.StoryVersioning.RestoreVersion(filePath, backupPath);
-                
+
                 // Reload story into creator
                 storyCreator.SetStoryFromFile();
                 storyCreator.InvalidateIsStorySavedToFileCache();
@@ -1458,7 +1932,7 @@ namespace UnityMCP.Editor
                 {
                     { "success", true },
                     { "restoredFrom", history[0].displayDate },
-                    { "reason", history[0].reason }
+                    { "reason", history[0].reason },
                 };
             }
             catch (Exception ex)
@@ -1467,22 +1941,28 @@ namespace UnityMCP.Editor
             }
         }
 
-
-        private static Dictionary<string, object> SerializeTriggerActionSet(TriggerActionSet tas, int index, ref int nodeCount, int maxNodes)
+        private static Dictionary<string, object> SerializeTriggerActionSet(
+            TriggerActionSet tas,
+            int index,
+            ref int nodeCount,
+            int maxNodes
+        )
         {
             var result = new Dictionary<string, object>
             {
                 { "index", index },
-                { "trigger", nodeCount < maxNodes ? SerializeNode(tas.trigger) : null }
+                { "trigger", nodeCount < maxNodes ? SerializeNode(tas.trigger) : null },
             };
-            if (tas.trigger != null) nodeCount++;
+            if (tas.trigger != null)
+                nodeCount++;
 
             var actions = new List<object>();
             if (tas.actions != null)
             {
                 foreach (Node action in tas.actions)
                 {
-                    if (nodeCount >= maxNodes) break;
+                    if (nodeCount >= maxNodes)
+                        break;
                     actions.Add(SerializeNode(action));
                     nodeCount++;
                 }
@@ -1495,7 +1975,10 @@ namespace UnityMCP.Editor
         {
             NodeTemplatesData nodeTemplatesData = LoadNodeTemplatesData();
             if (nodeTemplatesData == null)
-                return new { error = "NodeTemplatesData ScriptableObject not found in the project." };
+                return new
+                {
+                    error = "NodeTemplatesData ScriptableObject not found in the project.",
+                };
 
             var actionTemplates = new List<object>();
             foreach (NodeTemplatesData.NodeData template in nodeTemplatesData.actionTemplates)
@@ -1512,12 +1995,14 @@ namespace UnityMCP.Editor
             var defaultParams = new List<object>();
             foreach (NodeTemplatesData.ParameterData param in nodeTemplatesData.DefaultParameters)
             {
-                defaultParams.Add(new Dictionary<string, object>
-                {
-                    { "key", param.Key },
-                    { "type", param.Type },
-                    { "defaultValue", param.DefaultValue }
-                });
+                defaultParams.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "key", param.Key },
+                        { "type", param.Type },
+                        { "defaultValue", param.DefaultValue },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -1527,11 +2012,13 @@ namespace UnityMCP.Editor
                 { "triggerTemplateCount", triggerTemplates.Count },
                 { "actionTemplates", actionTemplates },
                 { "triggerTemplates", triggerTemplates },
-                { "defaultParameters", defaultParams }
+                { "defaultParameters", defaultParams },
             };
         }
 
-        private static Dictionary<string, object> SerializeNodeTemplate(NodeTemplatesData.NodeData template)
+        private static Dictionary<string, object> SerializeNodeTemplate(
+            NodeTemplatesData.NodeData template
+        )
         {
             var options = new List<object>();
             if (template.Options != null)
@@ -1543,54 +2030,64 @@ namespace UnityMCP.Editor
                     {
                         foreach (NodeTemplatesData.ParameterData param in option.Parameters)
                         {
-                            parameters.Add(new Dictionary<string, object>
-                            {
-                                { "key", param.Key },
-                                { "type", param.Type },
-                                { "defaultValue", param.DefaultValue }
-                            });
+                            parameters.Add(
+                                new Dictionary<string, object>
+                                {
+                                    { "key", param.Key },
+                                    { "type", param.Type },
+                                    { "defaultValue", param.DefaultValue },
+                                }
+                            );
                         }
                     }
 
                     var nestedParams = new List<object>();
                     if (option.NestedParameters != null)
                     {
-                        foreach (NodeTemplatesData.NestedParameterData nested in option.NestedParameters)
+                        foreach (
+                            NodeTemplatesData.NestedParameterData nested in option.NestedParameters
+                        )
                         {
                             var nestedParamList = new List<object>();
                             if (nested.Parameters != null)
                             {
                                 foreach (NodeTemplatesData.ParameterData np in nested.Parameters)
                                 {
-                                    nestedParamList.Add(new Dictionary<string, object>
-                                    {
-                                        { "key", np.Key },
-                                        { "type", np.Type },
-                                        { "defaultValue", np.DefaultValue }
-                                    });
+                                    nestedParamList.Add(
+                                        new Dictionary<string, object>
+                                        {
+                                            { "key", np.Key },
+                                            { "type", np.Type },
+                                            { "defaultValue", np.DefaultValue },
+                                        }
+                                    );
                                 }
                             }
-                            nestedParams.Add(new Dictionary<string, object>
-                            {
-                                { "key", nested.Key },
-                                { "parameters", nestedParamList }
-                            });
+                            nestedParams.Add(
+                                new Dictionary<string, object>
+                                {
+                                    { "key", nested.Key },
+                                    { "parameters", nestedParamList },
+                                }
+                            );
                         }
                     }
 
-                    options.Add(new Dictionary<string, object>
-                    {
-                        { "name", option.Name },
-                        { "parameters", parameters },
-                        { "nestedParameters", nestedParams }
-                    });
+                    options.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "name", option.Name },
+                            { "parameters", parameters },
+                            { "nestedParameters", nestedParams },
+                        }
+                    );
                 }
             }
 
             return new Dictionary<string, object>
             {
                 { "name", template.Name },
-                { "options", options }
+                { "options", options },
             };
         }
 
@@ -1605,15 +2102,24 @@ namespace UnityMCP.Editor
 
             NodeTemplatesData nodeTemplatesData = LoadNodeTemplatesData();
             if (nodeTemplatesData == null)
-                return new { error = "NodeTemplatesData ScriptableObject not found in the project." };
+                return new
+                {
+                    error = "NodeTemplatesData ScriptableObject not found in the project.",
+                };
 
             string queryLower = query.ToLowerInvariant();
-            string[] queryTokens = queryLower.Split(new[] { ' ', '_', '-' }, StringSplitOptions.RemoveEmptyEntries);
+            string[] queryTokens = queryLower.Split(
+                new[] { ' ', '_', '-' },
+                StringSplitOptions.RemoveEmptyEntries
+            );
 
             var results = new List<Dictionary<string, object>>();
 
             // Search action templates
-            if (string.IsNullOrEmpty(type) || type.Equals("action", StringComparison.OrdinalIgnoreCase))
+            if (
+                string.IsNullOrEmpty(type)
+                || type.Equals("action", StringComparison.OrdinalIgnoreCase)
+            )
             {
                 foreach (NodeTemplatesData.NodeData template in nodeTemplatesData.actionTemplates)
                 {
@@ -1629,7 +2135,10 @@ namespace UnityMCP.Editor
             }
 
             // Search trigger templates
-            if (string.IsNullOrEmpty(type) || type.Equals("trigger", StringComparison.OrdinalIgnoreCase))
+            if (
+                string.IsNullOrEmpty(type)
+                || type.Equals("trigger", StringComparison.OrdinalIgnoreCase)
+            )
             {
                 foreach (NodeTemplatesData.NodeData template in nodeTemplatesData.triggerTemplates)
                 {
@@ -1654,25 +2163,33 @@ namespace UnityMCP.Editor
                 { "success", true },
                 { "query", query },
                 { "resultCount", results.Count },
-                { "results", results }
+                { "results", results },
             };
         }
 
-        private static int FuzzyScoreNodeTemplate(NodeTemplatesData.NodeData template, string queryLower, string[] queryTokens)
+        private static int FuzzyScoreNodeTemplate(
+            NodeTemplatesData.NodeData template,
+            string queryLower,
+            string[] queryTokens
+        )
         {
             int score = 0;
             string nameLower = (template.Name ?? "").ToLowerInvariant();
 
             // Exact name match (highest)
-            if (nameLower == queryLower) score += 100;
+            if (nameLower == queryLower)
+                score += 100;
             // Name contains full query
-            else if (nameLower.Contains(queryLower)) score += 50;
+            else if (nameLower.Contains(queryLower))
+                score += 50;
 
             // Token-level matching (for multi-word fuzzy search)
             foreach (string token in queryTokens)
             {
-                if (token.Length < 2) continue;
-                if (nameLower.Contains(token)) score += 10;
+                if (token.Length < 2)
+                    continue;
+                if (nameLower.Contains(token))
+                    score += 10;
             }
 
             // Check option names for matches
@@ -1681,11 +2198,14 @@ namespace UnityMCP.Editor
                 foreach (NodeTemplatesData.OptionData option in template.Options)
                 {
                     string optNameLower = (option.Name ?? "").ToLowerInvariant();
-                    if (optNameLower.Contains(queryLower)) score += 15;
+                    if (optNameLower.Contains(queryLower))
+                        score += 15;
                     foreach (string token in queryTokens)
                     {
-                        if (token.Length < 2) continue;
-                        if (optNameLower.Contains(token)) score += 3;
+                        if (token.Length < 2)
+                            continue;
+                        if (optNameLower.Contains(token))
+                            score += 3;
                     }
                 }
             }
@@ -1718,9 +2238,12 @@ namespace UnityMCP.Editor
                 return new Dictionary<string, object>
                 {
                     { "success", true },
-                    { "message", "VO generation started in the Unity Editor. Use the 'Generate VO' window to monitor progress." },
+                    {
+                        "message",
+                        "VO generation started in the Unity Editor. Use the 'Generate VO' window to monitor progress."
+                    },
                     { "windowOpened", true },
-                    { "clearAndRegenerate", clearAndRegenerate }
+                    { "clearAndRegenerate", clearAndRegenerate },
                 };
             }
             catch (Exception ex)
@@ -1731,7 +2254,8 @@ namespace UnityMCP.Editor
 
         public static object QueryObjectsList(Dictionary<string, object> args)
         {
-            QueryObjectsIdManager queryManager = UnityEngine.Object.FindObjectOfType<QueryObjectsIdManager>();
+            QueryObjectsIdManager queryManager =
+                UnityEngine.Object.FindObjectOfType<QueryObjectsIdManager>();
             if (queryManager == null)
                 return new { error = "No QueryObjectsIdManager found in loaded scenes." };
 
@@ -1742,38 +2266,45 @@ namespace UnityMCP.Editor
             var result = new List<object>();
             foreach (GameObjectQuery goQuery in queries)
             {
-                if (goQuery == null || goQuery.gameObject == null) continue;
+                if (goQuery == null || goQuery.gameObject == null)
+                    continue;
 
                 var components = new List<string>();
                 foreach (Component comp in goQuery.GetComponents<Component>())
                 {
-                    if (comp == null) continue;
+                    if (comp == null)
+                        continue;
                     System.Type type = comp.GetType();
                     string typeName = type.Name;
-                    if (typeName.Contains("Grabbable")) components.Add("Grabbable");
-                    else if (typeName.Contains("PlacePoint")) components.Add("PlacePoint");
-                    else if (typeName.Contains("BaseItem")) components.Add("BaseItem");
+                    if (typeName.Contains("Grabbable"))
+                        components.Add("Grabbable");
+                    else if (typeName.Contains("PlacePoint"))
+                        components.Add("PlacePoint");
+                    else if (typeName.Contains("BaseItem"))
+                        components.Add("BaseItem");
                 }
 
                 string path = GetGameObjectPath(goQuery.gameObject);
 
-                result.Add(new Dictionary<string, object>
-                {
-                    { "queryName", goQuery.Name },
-                    { "id", goQuery.ID },
-                    { "isIDValid", goQuery.IsIDValid },
-                    { "gameObjectName", goQuery.gameObject.name },
-                    { "gameObjectPath", path },
-                    { "activeInHierarchy", goQuery.gameObject.activeInHierarchy },
-                    { "vrseComponents", components }
-                });
+                result.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "queryName", goQuery.Name },
+                        { "id", goQuery.ID },
+                        { "isIDValid", goQuery.IsIDValid },
+                        { "gameObjectName", goQuery.gameObject.name },
+                        { "gameObjectPath", path },
+                        { "activeInHierarchy", goQuery.gameObject.activeInHierarchy },
+                        { "vrseComponents", components },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
             {
                 { "success", true },
                 { "count", result.Count },
-                { "queryObjects", result }
+                { "queryObjects", result },
             };
         }
 
@@ -1791,14 +2322,31 @@ namespace UnityMCP.Editor
 
         public static object StoryRemoveAction(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string section = NormalizeSectionName(GetStringArg(args, "section"));
             int nodeIndex = GetIntArg(args, "nodeIndex", -1);
             int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
 
-            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+            if (
+                !TryGetActionNodeArray(
+                    moment,
+                    section,
+                    triggerSetIndex,
+                    out Node[] nodeArray,
+                    out string arrayError
+                )
+            )
                 return new { error = arrayError };
 
             if (nodeIndex < 0 || nodeIndex >= nodeArray.Length)
@@ -1810,7 +2358,13 @@ namespace UnityMCP.Editor
             if (nodeIndex > 0)
                 Array.Copy(nodeArray, 0, newArray, 0, nodeIndex);
             if (nodeIndex < nodeArray.Length - 1)
-                Array.Copy(nodeArray, nodeIndex + 1, newArray, nodeIndex, nodeArray.Length - nodeIndex - 1);
+                Array.Copy(
+                    nodeArray,
+                    nodeIndex + 1,
+                    newArray,
+                    nodeIndex,
+                    nodeArray.Length - nodeIndex - 1
+                );
 
             SetActionNodeArray(moment, section, triggerSetIndex, newArray);
             MarkStoryChanged(storyCreator);
@@ -1824,18 +2378,20 @@ namespace UnityMCP.Editor
                 { "triggerSetIndex", triggerSetIndex },
                 { "removedNodeIndex", nodeIndex },
                 { "removedNode", removedNode },
-                { "remainingCount", newArray.Length }
+                { "remainingCount", newArray.Length },
             };
         }
 
         public static object StoryAddChapter(Dictionary<string, object> args)
         {
             StoryCreator storyCreator = FindStoryCreator(args);
-            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
 
             string name = GetStringArg(args, "name");
-            if (string.IsNullOrEmpty(name)) name = "New Chapter";
-            
+            if (string.IsNullOrEmpty(name))
+                name = "New Chapter";
+
             int index = GetIntArg(args, "index", -1);
 
             if (storyCreator._story.chapters == null)
@@ -1856,61 +2412,103 @@ namespace UnityMCP.Editor
             storyCreator._story.AssignChapterAndMomentIndex();
             MarkStoryChanged(storyCreator);
 
-            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", index }, { "chapterName", name } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", index },
+                { "chapterName", name },
+            };
         }
 
         public static object StoryRenameChapter(Dictionary<string, object> args)
         {
             StoryCreator storyCreator = FindStoryCreator(args);
-            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
 
             int chapterIndex = GetIntArg(args, "chapterIndex", -1);
-            if (storyCreator._story.chapters == null || chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
-                return new { error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}." };
+            if (
+                storyCreator._story.chapters == null
+                || chapterIndex < 0
+                || chapterIndex >= storyCreator._story.chapters.Length
+            )
+                return new
+                {
+                    error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}.",
+                };
 
             string newName = GetStringArg(args, "newName");
-            if (string.IsNullOrEmpty(newName)) return new { error = "newName is required." };
+            if (string.IsNullOrEmpty(newName))
+                return new { error = "newName is required." };
 
             storyCreator._story.chapters[chapterIndex].name = newName;
             MarkStoryChanged(storyCreator);
 
-            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "newName", newName } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "newName", newName },
+            };
         }
 
         public static object StoryRemoveChapter(Dictionary<string, object> args)
         {
             StoryCreator storyCreator = FindStoryCreator(args);
-            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
 
             int chapterIndex = GetIntArg(args, "chapterIndex", -1);
-            if (storyCreator._story.chapters == null || chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
-                return new { error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}." };
+            if (
+                storyCreator._story.chapters == null
+                || chapterIndex < 0
+                || chapterIndex >= storyCreator._story.chapters.Length
+            )
+                return new
+                {
+                    error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}.",
+                };
 
             List<Chapter> chapters = storyCreator._story.chapters.ToList();
             var removedName = chapters[chapterIndex].name;
             chapters.RemoveAt(chapterIndex);
-            
+
             storyCreator._story.chapters = chapters.ToArray();
             storyCreator._story.AssignChapterAndMomentIndex();
             MarkStoryChanged(storyCreator);
 
-            return new Dictionary<string, object> { { "success", true }, { "removedChapterIndex", chapterIndex }, { "removedChapterName", removedName }, { "remainingCount", chapters.Count } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "removedChapterIndex", chapterIndex },
+                { "removedChapterName", removedName },
+                { "remainingCount", chapters.Count },
+            };
         }
 
         public static object StoryAddMoment(Dictionary<string, object> args)
         {
             StoryCreator storyCreator = FindStoryCreator(args);
-            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
 
             int chapterIndex = GetIntArg(args, "chapterIndex", -1);
-            if (storyCreator._story.chapters == null || chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
-                return new { error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}." };
+            if (
+                storyCreator._story.chapters == null
+                || chapterIndex < 0
+                || chapterIndex >= storyCreator._story.chapters.Length
+            )
+                return new
+                {
+                    error = $"Invalid chapterIndex. Valid range: 0-{(storyCreator._story.chapters?.Length - 1 ?? -1)}.",
+                };
 
             Chapter chapter = storyCreator._story.chapters[chapterIndex];
 
             string name = GetStringArg(args, "name");
-            if (string.IsNullOrEmpty(name)) name = "New Moment";
-            
+            if (string.IsNullOrEmpty(name))
+                name = "New Moment";
+
             int index = GetIntArg(args, "index", -1);
 
             if (chapter.moments == null)
@@ -1931,26 +2529,57 @@ namespace UnityMCP.Editor
             storyCreator._story.AssignChapterAndMomentIndex();
             MarkStoryChanged(storyCreator);
 
-            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "momentIndex", index }, { "momentName", name } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", index },
+                { "momentName", name },
+            };
         }
 
         public static object StoryRenameMoment(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string newName = GetStringArg(args, "newName");
-            if (string.IsNullOrEmpty(newName)) return new { error = "newName is required." };
+            if (string.IsNullOrEmpty(newName))
+                return new { error = "newName is required." };
 
             moment.name = newName;
             MarkStoryChanged(storyCreator);
 
-            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "momentIndex", momentIndex }, { "newName", newName } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "momentIndex", momentIndex },
+                { "newName", newName },
+            };
         }
 
         public static object StoryRemoveMoment(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             Chapter chapter = storyCreator._story.chapters[chapterIndex];
@@ -1962,17 +2591,25 @@ namespace UnityMCP.Editor
             storyCreator._story.AssignChapterAndMomentIndex();
             MarkStoryChanged(storyCreator);
 
-            return new Dictionary<string, object> { { "success", true }, { "chapterIndex", chapterIndex }, { "removedMomentIndex", momentIndex }, { "removedMomentName", removedName }, { "remainingCount", moments.Count } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "chapterIndex", chapterIndex },
+                { "removedMomentIndex", momentIndex },
+                { "removedMomentName", removedName },
+                { "remainingCount", moments.Count },
+            };
         }
 
         public static object StoryDefaultsGet(Dictionary<string, object> args)
         {
             StoryCreator storyCreator = FindStoryCreator(args);
-            if (storyCreator == null) return new { error = "No StoryCreator found in the loaded scenes." };
+            if (storyCreator == null)
+                return new { error = "No StoryCreator found in the loaded scenes." };
 
             var response = new Dictionary<string, object>
             {
-                { "storyDefaults", storyCreator._story.defaults }
+                { "storyDefaults", storyCreator._story.defaults },
             };
 
             var chaptersList = new List<object>();
@@ -1985,10 +2622,25 @@ namespace UnityMCP.Editor
                     {
                         foreach (var moment in chapter.moments)
                         {
-                            momentsList.Add(new { momentIndex = moment.momentIndex, name = moment.name, defaults = moment.defaults });
+                            momentsList.Add(
+                                new
+                                {
+                                    momentIndex = moment.momentIndex,
+                                    name = moment.name,
+                                    defaults = moment.defaults,
+                                }
+                            );
                         }
                     }
-                    chaptersList.Add(new { chapterIndex = chapter.chapterIndex, name = chapter.name, defaults = chapter.defaults, moments = momentsList });
+                    chaptersList.Add(
+                        new
+                        {
+                            chapterIndex = chapter.chapterIndex,
+                            name = chapter.name,
+                            defaults = chapter.defaults,
+                            moments = momentsList,
+                        }
+                    );
                 }
             }
             response.Add("chapters", chaptersList);
@@ -1997,25 +2649,34 @@ namespace UnityMCP.Editor
 
         public static object BuildingBlocksList(Dictionary<string, object> args)
         {
-            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection");
-            if (guids.Length == 0) return new { error = "No VRseBlocksCollection found in the project." };
+            string[] guids = AssetDatabase.FindAssets(
+                "t:VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection"
+            );
+            if (guids.Length == 0)
+                return new { error = "No VRseBlocksCollection found in the project." };
 
             string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection>(path);
-            if (collection == null) return new { error = "Failed to load VRseBlocksCollection." };
+            var collection =
+                AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection>(
+                    path
+                );
+            if (collection == null)
+                return new { error = "Failed to load VRseBlocksCollection." };
 
             var blocks = new List<object>();
             foreach (var block in collection.Blocks)
             {
-                blocks.Add(new 
-                { 
-                    blockName = block.BlockName, 
-                    description = block.Description, 
-                    category = block.Category, 
-                    tags = block.Tags,
-                    actionName = block.ActionName,
-                    triggerName = block.TriggerName
-                });
+                blocks.Add(
+                    new
+                    {
+                        blockName = block.BlockName,
+                        description = block.Description,
+                        category = block.Category,
+                        tags = block.Tags,
+                        actionName = block.ActionName,
+                        triggerName = block.TriggerName,
+                    }
+                );
             }
 
             return new Dictionary<string, object> { { "blocks", blocks } };
@@ -2024,21 +2685,34 @@ namespace UnityMCP.Editor
         public static object BuildingBlocksInstantiate(Dictionary<string, object> args)
         {
             string blockName = GetStringArg(args, "blockName");
-            if (string.IsNullOrEmpty(blockName)) return new { error = "blockName is required." };
+            if (string.IsNullOrEmpty(blockName))
+                return new { error = "blockName is required." };
 
-            string[] guids = AssetDatabase.FindAssets("t:VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection");
-            if (guids.Length == 0) return new { error = "No VRseBlocksCollection found in the project." };
+            string[] guids = AssetDatabase.FindAssets(
+                "t:VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection"
+            );
+            if (guids.Length == 0)
+                return new { error = "No VRseBlocksCollection found in the project." };
 
             string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            var collection = AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection>(path);
-            if (collection == null) return new { error = "Failed to load VRseBlocksCollection." };
+            var collection =
+                AssetDatabase.LoadAssetAtPath<VRseBuilder.Tools.Editor.VRseBlocks.VRseBlocksCollection>(
+                    path
+                );
+            if (collection == null)
+                return new { error = "Failed to load VRseBlocksCollection." };
 
-            var block = collection.Blocks.FirstOrDefault(b => b.BlockName.Equals(blockName, System.StringComparison.OrdinalIgnoreCase));
-            if (block == null) return new { error = $"VRse block '{blockName}' not found in the collection." };
-            if (block.BlockPrefab == null) return new { error = $"VRse block '{blockName}' has no prefab assigned." };
+            var block = collection.Blocks.FirstOrDefault(b =>
+                b.BlockName.Equals(blockName, System.StringComparison.OrdinalIgnoreCase)
+            );
+            if (block == null)
+                return new { error = $"VRse block '{blockName}' not found in the collection." };
+            if (block.BlockPrefab == null)
+                return new { error = $"VRse block '{blockName}' has no prefab assigned." };
 
             GameObject instance = (GameObject)PrefabUtility.InstantiatePrefab(block.BlockPrefab);
-            if (instance == null) return new { error = $"Failed to instantiate prefab for '{blockName}'." };
+            if (instance == null)
+                return new { error = $"Failed to instantiate prefab for '{blockName}'." };
 
             var view = SceneView.lastActiveSceneView;
             if (view != null)
@@ -2049,24 +2723,38 @@ namespace UnityMCP.Editor
             Selection.activeGameObject = instance;
             Undo.RegisterCreatedObjectUndo(instance, $"Instantiate VRse Block: {blockName}");
 
-            return new Dictionary<string, object> 
-            { 
-                { "success", true }, 
-                { "instanceName", instance.name }, 
-                { "instanceId", instance.GetInstanceID() } 
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "instanceName", instance.name },
+                { "instanceId", instance.GetInstanceID() },
             };
         }
 
         public static object SceneHierarchyCheckup(Dictionary<string, object> args)
         {
-            var type = System.Type.GetType("VRseBuilder.Core.Editor.SceneHierarchyCheckup, VRseBuilder.Core");
-            if (type == null) return new { error = "SceneHierarchyCheckup type not found." };
-            var method = type.GetMethod("MoveQueryObjects", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            if (method == null) return new { error = "MoveQueryObjects method not found." };
+            var type = System.Type.GetType(
+                "VRseBuilder.Core.Editor.SceneHierarchyCheckup, VRseBuilder.Core"
+            );
+            if (type == null)
+                return new { error = "SceneHierarchyCheckup type not found." };
+            var method = type.GetMethod(
+                "MoveQueryObjects",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static
+            );
+            if (method == null)
+                return new { error = "MoveQueryObjects method not found." };
 
             method.Invoke(null, null);
 
-            return new Dictionary<string, object> { { "success", true }, { "message", "Scene hierarchy checkup complete. Query objects moved to QueryObjects parent." } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                {
+                    "message",
+                    "Scene hierarchy checkup complete. Query objects moved to QueryObjects parent."
+                },
+            };
         }
 
         public static object ModuleSetIncludeInBuild(Dictionary<string, object> args)
@@ -2075,41 +2763,70 @@ namespace UnityMCP.Editor
             string moduleName = GetStringArg(args, "moduleName");
             bool include = GetBoolArg(args, "includeInBuild", true);
 
-            string configPath = $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
-            var config = AssetDatabase.LoadAssetAtPath<VRseBuilder.Core.Framework.RoomManagerConfig>(configPath);
-            if (config == null) return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
+            string configPath =
+                $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
+            var config =
+                AssetDatabase.LoadAssetAtPath<VRseBuilder.Core.Framework.RoomManagerConfig>(
+                    configPath
+                );
+            if (config == null)
+                return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
 
-            var module = config.experiences?.FirstOrDefault(m => m != null && m.GetModuleName().Equals(moduleName, System.StringComparison.OrdinalIgnoreCase));
-            if (module == null) return new { error = $"Module '{moduleName}' not found in project '{projectName}'." };
+            var module = config.experiences?.FirstOrDefault(m =>
+                m != null
+                && m.GetModuleName().Equals(moduleName, System.StringComparison.OrdinalIgnoreCase)
+            );
+            if (module == null)
+                return new
+                {
+                    error = $"Module '{moduleName}' not found in project '{projectName}'.",
+                };
 
             module.IncludeInBuild = include;
             EditorUtility.SetDirty(config);
             AssetDatabase.SaveAssets();
 
-            return new Dictionary<string, object> { { "success", true }, { "moduleName", moduleName }, { "includeInBuild", include } };
+            return new Dictionary<string, object>
+            {
+                { "success", true },
+                { "moduleName", moduleName },
+                { "includeInBuild", include },
+            };
         }
 
         public static object BuildStart(Dictionary<string, object> args)
         {
             string projectName = ResolveProjectName(args);
             string buildPath = GetStringArg(args, "buildPath");
-            if (string.IsNullOrEmpty(buildPath)) return new { error = "buildPath parameter is required for headless build start." };
+            if (string.IsNullOrEmpty(buildPath))
+                return new { error = "buildPath parameter is required for headless build start." };
 
-            string configPath = $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
-            var config = AssetDatabase.LoadAssetAtPath<VRseBuilder.Core.Framework.RoomManagerConfig>(configPath);
+            string configPath =
+                $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
+            var config =
+                AssetDatabase.LoadAssetAtPath<VRseBuilder.Core.Framework.RoomManagerConfig>(
+                    configPath
+                );
             if (config != null)
             {
-                var buildToolType = System.Type.GetType("VRseBuilder.Tools.Editor.BuildTool.VRseBuildToolWindowController, VRseBuilder.Tools.Editor");
+                var buildToolType = System.Type.GetType(
+                    "VRseBuilder.Tools.Editor.BuildTool.VRseBuildToolWindowController, VRseBuilder.Tools.Editor"
+                );
                 if (buildToolType != null)
                 {
                     var controller = System.Activator.CreateInstance(buildToolType);
                     var method = buildToolType.GetMethod("AddAllScenesFromConfigToBuildScenesList");
-                    if (method != null) method.Invoke(controller, new object[] { config });
+                    if (method != null)
+                        method.Invoke(controller, new object[] { config });
                 }
             }
 
-            var buildScenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
-            if (buildScenes.Length == 0) return new { error = "No enabled scenes found in EditorBuildSettings." };
+            var buildScenes = EditorBuildSettings
+                .scenes.Where(s => s.enabled)
+                .Select(s => s.path)
+                .ToArray();
+            if (buildScenes.Length == 0)
+                return new { error = "No enabled scenes found in EditorBuildSettings." };
 
             UnityEditor.Build.Reporting.BuildReport report = null;
             try
@@ -2119,7 +2836,7 @@ namespace UnityMCP.Editor
                     scenes = buildScenes,
                     locationPathName = buildPath,
                     target = EditorUserBuildSettings.activeBuildTarget,
-                    options = UnityEditor.BuildOptions.None
+                    options = UnityEditor.BuildOptions.None,
                 };
 
                 report = BuildPipeline.BuildPlayer(options);
@@ -2129,22 +2846,28 @@ namespace UnityMCP.Editor
                 return new { error = $"Build encounter exception: {ex.Message}" };
             }
 
-            return new Dictionary<string, object> 
-            { 
-                { "success", report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded }, 
+            return new Dictionary<string, object>
+            {
+                {
+                    "success",
+                    report.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded
+                },
                 { "result", report.summary.result.ToString() },
                 { "totalErrors", report.summary.totalErrors },
                 { "totalWarnings", report.summary.totalWarnings },
-                { "outputPath", report.summary.outputPath }
+                { "outputPath", report.summary.outputPath },
             };
         }
 
         public static object BuildStatus(Dictionary<string, object> args)
         {
-            return new Dictionary<string, object> 
-            { 
+            return new Dictionary<string, object>
+            {
                 { "status", "ready" },
-                { "message", "Unity Editor builds triggered by MCP are synchronous and block the main thread. If the Editor is responsive, no build is currently running." }
+                {
+                    "message",
+                    "Unity Editor builds triggered by MCP are synchronous and block the main thread. If the Editor is responsive, no build is currently running."
+                },
             };
         }
 
@@ -2152,7 +2875,10 @@ namespace UnityMCP.Editor
         {
             string projectName = ResolveProjectName(args);
             if (string.IsNullOrEmpty(projectName))
-                return new { error = "No project selected. Use vrse/select-project first or pass projectName." };
+                return new
+                {
+                    error = "No project selected. Use vrse/select-project first or pass projectName.",
+                };
 
             if (!TryGetRoomManagerConfig(projectName, out RoomManagerConfig roomManagerConfig))
                 return new { error = $"RoomManagerConfig not found for project '{projectName}'." };
@@ -2163,7 +2889,10 @@ namespace UnityMCP.Editor
 
             ModuleData.ExperienceData experience = ResolveExperience(module, args);
             if (experience == null)
-                return new { error = "Training experience not found. Provide experienceId or experienceName." };
+                return new
+                {
+                    error = "Training experience not found. Provide experienceId or experienceName.",
+                };
 
             if (string.IsNullOrEmpty(experience.DevScene) || !File.Exists(experience.DevScene))
                 return new { error = "Training dev scene not found." };
@@ -2174,35 +2903,58 @@ namespace UnityMCP.Editor
                 return new { error = "StoryCreator not found in training scene." };
 
             VRseProjectWindowController projectController = new VRseProjectWindowController();
-            string storyJsonPath = projectController.GetLocalStoryJsonPathFromConfig(projectName, module.ModuleId, experience.ExperienceId);
+            string storyJsonPath = projectController.GetLocalStoryJsonPathFromConfig(
+                projectName,
+                module.ModuleId,
+                experience.ExperienceId
+            );
             if (string.IsNullOrEmpty(storyJsonPath) || !File.Exists(storyJsonPath))
                 return new { error = "Training story JSON file not found." };
 
             string evaluationSceneName = GetStringArg(args, "evaluationSceneName");
             if (string.IsNullOrEmpty(evaluationSceneName))
-                evaluationSceneName = CreateDefaultEvaluationName(experience.Name, "Evaluation_Scene");
+                evaluationSceneName = CreateDefaultEvaluationName(
+                    experience.Name,
+                    "Evaluation_Scene"
+                );
 
             string evaluationStoryName = GetStringArg(args, "evaluationStoryName");
             if (string.IsNullOrEmpty(evaluationStoryName))
-                evaluationStoryName = CreateDefaultEvaluationName(experience.Name, "Evaluation_JSON");
+                evaluationStoryName = CreateDefaultEvaluationName(
+                    experience.Name,
+                    "Evaluation_JSON"
+                );
 
             string storyDefaults = GetStringArg(args, "storyDefaults");
             if (string.IsNullOrEmpty(storyDefaults))
-                storyDefaults = "{\"storyMode\":\"Evaluation\",\"maxAttempts\":\"3\",\"useDefaultMaxAttempts\":\"false\"}";
+                storyDefaults =
+                    "{\"storyMode\":\"Evaluation\",\"maxAttempts\":\"3\",\"useDefaultMaxAttempts\":\"false\"}";
 
-            var window = EditorWindow.GetWindow<VRseEvaluationAutomationToolEditor>("Evaluation Automation Tool");
+            var window = EditorWindow.GetWindow<VRseEvaluationAutomationToolEditor>(
+                "Evaluation Automation Tool"
+            );
             if (window == null)
                 return new { error = "Could not open Evaluation Automation Tool window." };
 
             Type windowType = window.GetType();
-            if (!TrySetPrivateField(window, "_storyCreator", storyCreator) ||
-                !TrySetPrivateField(window, "_originalStoryPath", storyJsonPath))
+            if (
+                !TrySetPrivateField(window, "_storyCreator", storyCreator)
+                || !TrySetPrivateField(window, "_originalStoryPath", storyJsonPath)
+            )
             {
                 return new { error = "Could not configure Evaluation Automation Tool." };
             }
 
-            TrySetPrivateField(window, "_currentSceneName", Path.GetFileNameWithoutExtension(experience.DevScene));
-            TrySetPrivateField(window, "_currentStoryName", storyCreator._fileName ?? evaluationStoryName);
+            TrySetPrivateField(
+                window,
+                "_currentSceneName",
+                Path.GetFileNameWithoutExtension(experience.DevScene)
+            );
+            TrySetPrivateField(
+                window,
+                "_currentStoryName",
+                storyCreator._fileName ?? evaluationStoryName
+            );
             TrySetPrivateField(window, "_evaluationSceneName", evaluationSceneName);
             TrySetPrivateField(window, "_evaluationStoryName", evaluationStoryName);
             TrySetPrivateField(window, "_storyDefaults", storyDefaults);
@@ -2215,13 +2967,36 @@ namespace UnityMCP.Editor
                     TrySetPrivateField(window, "_evaluationType", parsed);
             }
 
-            TrySetPrivateField(window, "_showAutoToastMessageForWrongAction", GetBoolArg(args, "showAutoToastForWrongAction", true));
-            TrySetPrivateField(window, "_showAutoToastMessageForRightAction", GetBoolArg(args, "showAutoToastForRightAction", true));
-            TrySetPrivateField(window, "_rightActionToastMessageDisplayTime", GetFloatArg(args, "rightActionToastMessageDisplayTime", 2.5f));
-            TrySetPrivateField(window, "_mistakeCoolDownTime", GetFloatArg(args, "mistakeCoolDownTime", 2.0f));
-            TrySetPrivateField(window, "_debugMistakesCountToPass", GetIntArg(args, "debugMistakesCountToPass", 3));
+            TrySetPrivateField(
+                window,
+                "_showAutoToastMessageForWrongAction",
+                GetBoolArg(args, "showAutoToastForWrongAction", true)
+            );
+            TrySetPrivateField(
+                window,
+                "_showAutoToastMessageForRightAction",
+                GetBoolArg(args, "showAutoToastForRightAction", true)
+            );
+            TrySetPrivateField(
+                window,
+                "_rightActionToastMessageDisplayTime",
+                GetFloatArg(args, "rightActionToastMessageDisplayTime", 2.5f)
+            );
+            TrySetPrivateField(
+                window,
+                "_mistakeCoolDownTime",
+                GetFloatArg(args, "mistakeCoolDownTime", 2.0f)
+            );
+            TrySetPrivateField(
+                window,
+                "_debugMistakesCountToPass",
+                GetIntArg(args, "debugMistakesCountToPass", 3)
+            );
 
-            MethodInfo createMethod = windowType.GetMethod("CreateEvaluationScene", BindingFlags.Instance | BindingFlags.NonPublic);
+            MethodInfo createMethod = windowType.GetMethod(
+                "CreateEvaluationScene",
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
             if (createMethod == null)
                 return new { error = "Evaluation creation method not found." };
 
@@ -2234,15 +3009,21 @@ namespace UnityMCP.Editor
                 return new { error = $"Evaluation creation failed: {ex.Message}" };
             }
 
-            string evaluationScenePath = Path.Combine(Path.GetDirectoryName(experience.DevScene) ?? string.Empty, evaluationSceneName + ".unity");
-            string evaluationStoryPath = Path.Combine(Path.GetDirectoryName(storyJsonPath) ?? string.Empty, evaluationStoryName + ".json");
+            string evaluationScenePath = Path.Combine(
+                Path.GetDirectoryName(experience.DevScene) ?? string.Empty,
+                evaluationSceneName + ".unity"
+            );
+            string evaluationStoryPath = Path.Combine(
+                Path.GetDirectoryName(storyJsonPath) ?? string.Empty,
+                evaluationStoryName + ".json"
+            );
 
             return new Dictionary<string, object>
             {
                 { "success", true },
                 { "evaluationScene", evaluationScenePath },
                 { "evaluationStory", evaluationStoryPath },
-                { "storyDefaults", storyDefaults }
+                { "storyDefaults", storyDefaults },
             };
         }
 
@@ -2261,7 +3042,10 @@ namespace UnityMCP.Editor
 
         private static bool TrySetPrivateField<T>(object target, string fieldName, T value)
         {
-            FieldInfo field = typeof(VRseEvaluationAutomationToolEditor).GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo field = typeof(VRseEvaluationAutomationToolEditor).GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.NonPublic
+            );
             if (field == null)
                 return false;
 
@@ -2269,7 +3053,11 @@ namespace UnityMCP.Editor
             return true;
         }
 
-        private static float GetFloatArg(Dictionary<string, object> args, string key, float defaultValue)
+        private static float GetFloatArg(
+            Dictionary<string, object> args,
+            string key,
+            float defaultValue
+        )
         {
             if (!args.ContainsKey(key) || args[key] == null)
                 return defaultValue;
@@ -2311,7 +3099,9 @@ namespace UnityMCP.Editor
 
         private static string GetStringArg(Dictionary<string, object> args, string key)
         {
-            return args.ContainsKey(key) ? args[key]?.ToString()?.Trim() ?? string.Empty : string.Empty;
+            return args.ContainsKey(key)
+                ? args[key]?.ToString()?.Trim() ?? string.Empty
+                : string.Empty;
         }
 
         private static int GetIntArg(Dictionary<string, object> args, string key, int defaultValue)
@@ -2330,7 +3120,11 @@ namespace UnityMCP.Editor
             return int.TryParse(value.ToString(), out int parsed) ? parsed : defaultValue;
         }
 
-        private static bool GetBoolArg(Dictionary<string, object> args, string key, bool defaultValue)
+        private static bool GetBoolArg(
+            Dictionary<string, object> args,
+            string key,
+            bool defaultValue
+        )
         {
             if (!args.ContainsKey(key) || args[key] == null)
                 return defaultValue;
@@ -2342,7 +3136,9 @@ namespace UnityMCP.Editor
             return bool.TryParse(value.ToString(), out bool parsed) ? parsed : defaultValue;
         }
 
-        private static ModuleData.ExperienceType ResolveExperienceType(Dictionary<string, object> args)
+        private static ModuleData.ExperienceType ResolveExperienceType(
+            Dictionary<string, object> args
+        )
         {
             string experienceType = GetStringArg(args, "experienceType");
             return Enum.TryParse(experienceType, true, out ModuleData.ExperienceType parsedType)
@@ -2376,19 +3172,36 @@ namespace UnityMCP.Editor
         private static StoryCreator FindStoryCreator(Dictionary<string, object> args)
         {
             string storyCreatorName = GetStringArg(args, "storyCreatorName");
-            IEnumerable<StoryCreator> storyCreators = Resources.FindObjectsOfTypeAll<StoryCreator>()
-                .Where(candidate => candidate != null && candidate.gameObject.scene.IsValid() && candidate.gameObject.scene.isLoaded);
+            IEnumerable<StoryCreator> storyCreators = Resources
+                .FindObjectsOfTypeAll<StoryCreator>()
+                .Where(candidate =>
+                    candidate != null
+                    && candidate.gameObject.scene.IsValid()
+                    && candidate.gameObject.scene.isLoaded
+                );
 
             if (!string.IsNullOrEmpty(storyCreatorName))
             {
                 return storyCreators.FirstOrDefault(candidate =>
-                    string.Equals(candidate.gameObject.name, storyCreatorName, StringComparison.OrdinalIgnoreCase));
+                    string.Equals(
+                        candidate.gameObject.name,
+                        storyCreatorName,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                );
             }
 
             return storyCreators.FirstOrDefault();
         }
 
-        private static bool TryResolveMoment(Dictionary<string, object> args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error)
+        private static bool TryResolveMoment(
+            Dictionary<string, object> args,
+            out StoryCreator storyCreator,
+            out Moment moment,
+            out int chapterIndex,
+            out int momentIndex,
+            out string error
+        )
         {
             storyCreator = FindStoryCreator(args);
             moment = null;
@@ -2410,7 +3223,8 @@ namespace UnityMCP.Editor
 
             if (chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
             {
-                error = $"chapterIndex is out of range. Valid range: 0-{storyCreator._story.chapters.Length - 1}.";
+                error =
+                    $"chapterIndex is out of range. Valid range: 0-{storyCreator._story.chapters.Length - 1}.";
                 return false;
             }
 
@@ -2423,7 +3237,8 @@ namespace UnityMCP.Editor
 
             if (momentIndex < 0 || momentIndex >= chapter.moments.Length)
             {
-                error = $"momentIndex is out of range for chapter {chapterIndex}. Valid range: 0-{chapter.moments.Length - 1}.";
+                error =
+                    $"momentIndex is out of range for chapter {chapterIndex}. Valid range: 0-{chapter.moments.Length - 1}.";
                 return false;
             }
 
@@ -2439,11 +3254,11 @@ namespace UnityMCP.Editor
 
         private static bool IsSimpleActionSection(string section)
         {
-            return section == "onAwake" ||
-                   section == "onStart" ||
-                   section == "onFirstWarning" ||
-                   section == "onLastWarning" ||
-                   section == "onEnd";
+            return section == "onAwake"
+                || section == "onStart"
+                || section == "onFirstWarning"
+                || section == "onLastWarning"
+                || section == "onEnd";
         }
 
         private static ActionSet GetOrCreateActionSet(Moment moment, string section)
@@ -2451,26 +3266,37 @@ namespace UnityMCP.Editor
             switch (section)
             {
                 case "onAwake":
-                    if (moment.onAwake == null) moment.onAwake = new ActionSet { actions = new Node[0] };
+                    if (moment.onAwake == null)
+                        moment.onAwake = new ActionSet { actions = new Node[0] };
                     return moment.onAwake;
                 case "onStart":
-                    if (moment.onStart == null) moment.onStart = new ActionSet { actions = new Node[0] };
+                    if (moment.onStart == null)
+                        moment.onStart = new ActionSet { actions = new Node[0] };
                     return moment.onStart;
                 case "onFirstWarning":
-                    if (moment.onFirstWarning == null) moment.onFirstWarning = new ActionSet { actions = new Node[0] };
+                    if (moment.onFirstWarning == null)
+                        moment.onFirstWarning = new ActionSet { actions = new Node[0] };
                     return moment.onFirstWarning;
                 case "onLastWarning":
-                    if (moment.onLastWarning == null) moment.onLastWarning = new ActionSet { actions = new Node[0] };
+                    if (moment.onLastWarning == null)
+                        moment.onLastWarning = new ActionSet { actions = new Node[0] };
                     return moment.onLastWarning;
                 case "onEnd":
-                    if (moment.onEnd == null) moment.onEnd = new ActionSet { actions = new Node[0] };
+                    if (moment.onEnd == null)
+                        moment.onEnd = new ActionSet { actions = new Node[0] };
                     return moment.onEnd;
                 default:
                     return null;
             }
         }
 
-        private static bool TryGetTriggerActionSet(Moment moment, string section, int triggerSetIndex, out TriggerActionSet triggerActionSet, out string error)
+        private static bool TryGetTriggerActionSet(
+            Moment moment,
+            string section,
+            int triggerSetIndex,
+            out TriggerActionSet triggerActionSet,
+            out string error
+        )
         {
             triggerActionSet = null;
             error = null;
@@ -2499,7 +3325,8 @@ namespace UnityMCP.Editor
 
             if (triggerSetIndex >= sets.Length)
             {
-                error = $"triggerSetIndex is out of range for section '{section}'. Valid range: 0-{sets.Length - 1}.";
+                error =
+                    $"triggerSetIndex is out of range for section '{section}'. Valid range: 0-{sets.Length - 1}.";
                 return false;
             }
 
@@ -2513,7 +3340,15 @@ namespace UnityMCP.Editor
             return true;
         }
 
-        private static bool TryResolveNode(Moment moment, string section, string nodeKind, int triggerSetIndex, int nodeIndex, out Node node, out string error)
+        private static bool TryResolveNode(
+            Moment moment,
+            string section,
+            string nodeKind,
+            int triggerSetIndex,
+            int nodeIndex,
+            out Node node,
+            out string error
+        )
         {
             node = null;
             error = null;
@@ -2529,7 +3364,8 @@ namespace UnityMCP.Editor
 
                 if (nodeIndex < 0 || nodeIndex >= actionSet.actions.Length)
                 {
-                    error = $"nodeIndex is out of range for section '{section}'. Valid range: 0-{actionSet.actions.Length - 1}.";
+                    error =
+                        $"nodeIndex is out of range for section '{section}'. Valid range: 0-{actionSet.actions.Length - 1}.";
                     return false;
                 }
 
@@ -2539,20 +3375,32 @@ namespace UnityMCP.Editor
 
             if (section != "onWrong" && section != "onRight")
             {
-                error = "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight.";
+                error =
+                    "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight.";
                 return false;
             }
 
-            if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out error))
+            if (
+                !TryGetTriggerActionSet(
+                    moment,
+                    section,
+                    triggerSetIndex,
+                    out TriggerActionSet triggerActionSet,
+                    out error
+                )
+            )
                 return false;
 
-            string normalizedNodeKind = string.IsNullOrEmpty(nodeKind) ? "action" : nodeKind.Trim().ToLowerInvariant();
+            string normalizedNodeKind = string.IsNullOrEmpty(nodeKind)
+                ? "action"
+                : nodeKind.Trim().ToLowerInvariant();
             if (normalizedNodeKind == "trigger")
             {
                 node = triggerActionSet.trigger;
                 if (node == null)
                 {
-                    error = $"Trigger set {triggerSetIndex} in section '{section}' does not have a trigger node.";
+                    error =
+                        $"Trigger set {triggerSetIndex} in section '{section}' does not have a trigger node.";
                     return false;
                 }
 
@@ -2561,13 +3409,15 @@ namespace UnityMCP.Editor
 
             if (triggerActionSet.actions == null || triggerActionSet.actions.Length == 0)
             {
-                error = $"Trigger set {triggerSetIndex} in section '{section}' does not contain any actions.";
+                error =
+                    $"Trigger set {triggerSetIndex} in section '{section}' does not contain any actions.";
                 return false;
             }
 
             if (nodeIndex < 0 || nodeIndex >= triggerActionSet.actions.Length)
             {
-                error = $"nodeIndex is out of range for trigger set {triggerSetIndex} in section '{section}'. Valid range: 0-{triggerActionSet.actions.Length - 1}.";
+                error =
+                    $"nodeIndex is out of range for trigger set {triggerSetIndex} in section '{section}'. Valid range: 0-{triggerActionSet.actions.Length - 1}.";
                 return false;
             }
 
@@ -2585,14 +3435,22 @@ namespace UnityMCP.Editor
 
             switch (normalized)
             {
-                case "onawake": return "onAwake";
-                case "onstart": return "onStart";
-                case "onwrong": return "onWrong";
-                case "onright": return "onRight";
-                case "onfirstwarning": return "onFirstWarning";
-                case "onlastwarning": return "onLastWarning";
-                case "onend": return "onEnd";
-                default: return section;
+                case "onawake":
+                    return "onAwake";
+                case "onstart":
+                    return "onStart";
+                case "onwrong":
+                    return "onWrong";
+                case "onright":
+                    return "onRight";
+                case "onfirstwarning":
+                    return "onFirstWarning";
+                case "onlastwarning":
+                    return "onLastWarning";
+                case "onend":
+                    return "onEnd";
+                default:
+                    return section;
             }
         }
 
@@ -2606,14 +3464,17 @@ namespace UnityMCP.Editor
                 Query = string.Empty,
                 Option = isAction ? "Spawn" : string.Empty,
                 Data = "{}",
-                TargetGameObject = null
+                TargetGameObject = null,
             };
 
             NodeTemplatesData nodeTemplatesData = LoadNodeTemplatesData();
-            NodeTemplatesData.NodeData template = nodeTemplatesData != null ? nodeTemplatesData.GetNodeTemplate(defaultName) : null;
+            NodeTemplatesData.NodeData template =
+                nodeTemplatesData != null ? nodeTemplatesData.GetNodeTemplate(defaultName) : null;
             if (template != null && template.Options != null && template.Options.Count > 0)
             {
-                NodeTemplatesData.OptionData option = template.Options.FirstOrDefault(currentOption => !string.IsNullOrWhiteSpace(currentOption.Name));
+                NodeTemplatesData.OptionData option = template.Options.FirstOrDefault(
+                    currentOption => !string.IsNullOrWhiteSpace(currentOption.Name)
+                );
                 if (option != null)
                 {
                     node.Option = option.Name;
@@ -2636,7 +3497,9 @@ namespace UnityMCP.Editor
                 return null;
 
             string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-            NodeTemplatesData nodeTemplatesData = AssetDatabase.LoadAssetAtPath<NodeTemplatesData>(path);
+            NodeTemplatesData nodeTemplatesData = AssetDatabase.LoadAssetAtPath<NodeTemplatesData>(
+                path
+            );
             if (nodeTemplatesData != null)
                 nodeTemplatesData.OnValidate();
             return nodeTemplatesData;
@@ -2646,7 +3509,8 @@ namespace UnityMCP.Editor
         {
             node.TargetGameObject = targetGameObject;
 
-            QueryObjectsIdManager queryObjectsIdManager = UnityEngine.Object.FindObjectOfType<QueryObjectsIdManager>();
+            QueryObjectsIdManager queryObjectsIdManager =
+                UnityEngine.Object.FindObjectOfType<QueryObjectsIdManager>();
             if (queryObjectsIdManager != null)
             {
                 node.Query = queryObjectsIdManager.GetQueryObjectNameWithId(targetGameObject);
@@ -2666,7 +3530,8 @@ namespace UnityMCP.Editor
                 storyCreator._story.AssignChapterAndMomentIndex();
             storyCreator.InvalidateIsStorySavedToFileCache();
 
-            ReferenceManager referenceManager = UnityEngine.Object.FindObjectOfType<ReferenceManager>();
+            ReferenceManager referenceManager =
+                UnityEngine.Object.FindObjectOfType<ReferenceManager>();
             if (referenceManager != null)
                 referenceManager.OnStoryChangedFromInspector();
 
@@ -2684,30 +3549,49 @@ namespace UnityMCP.Editor
                 { "query", node?.Query },
                 { "data", node?.Data },
                 { "type", node != null ? node.Type : (byte)0 },
-                { "targetGameObject", node?.TargetGameObject != null ? node.TargetGameObject.name : null }
+                {
+                    "targetGameObject",
+                    node?.TargetGameObject != null ? node.TargetGameObject.name : null
+                },
             };
         }
 
-        private static Dictionary<string, object> BuildModulePayload(ModuleData module, string fallbackModuleId, string fallbackModuleName)
+        private static Dictionary<string, object> BuildModulePayload(
+            ModuleData module,
+            string fallbackModuleId,
+            string fallbackModuleName
+        )
         {
             return new Dictionary<string, object>
             {
                 { "id", module != null ? module.ModuleId : fallbackModuleId },
-                { "name", module != null ? module.GetModuleName() : fallbackModuleName }
+                { "name", module != null ? module.GetModuleName() : fallbackModuleName },
             };
         }
 
-        private static Dictionary<string, object> BuildExperiencePayload(ModuleData.ExperienceData experience, string fallbackExperienceId, string fallbackExperienceName, ModuleData.ExperienceType fallbackType)
+        private static Dictionary<string, object> BuildExperiencePayload(
+            ModuleData.ExperienceData experience,
+            string fallbackExperienceId,
+            string fallbackExperienceName,
+            ModuleData.ExperienceType fallbackType
+        )
         {
             return new Dictionary<string, object>
             {
                 { "id", experience != null ? experience.ExperienceId : fallbackExperienceId },
                 { "name", experience != null ? experience.Name : fallbackExperienceName },
-                { "type", experience != null ? experience.Type.ToString() : fallbackType.ToString() }
+                {
+                    "type",
+                    experience != null ? experience.Type.ToString() : fallbackType.ToString()
+                },
             };
         }
 
-        private static Dictionary<string, object> BuildExperienceCreationStatus(string projectName, ModuleData module, ModuleData.ExperienceData experience)
+        private static Dictionary<string, object> BuildExperienceCreationStatus(
+            string projectName,
+            ModuleData module,
+            ModuleData.ExperienceData experience
+        )
         {
             if (experience == null)
             {
@@ -2715,14 +3599,17 @@ namespace UnityMCP.Editor
                 {
                     { "projectName", projectName },
                     { "moduleFound", module != null },
-                    { "experienceFound", false }
+                    { "experienceFound", false },
                 };
             }
 
             string storyJsonAbsolutePath = GetAbsoluteStoryJsonPath(experience.StoryJsonPath);
-            bool storyJsonExists = !string.IsNullOrEmpty(storyJsonAbsolutePath) && File.Exists(storyJsonAbsolutePath);
-            bool devSceneExists = !string.IsNullOrEmpty(experience.DevScene) && File.Exists(experience.DevScene);
-            bool artSceneExists = !string.IsNullOrEmpty(experience.ArtScene) && File.Exists(experience.ArtScene);
+            bool storyJsonExists =
+                !string.IsNullOrEmpty(storyJsonAbsolutePath) && File.Exists(storyJsonAbsolutePath);
+            bool devSceneExists =
+                !string.IsNullOrEmpty(experience.DevScene) && File.Exists(experience.DevScene);
+            bool artSceneExists =
+                !string.IsNullOrEmpty(experience.ArtScene) && File.Exists(experience.ArtScene);
 
             return new Dictionary<string, object>
             {
@@ -2742,7 +3629,7 @@ namespace UnityMCP.Editor
                 { "devSceneExists", devSceneExists },
                 { "artScenePath", experience.ArtScene },
                 { "artSceneExists", artSceneExists },
-                { "isFullyConfigured", storyJsonExists && devSceneExists && artSceneExists }
+                { "isFullyConfigured", storyJsonExists && devSceneExists && artSceneExists },
             };
         }
 
@@ -2758,7 +3645,10 @@ namespace UnityMCP.Editor
             return Path.Combine(Application.streamingAssetsPath, trimmed).Replace("\\", "/");
         }
 
-        private static string ResolveExperienceJsonFileUrl(string projectName, Dictionary<string, object> args)
+        private static string ResolveExperienceJsonFileUrl(
+            string projectName,
+            Dictionary<string, object> args
+        )
         {
 #if !VRSE_BACKEND_ENABLED
             return null;
@@ -2774,8 +3664,12 @@ namespace UnityMCP.Editor
 
                 string projectId = GetStringArg(args, "projectId");
                 AccessProject remoteProject = response.projects.FirstOrDefault(project =>
-                    (!string.IsNullOrEmpty(projectId) && string.Equals(project._id, projectId, StringComparison.OrdinalIgnoreCase)) ||
-                    string.Equals(project.name, projectName, StringComparison.OrdinalIgnoreCase));
+                    (
+                        !string.IsNullOrEmpty(projectId)
+                        && string.Equals(project._id, projectId, StringComparison.OrdinalIgnoreCase)
+                    )
+                    || string.Equals(project.name, projectName, StringComparison.OrdinalIgnoreCase)
+                );
 
                 if (remoteProject?.modules == null)
                     return null;
@@ -2783,8 +3677,19 @@ namespace UnityMCP.Editor
                 string moduleId = GetStringArg(args, "moduleId");
                 string moduleName = GetStringArg(args, "moduleName");
                 AccessModule remoteModule = remoteProject.modules.FirstOrDefault(module =>
-                    (!string.IsNullOrEmpty(moduleId) && string.Equals(module._id, moduleId, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(moduleName) && string.Equals(module.name, moduleName, StringComparison.OrdinalIgnoreCase)));
+                    (
+                        !string.IsNullOrEmpty(moduleId)
+                        && string.Equals(module._id, moduleId, StringComparison.OrdinalIgnoreCase)
+                    )
+                    || (
+                        !string.IsNullOrEmpty(moduleName)
+                        && string.Equals(
+                            module.name,
+                            moduleName,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
+                );
 
                 if (remoteModule?.experiences == null)
                     return null;
@@ -2792,10 +3697,30 @@ namespace UnityMCP.Editor
                 string experienceId = GetStringArg(args, "experienceId");
                 string experienceName = GetStringArg(args, "experienceName");
                 ModuleData.ExperienceType experienceType = ResolveExperienceType(args);
-                AccessExperience remoteExperience = remoteModule.experiences.FirstOrDefault(experience =>
-                    (!string.IsNullOrEmpty(experienceId) && string.Equals(experience._id, experienceId, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(experienceName) && string.Equals(experience.name, experienceName, StringComparison.OrdinalIgnoreCase)) ||
-                    string.Equals(experience.type, experienceType.ToString(), StringComparison.OrdinalIgnoreCase));
+                AccessExperience remoteExperience = remoteModule.experiences.FirstOrDefault(
+                    experience =>
+                        (
+                            !string.IsNullOrEmpty(experienceId)
+                            && string.Equals(
+                                experience._id,
+                                experienceId,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        )
+                        || (
+                            !string.IsNullOrEmpty(experienceName)
+                            && string.Equals(
+                                experience.name,
+                                experienceName,
+                                StringComparison.OrdinalIgnoreCase
+                            )
+                        )
+                        || string.Equals(
+                            experience.type,
+                            experienceType.ToString(),
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                );
 
                 return remoteExperience?.jsonFileUrl;
             }
@@ -2806,7 +3731,10 @@ namespace UnityMCP.Editor
 #endif
         }
 
-        private static List<object> BuildValidationIssues(Story story, Dictionary<Moment, Dictionary<string, List<string>>> validationResult)
+        private static List<object> BuildValidationIssues(
+            Story story,
+            Dictionary<Moment, Dictionary<string, List<string>>> validationResult
+        )
         {
             var issues = new List<object>();
             if (story?.chapters == null)
@@ -2821,7 +3749,15 @@ namespace UnityMCP.Editor
                 for (int momentIndex = 0; momentIndex < chapter.moments.Length; momentIndex++)
                 {
                     Moment moment = chapter.moments[momentIndex];
-                    if (moment == null || !validationResult.TryGetValue(moment, out Dictionary<string, List<string>> momentIssues) || momentIssues == null || momentIssues.Count == 0)
+                    if (
+                        moment == null
+                        || !validationResult.TryGetValue(
+                            moment,
+                            out Dictionary<string, List<string>> momentIssues
+                        )
+                        || momentIssues == null
+                        || momentIssues.Count == 0
+                    )
                         continue;
 
                     var sections = new List<object>();
@@ -2830,33 +3766,44 @@ namespace UnityMCP.Editor
                     {
                         List<string> messages = entry.Value ?? new List<string>();
                         issueCount += messages.Count;
-                        sections.Add(new Dictionary<string, object>
-                        {
-                            { "section", entry.Key },
-                            { "messages", messages }
-                        });
+                        sections.Add(
+                            new Dictionary<string, object>
+                            {
+                                { "section", entry.Key },
+                                { "messages", messages },
+                            }
+                        );
                     }
 
-                    issues.Add(new Dictionary<string, object>
-                    {
-                        { "chapterIndex", chapterIndex },
-                        { "chapterName", chapter.name },
-                        { "momentIndex", momentIndex },
-                        { "momentName", moment.name },
-                        { "issueCount", issueCount },
-                        { "sections", sections }
-                    });
+                    issues.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "chapterIndex", chapterIndex },
+                            { "chapterName", chapter.name },
+                            { "momentIndex", momentIndex },
+                            { "momentName", moment.name },
+                            { "issueCount", issueCount },
+                            { "sections", sections },
+                        }
+                    );
                 }
             }
 
             return issues;
         }
 
-
-
         public static object StoryMoveAction(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string section = NormalizeSectionName(GetStringArg(args, "section"));
@@ -2864,11 +3811,27 @@ namespace UnityMCP.Editor
             int toIndex = GetIntArg(args, "toIndex", -1);
             int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
 
-            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+            if (
+                !TryGetActionNodeArray(
+                    moment,
+                    section,
+                    triggerSetIndex,
+                    out Node[] nodeArray,
+                    out string arrayError
+                )
+            )
                 return new { error = arrayError };
 
-            if (fromIndex < 0 || fromIndex >= nodeArray.Length || toIndex < 0 || toIndex >= nodeArray.Length)
-                return new { error = $"fromIndex and toIndex must be within 0-{nodeArray.Length - 1}." };
+            if (
+                fromIndex < 0
+                || fromIndex >= nodeArray.Length
+                || toIndex < 0
+                || toIndex >= nodeArray.Length
+            )
+                return new
+                {
+                    error = $"fromIndex and toIndex must be within 0-{nodeArray.Length - 1}.",
+                };
 
             MoveNodeInArray(ref nodeArray, fromIndex, toIndex);
             SetActionNodeArray(moment, section, triggerSetIndex, nodeArray);
@@ -2882,20 +3845,37 @@ namespace UnityMCP.Editor
                 { "section", section },
                 { "triggerSetIndex", triggerSetIndex },
                 { "fromIndex", fromIndex },
-                { "toIndex", toIndex }
+                { "toIndex", toIndex },
             };
         }
 
         public static object StoryDuplicateAction(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment moment, out int chapterIndex, out int momentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment moment,
+                    out int chapterIndex,
+                    out int momentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string section = NormalizeSectionName(GetStringArg(args, "section"));
             int nodeIndex = GetIntArg(args, "nodeIndex", -1);
             int triggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
 
-            if (!TryGetActionNodeArray(moment, section, triggerSetIndex, out Node[] nodeArray, out string arrayError))
+            if (
+                !TryGetActionNodeArray(
+                    moment,
+                    section,
+                    triggerSetIndex,
+                    out Node[] nodeArray,
+                    out string arrayError
+                )
+            )
                 return new { error = arrayError };
 
             if (nodeIndex < 0 || nodeIndex >= nodeArray.Length)
@@ -2904,7 +3884,13 @@ namespace UnityMCP.Editor
             var newArray = new Node[nodeArray.Length + 1];
             Array.Copy(nodeArray, 0, newArray, 0, nodeIndex + 1);
             newArray[nodeIndex + 1] = CloneNode(nodeArray[nodeIndex]);
-            Array.Copy(nodeArray, nodeIndex + 1, newArray, nodeIndex + 2, nodeArray.Length - nodeIndex - 1);
+            Array.Copy(
+                nodeArray,
+                nodeIndex + 1,
+                newArray,
+                nodeIndex + 2,
+                nodeArray.Length - nodeIndex - 1
+            );
 
             SetActionNodeArray(moment, section, triggerSetIndex, newArray);
             MarkStoryChanged(storyCreator);
@@ -2918,27 +3904,51 @@ namespace UnityMCP.Editor
                 { "triggerSetIndex", triggerSetIndex },
                 { "sourceNodeIndex", nodeIndex },
                 { "newNodeIndex", nodeIndex + 1 },
-                { "node", SerializeNode(newArray[nodeIndex + 1]) }
+                { "node", SerializeNode(newArray[nodeIndex + 1]) },
             };
         }
 
         public static object StoryApplyActionToMultipleMoments(Dictionary<string, object> args)
         {
-            if (!TryResolveMoment(args, out StoryCreator storyCreator, out Moment sourceMoment, out int sourceChapterIndex, out int sourceMomentIndex, out string error))
+            if (
+                !TryResolveMoment(
+                    args,
+                    out StoryCreator storyCreator,
+                    out Moment sourceMoment,
+                    out int sourceChapterIndex,
+                    out int sourceMomentIndex,
+                    out string error
+                )
+            )
                 return new { error };
 
             string sourceSection = NormalizeSectionName(GetStringArg(args, "section"));
             int sourceNodeIndex = GetIntArg(args, "nodeIndex", -1);
             int sourceTriggerSetIndex = GetIntArg(args, "triggerSetIndex", -1);
 
-            if (!TryGetActionNodeArray(sourceMoment, sourceSection, sourceTriggerSetIndex, out Node[] sourceArray, out string sourceArrayError))
+            if (
+                !TryGetActionNodeArray(
+                    sourceMoment,
+                    sourceSection,
+                    sourceTriggerSetIndex,
+                    out Node[] sourceArray,
+                    out string sourceArrayError
+                )
+            )
                 return new { error = sourceArrayError };
 
             if (sourceNodeIndex < 0 || sourceNodeIndex >= sourceArray.Length)
                 return new { error = $"nodeIndex must be within 0-{sourceArray.Length - 1}." };
 
-            if (!args.TryGetValue("targets", out object targetsObj) || !(targetsObj is List<object> rawTargets) || rawTargets.Count == 0)
-                return new { error = "targets is required and must contain at least one target moment." };
+            if (
+                !args.TryGetValue("targets", out object targetsObj)
+                || !(targetsObj is List<object> rawTargets)
+                || rawTargets.Count == 0
+            )
+                return new
+                {
+                    error = "targets is required and must contain at least one target moment.",
+                };
 
             Node sourceNode = sourceArray[sourceNodeIndex];
             var appliedTargets = new List<object>();
@@ -2953,33 +3963,57 @@ namespace UnityMCP.Editor
                 string targetSection = NormalizeSectionName(GetNestedStringArg(target, "section"));
                 if (string.IsNullOrEmpty(targetSection))
                     targetSection = sourceSection;
-                int targetTriggerSetIndex = GetNestedIntArg(target, "triggerSetIndex", sourceTriggerSetIndex);
+                int targetTriggerSetIndex = GetNestedIntArg(
+                    target,
+                    "triggerSetIndex",
+                    sourceTriggerSetIndex
+                );
 
-                if (!TryResolveMomentByIndex(storyCreator, targetChapterIndex, targetMomentIndex, out Moment targetMoment, out string targetMomentError))
+                if (
+                    !TryResolveMomentByIndex(
+                        storyCreator,
+                        targetChapterIndex,
+                        targetMomentIndex,
+                        out Moment targetMoment,
+                        out string targetMomentError
+                    )
+                )
                 {
-                    appliedTargets.Add(new Dictionary<string, object>
-                    {
-                        { "chapterIndex", targetChapterIndex },
-                        { "momentIndex", targetMomentIndex },
-                        { "section", targetSection },
-                        { "triggerSetIndex", targetTriggerSetIndex },
-                        { "success", false },
-                        { "error", targetMomentError }
-                    });
+                    appliedTargets.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "chapterIndex", targetChapterIndex },
+                            { "momentIndex", targetMomentIndex },
+                            { "section", targetSection },
+                            { "triggerSetIndex", targetTriggerSetIndex },
+                            { "success", false },
+                            { "error", targetMomentError },
+                        }
+                    );
                     continue;
                 }
 
-                if (!TryGetActionNodeArray(targetMoment, targetSection, targetTriggerSetIndex, out Node[] targetArray, out string targetArrayError))
+                if (
+                    !TryGetActionNodeArray(
+                        targetMoment,
+                        targetSection,
+                        targetTriggerSetIndex,
+                        out Node[] targetArray,
+                        out string targetArrayError
+                    )
+                )
                 {
-                    appliedTargets.Add(new Dictionary<string, object>
-                    {
-                        { "chapterIndex", targetChapterIndex },
-                        { "momentIndex", targetMomentIndex },
-                        { "section", targetSection },
-                        { "triggerSetIndex", targetTriggerSetIndex },
-                        { "success", false },
-                        { "error", targetArrayError }
-                    });
+                    appliedTargets.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "chapterIndex", targetChapterIndex },
+                            { "momentIndex", targetMomentIndex },
+                            { "section", targetSection },
+                            { "triggerSetIndex", targetTriggerSetIndex },
+                            { "success", false },
+                            { "error", targetArrayError },
+                        }
+                    );
                     continue;
                 }
 
@@ -2988,15 +4022,17 @@ namespace UnityMCP.Editor
                 targetArray[newNodeIndex] = CloneNode(sourceNode);
                 SetActionNodeArray(targetMoment, targetSection, targetTriggerSetIndex, targetArray);
 
-                appliedTargets.Add(new Dictionary<string, object>
-                {
-                    { "chapterIndex", targetChapterIndex },
-                    { "momentIndex", targetMomentIndex },
-                    { "section", targetSection },
-                    { "triggerSetIndex", targetTriggerSetIndex },
-                    { "success", true },
-                    { "newNodeIndex", newNodeIndex }
-                });
+                appliedTargets.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "chapterIndex", targetChapterIndex },
+                        { "momentIndex", targetMomentIndex },
+                        { "section", targetSection },
+                        { "triggerSetIndex", targetTriggerSetIndex },
+                        { "success", true },
+                        { "newNodeIndex", newNodeIndex },
+                    }
+                );
             }
 
             MarkStoryChanged(storyCreator);
@@ -3004,17 +4040,19 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "success", true },
-                { "source", new Dictionary<string, object>
+                {
+                    "source",
+                    new Dictionary<string, object>
                     {
                         { "chapterIndex", sourceChapterIndex },
                         { "momentIndex", sourceMomentIndex },
                         { "section", sourceSection },
                         { "triggerSetIndex", sourceTriggerSetIndex },
                         { "nodeIndex", sourceNodeIndex },
-                        { "node", SerializeNode(sourceNode) }
+                        { "node", SerializeNode(sourceNode) },
                     }
                 },
-                { "targets", appliedTargets }
+                { "targets", appliedTargets },
             };
         }
 
@@ -3027,14 +4065,18 @@ namespace UnityMCP.Editor
             string filePath = storyCreator._FilePath;
             List<StoryVersioning.StoryVersion> history = StoryVersioning.GetHistory(filePath);
             var backups = history
-                .Select((backup, index) => (object)new Dictionary<string, object>
-                {
-                    { "index", index },
-                    { "filePath", backup.filePath },
-                    { "timestamp", backup.timestamp },
-                    { "displayDate", backup.displayDate },
-                    { "reason", backup.reason }
-                })
+                .Select(
+                    (backup, index) =>
+                        (object)
+                            new Dictionary<string, object>
+                            {
+                                { "index", index },
+                                { "filePath", backup.filePath },
+                                { "timestamp", backup.timestamp },
+                                { "displayDate", backup.displayDate },
+                                { "reason", backup.reason },
+                            }
+                )
                 .ToList();
 
             return new Dictionary<string, object>
@@ -3042,7 +4084,7 @@ namespace UnityMCP.Editor
                 { "storyCreator", storyCreator.gameObject.name },
                 { "filePath", filePath },
                 { "backupCount", backups.Count },
-                { "backups", backups }
+                { "backups", backups },
             };
         }
 
@@ -3068,14 +4110,18 @@ namespace UnityMCP.Editor
                 { "success", latest != null },
                 { "storyCreator", storyCreator.gameObject.name },
                 { "filePath", filePath },
-                { "latestBackup", latest == null ? null : new Dictionary<string, object>
-                    {
-                        { "filePath", latest.filePath },
-                        { "timestamp", latest.timestamp },
-                        { "displayDate", latest.displayDate },
-                        { "reason", latest.reason }
-                    }
-                }
+                {
+                    "latestBackup",
+                    latest == null
+                        ? null
+                        : new Dictionary<string, object>
+                        {
+                            { "filePath", latest.filePath },
+                            { "timestamp", latest.timestamp },
+                            { "displayDate", latest.displayDate },
+                            { "reason", latest.reason },
+                        }
+                },
             };
         }
 
@@ -3087,7 +4133,10 @@ namespace UnityMCP.Editor
 
             string filePath = storyCreator._FilePath;
             if (string.IsNullOrEmpty(filePath))
-                return new { error = "The active StoryCreator does not have a valid story file path." };
+                return new
+                {
+                    error = "The active StoryCreator does not have a valid story file path.",
+                };
 
             string backupPath = GetStringArg(args, "backupPath");
             if (string.IsNullOrEmpty(backupPath))
@@ -3095,7 +4144,10 @@ namespace UnityMCP.Editor
                 int backupIndex = GetIntArg(args, "backupIndex", -1);
                 var history = StoryVersioning.GetHistory(filePath);
                 if (backupIndex < 0 || backupIndex >= history.Count())
-                    return new { error = $"backupIndex must be within 0-{Math.Max(history.Count() - 1, 0)}." };
+                    return new
+                    {
+                        error = $"backupIndex must be within 0-{Math.Max(history.Count() - 1, 0)}.",
+                    };
                 backupPath = history[backupIndex].filePath;
             }
 
@@ -3112,16 +4164,22 @@ namespace UnityMCP.Editor
                 { "success", true },
                 { "storyCreator", storyCreator.gameObject.name },
                 { "filePath", filePath },
-                { "restoredBackupPath", backupPath }
+                { "restoredBackupPath", backupPath },
             };
         }
 
         private static string GetNestedStringArg(Dictionary<string, object> args, string key)
         {
-            return args.ContainsKey(key) ? args[key]?.ToString()?.Trim() ?? string.Empty : string.Empty;
+            return args.ContainsKey(key)
+                ? args[key]?.ToString()?.Trim() ?? string.Empty
+                : string.Empty;
         }
 
-        private static int GetNestedIntArg(Dictionary<string, object> args, string key, int defaultValue)
+        private static int GetNestedIntArg(
+            Dictionary<string, object> args,
+            string key,
+            int defaultValue
+        )
         {
             if (!args.ContainsKey(key) || args[key] == null)
                 return defaultValue;
@@ -3137,7 +4195,13 @@ namespace UnityMCP.Editor
             return int.TryParse(value.ToString(), out int parsed) ? parsed : defaultValue;
         }
 
-        private static bool TryResolveMomentByIndex(StoryCreator storyCreator, int chapterIndex, int momentIndex, out Moment moment, out string error)
+        private static bool TryResolveMomentByIndex(
+            StoryCreator storyCreator,
+            int chapterIndex,
+            int momentIndex,
+            out Moment moment,
+            out string error
+        )
         {
             moment = null;
             error = null;
@@ -3150,7 +4214,8 @@ namespace UnityMCP.Editor
 
             if (chapterIndex < 0 || chapterIndex >= storyCreator._story.chapters.Length)
             {
-                error = $"chapterIndex is out of range. Valid range: 0-{storyCreator._story.chapters.Length - 1}.";
+                error =
+                    $"chapterIndex is out of range. Valid range: 0-{storyCreator._story.chapters.Length - 1}.";
                 return false;
             }
 
@@ -3163,7 +4228,8 @@ namespace UnityMCP.Editor
 
             if (momentIndex < 0 || momentIndex >= chapter.moments.Length)
             {
-                error = $"momentIndex is out of range for chapter {chapterIndex}. Valid range: 0-{chapter.moments.Length - 1}.";
+                error =
+                    $"momentIndex is out of range for chapter {chapterIndex}. Valid range: 0-{chapter.moments.Length - 1}.";
                 return false;
             }
 
@@ -3171,7 +4237,13 @@ namespace UnityMCP.Editor
             return moment != null;
         }
 
-        private static bool TryGetActionNodeArray(Moment moment, string section, int triggerSetIndex, out Node[] nodeArray, out string error)
+        private static bool TryGetActionNodeArray(
+            Moment moment,
+            string section,
+            int triggerSetIndex,
+            out Node[] nodeArray,
+            out string error
+        )
         {
             nodeArray = null;
             error = null;
@@ -3187,7 +4259,15 @@ namespace UnityMCP.Editor
 
             if (section == "onWrong" || section == "onRight")
             {
-                if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out error))
+                if (
+                    !TryGetTriggerActionSet(
+                        moment,
+                        section,
+                        triggerSetIndex,
+                        out TriggerActionSet triggerActionSet,
+                        out error
+                    )
+                )
                     return false;
 
                 if (triggerActionSet.actions == null)
@@ -3197,11 +4277,17 @@ namespace UnityMCP.Editor
                 return true;
             }
 
-            error = "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight.";
+            error =
+                "section must be one of onAwake, onStart, onFirstWarning, onLastWarning, onEnd, onWrong, or onRight.";
             return false;
         }
 
-        private static void SetActionNodeArray(Moment moment, string section, int triggerSetIndex, Node[] nodeArray)
+        private static void SetActionNodeArray(
+            Moment moment,
+            string section,
+            int triggerSetIndex,
+            Node[] nodeArray
+        )
         {
             if (IsSimpleActionSection(section))
             {
@@ -3209,7 +4295,15 @@ namespace UnityMCP.Editor
                 return;
             }
 
-            if (!TryGetTriggerActionSet(moment, section, triggerSetIndex, out TriggerActionSet triggerActionSet, out _))
+            if (
+                !TryGetTriggerActionSet(
+                    moment,
+                    section,
+                    triggerSetIndex,
+                    out TriggerActionSet triggerActionSet,
+                    out _
+                )
+            )
                 return;
 
             triggerActionSet.actions = nodeArray;
@@ -3241,14 +4335,18 @@ namespace UnityMCP.Editor
                 Query = original.Query,
                 Option = original.Option,
                 Data = original.Data,
-                Type = original.Type
+                Type = original.Type,
             };
         }
 
         private static string ResolveProjectName(Dictionary<string, object> args)
         {
-            string requestedProject = args.ContainsKey("projectName") ? args["projectName"]?.ToString()?.Trim() : string.Empty;
-            return !string.IsNullOrEmpty(requestedProject) ? requestedProject : GetSelectedProjectName();
+            string requestedProject = args.ContainsKey("projectName")
+                ? args["projectName"]?.ToString()?.Trim()
+                : string.Empty;
+            return !string.IsNullOrEmpty(requestedProject)
+                ? requestedProject
+                : GetSelectedProjectName();
         }
 
         private static string GetSelectedProjectName()
@@ -3256,69 +4354,118 @@ namespace UnityMCP.Editor
             return EditorPrefs.GetString(SelectedProjectKey, string.Empty);
         }
 
-        private static bool TryGetRoomManagerConfig(string projectName, out RoomManagerConfig roomManagerConfig)
+        private static bool TryGetRoomManagerConfig(
+            string projectName,
+            out RoomManagerConfig roomManagerConfig
+        )
         {
             roomManagerConfig = null;
             if (string.IsNullOrEmpty(projectName))
                 return false;
 
-            string assetPath = $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
+            string assetPath =
+                $"Assets/StudioProjects/{projectName}/ProjectSettings/RoomManagerConfig_{projectName}.asset";
             roomManagerConfig = AssetDatabase.LoadAssetAtPath<RoomManagerConfig>(assetPath);
             return roomManagerConfig != null;
         }
 
-        private static ModuleData ResolveModule(RoomManagerConfig roomManagerConfig, Dictionary<string, object> args)
+        private static ModuleData ResolveModule(
+            RoomManagerConfig roomManagerConfig,
+            Dictionary<string, object> args
+        )
         {
             if (roomManagerConfig?.experiences == null || roomManagerConfig.experiences.Length == 0)
                 return null;
 
-            string moduleId = args.ContainsKey("moduleId") ? args["moduleId"]?.ToString()?.Trim() : string.Empty;
-            string moduleName = args.ContainsKey("moduleName") ? args["moduleName"]?.ToString()?.Trim() : string.Empty;
+            string moduleId = args.ContainsKey("moduleId")
+                ? args["moduleId"]?.ToString()?.Trim()
+                : string.Empty;
+            string moduleName = args.ContainsKey("moduleName")
+                ? args["moduleName"]?.ToString()?.Trim()
+                : string.Empty;
 
             if (!string.IsNullOrEmpty(moduleId))
             {
-                ModuleData idMatch = roomManagerConfig.experiences.FirstOrDefault(module => string.Equals(module.ModuleId, moduleId, StringComparison.OrdinalIgnoreCase));
+                ModuleData idMatch = roomManagerConfig.experiences.FirstOrDefault(module =>
+                    string.Equals(module.ModuleId, moduleId, StringComparison.OrdinalIgnoreCase)
+                );
                 if (idMatch != null)
                     return idMatch;
             }
 
             if (!string.IsNullOrEmpty(moduleName))
-                return roomManagerConfig.experiences.FirstOrDefault(module => string.Equals(module.GetModuleName(), moduleName, StringComparison.OrdinalIgnoreCase));
+                return roomManagerConfig.experiences.FirstOrDefault(module =>
+                    string.Equals(
+                        module.GetModuleName(),
+                        moduleName,
+                        StringComparison.OrdinalIgnoreCase
+                    )
+                );
 
             return null;
         }
 
-        private static ModuleData.ExperienceData ResolveExperience(ModuleData module, Dictionary<string, object> args)
+        private static ModuleData.ExperienceData ResolveExperience(
+            ModuleData module,
+            Dictionary<string, object> args
+        )
         {
             if (module?.ExperienceDataList == null || module.ExperienceDataList.Count == 0)
                 return null;
 
-            string experienceId = args.ContainsKey("experienceId") ? args["experienceId"]?.ToString()?.Trim() : string.Empty;
-            string experienceName = args.ContainsKey("experienceName") ? args["experienceName"]?.ToString()?.Trim() : string.Empty;
-            string experienceType = args.ContainsKey("experienceType") ? args["experienceType"]?.ToString()?.Trim() : string.Empty;
+            string experienceId = args.ContainsKey("experienceId")
+                ? args["experienceId"]?.ToString()?.Trim()
+                : string.Empty;
+            string experienceName = args.ContainsKey("experienceName")
+                ? args["experienceName"]?.ToString()?.Trim()
+                : string.Empty;
+            string experienceType = args.ContainsKey("experienceType")
+                ? args["experienceType"]?.ToString()?.Trim()
+                : string.Empty;
 
             if (!string.IsNullOrEmpty(experienceId))
             {
-                ModuleData.ExperienceData idMatch = module.ExperienceDataList.FirstOrDefault(experience => string.Equals(experience.ExperienceId, experienceId, StringComparison.OrdinalIgnoreCase));
+                ModuleData.ExperienceData idMatch = module.ExperienceDataList.FirstOrDefault(
+                    experience =>
+                        string.Equals(
+                            experience.ExperienceId,
+                            experienceId,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                );
                 if (idMatch != null)
                     return idMatch;
             }
 
             if (!string.IsNullOrEmpty(experienceName))
             {
-                ModuleData.ExperienceData nameMatch = module.ExperienceDataList.FirstOrDefault(experience => string.Equals(experience.Name, experienceName, StringComparison.OrdinalIgnoreCase));
+                ModuleData.ExperienceData nameMatch = module.ExperienceDataList.FirstOrDefault(
+                    experience =>
+                        string.Equals(
+                            experience.Name,
+                            experienceName,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                );
                 if (nameMatch != null)
                     return nameMatch;
             }
 
-            if (!string.IsNullOrEmpty(experienceType) && Enum.TryParse(experienceType, true, out ModuleData.ExperienceType parsedType))
+            if (
+                !string.IsNullOrEmpty(experienceType)
+                && Enum.TryParse(experienceType, true, out ModuleData.ExperienceType parsedType)
+            )
             {
-                ModuleData.ExperienceData typeMatch = module.ExperienceDataList.FirstOrDefault(experience => experience.Type == parsedType);
+                ModuleData.ExperienceData typeMatch = module.ExperienceDataList.FirstOrDefault(
+                    experience => experience.Type == parsedType
+                );
                 if (typeMatch != null)
                     return typeMatch;
             }
 
-            ModuleData.ExperienceData trainingMatch = module.ExperienceDataList.FirstOrDefault(experience => experience.Type == ModuleData.ExperienceType.Training);
+            ModuleData.ExperienceData trainingMatch = module.ExperienceDataList.FirstOrDefault(
+                experience => experience.Type == ModuleData.ExperienceType.Training
+            );
             return trainingMatch ?? module.ExperienceDataList.FirstOrDefault();
         }
 
@@ -3329,19 +4476,28 @@ namespace UnityMCP.Editor
             if (string.IsNullOrEmpty(token))
                 throw new InvalidOperationException("Not logged in.");
 
-            string url = AuthUtility.GetBaseUrl().TrimEnd('/') + AuthUtility.ApiEndpoints.AccessModules;
+            string url =
+                AuthUtility.GetBaseUrl().TrimEnd('/') + AuthUtility.ApiEndpoints.AccessModules;
             using (var request = new HttpRequestMessage(HttpMethod.Get, url))
             {
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
-                HttpResponseMessage response = HttpClient.SendAsync(request).GetAwaiter().GetResult();
+                request.Headers.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                HttpResponseMessage response = HttpClient
+                    .SendAsync(request)
+                    .GetAwaiter()
+                    .GetResult();
                 string payload = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
                 if (!response.IsSuccessStatusCode)
-                    throw new InvalidOperationException($"Access-modules request failed ({(int)response.StatusCode}): {payload}");
+                    throw new InvalidOperationException(
+                        $"Access-modules request failed ({(int)response.StatusCode}): {payload}"
+                    );
 
                 AccessModulesResponse parsed = JsonUtility.FromJson<AccessModulesResponse>(payload);
                 if (parsed == null)
-                    throw new InvalidOperationException("Access-modules response could not be parsed.");
+                    throw new InvalidOperationException(
+                        "Access-modules response could not be parsed."
+                    );
 
                 return parsed;
             }
@@ -3350,15 +4506,21 @@ namespace UnityMCP.Editor
         private static LoginResponse PerformLogin(string username, string password)
         {
             string url = AuthUtility.GetBaseUrl().TrimEnd('/') + AuthUtility.ApiEndpoints.Login;
-            string body = JsonUtility.ToJson(new LoginRequest { username = username, password = password });
+            string body = JsonUtility.ToJson(
+                new LoginRequest { username = username, password = password }
+            );
 
             using (var request = new HttpRequestMessage(HttpMethod.Post, url))
             {
                 request.Content = new StringContent(body, Encoding.UTF8, "application/json");
-                HttpResponseMessage response = HttpClient.SendAsync(request).GetAwaiter().GetResult();
+                HttpResponseMessage response = HttpClient
+                    .SendAsync(request)
+                    .GetAwaiter()
+                    .GetResult();
                 string payload = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
 
-                LoginResponse parsed = JsonUtility.FromJson<LoginResponse>(payload) ?? new LoginResponse();
+                LoginResponse parsed =
+                    JsonUtility.FromJson<LoginResponse>(payload) ?? new LoginResponse();
                 if (!response.IsSuccessStatusCode && string.IsNullOrEmpty(parsed.message))
                     parsed.message = $"HTTP {(int)response.StatusCode}: {payload}";
 
@@ -3380,13 +4542,19 @@ namespace UnityMCP.Editor
                 string payload = parts[1].Replace('-', '+').Replace('_', '/');
                 switch (payload.Length % 4)
                 {
-                    case 2: payload += "=="; break;
-                    case 3: payload += "="; break;
+                    case 2:
+                        payload += "==";
+                        break;
+                    case 3:
+                        payload += "=";
+                        break;
                 }
 
                 string json = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
                 JwtPayload parsed = JsonUtility.FromJson<JwtPayload>(json);
-                return parsed != null && parsed.exp > 0 ? DateTimeOffset.FromUnixTimeSeconds(parsed.exp).UtcDateTime : (DateTime?)null;
+                return parsed != null && parsed.exp > 0
+                    ? DateTimeOffset.FromUnixTimeSeconds(parsed.exp).UtcDateTime
+                    : (DateTime?)null;
             }
             catch
             {
@@ -3465,9 +4633,10 @@ namespace UnityMCP.Editor
         // ══════════════════════════════════════════════
         public static object PivotRotateLimiterAnalyze(Dictionary<string, object> args)
         {
-            string gameObjectName = args != null && args.ContainsKey("gameObjectName")
-                ? args["gameObjectName"]?.ToString() ?? ""
-                : "";
+            string gameObjectName =
+                args != null && args.ContainsKey("gameObjectName")
+                    ? args["gameObjectName"]?.ToString() ?? ""
+                    : "";
 
             if (string.IsNullOrEmpty(gameObjectName))
                 return new Dictionary<string, object> { { "error", "gameObjectName is required" } };
@@ -3476,19 +4645,36 @@ namespace UnityMCP.Editor
             {
                 var setupType = FindTypeAcrossAssemblies("VRsePivotRotateLimiterSetup");
                 if (setupType == null)
-                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup not found — ensure the script is compiled in the project." } };
+                    return new Dictionary<string, object>
+                    {
+                        {
+                            "error",
+                            "VRsePivotRotateLimiterSetup not found — ensure the script is compiled in the project."
+                        },
+                    };
 
-                var analyzeMethod = setupType.GetMethod("Analyze", BindingFlags.Public | BindingFlags.Static);
+                var analyzeMethod = setupType.GetMethod(
+                    "Analyze",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 if (analyzeMethod == null)
-                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup.Analyze method not found." } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "VRsePivotRotateLimiterSetup.Analyze method not found." },
+                    };
 
                 string json = (string)analyzeMethod.Invoke(null, new object[] { gameObjectName });
                 var parsed = MiniJson.Deserialize(json);
-                return parsed ?? new Dictionary<string, object> { { "error", "Analyze returned null" } };
+                return parsed
+                    ?? new Dictionary<string, object> { { "error", "Analyze returned null" } };
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", ex.Message }, { "stackTrace", ex.StackTrace } };
+                return new Dictionary<string, object>
+                {
+                    { "error", ex.Message },
+                    { "stackTrace", ex.StackTrace },
+                };
             }
         }
 
@@ -3505,46 +4691,169 @@ namespace UnityMCP.Editor
             {
                 var setupType = FindTypeAcrossAssemblies("VRsePivotRotateLimiterSetup");
                 if (setupType == null)
-                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup not found — ensure the script is compiled in the project." } };
+                    return new Dictionary<string, object>
+                    {
+                        {
+                            "error",
+                            "VRsePivotRotateLimiterSetup not found — ensure the script is compiled in the project."
+                        },
+                    };
 
                 var paramsType = setupType.GetNestedType("Params", BindingFlags.Public);
                 if (paramsType == null)
-                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup.Params nested type not found." } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "VRsePivotRotateLimiterSetup.Params nested type not found." },
+                    };
 
-                var createMethod = setupType.GetMethod("Create", BindingFlags.Public | BindingFlags.Static);
+                var createMethod = setupType.GetMethod(
+                    "Create",
+                    BindingFlags.Public | BindingFlags.Static
+                );
                 if (createMethod == null)
-                    return new Dictionary<string, object> { { "error", "VRsePivotRotateLimiterSetup.Create method not found." } };
+                    return new Dictionary<string, object>
+                    {
+                        { "error", "VRsePivotRotateLimiterSetup.Create method not found." },
+                    };
 
-                int rotationAxisRaw = args.TryGetValue("rotationAxis", out var axisVal) ? Convert.ToInt32(axisVal) : 1;
+                int rotationAxisRaw = args.TryGetValue("rotationAxis", out var axisVal)
+                    ? Convert.ToInt32(axisVal)
+                    : 1;
 
                 // Build the Params instance via reflection
                 var p = Activator.CreateInstance(paramsType);
-                SetField(paramsType, p, "instanceId",       args.TryGetValue("instanceId",       out var idVal)   ? Convert.ToInt32(idVal)          : 0);
-                SetField(paramsType, p, "parentObjectPath", args.TryGetValue("parentObjectPath", out var pathVal) ? pathVal?.ToString() ?? ""        : "");
-                SetField(paramsType, p, "rotatingMeshName", args.TryGetValue("rotatingMeshName", out var rmVal)  ? rmVal?.ToString()  ?? ""         : "");
-                SetField(paramsType, p, "staticMeshNames",  args.TryGetValue("staticMeshNames",  out var smVal)  ? smVal?.ToString()  ?? ""         : "");
-                SetField(paramsType, p, "rootMeshIsStatic", args.TryGetValue("rootMeshIsStatic", out var rmsVal) ? Convert.ToBoolean(rmsVal)        : true);
-                SetField(paramsType, p, "rotationAxis",     rotationAxisRaw);
-                SetField(paramsType, p, "rotationKind",     args.TryGetValue("rotationKind",  out var rkVal)   ? rkVal?.ToString() ?? ""          : "");
-                SetField(paramsType, p, "minAngle",         args.TryGetValue("minAngle", out var minVal)         ? (float)Convert.ToDouble(minVal)  : 0f);
-                SetField(paramsType, p, "maxAngle",         args.TryGetValue("maxAngle", out var maxVal)         ? (float)Convert.ToDouble(maxVal)  : 90f);
-                SetField(paramsType, p, "useRootAsParent",  args.TryGetValue("useRootAsParent", out var urpVal)  ? Convert.ToBoolean(urpVal)        : false);
+                SetField(
+                    paramsType,
+                    p,
+                    "instanceId",
+                    args.TryGetValue("instanceId", out var idVal) ? Convert.ToInt32(idVal) : 0
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "parentObjectPath",
+                    args.TryGetValue("parentObjectPath", out var pathVal)
+                        ? pathVal?.ToString() ?? ""
+                        : ""
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "rotatingMeshName",
+                    args.TryGetValue("rotatingMeshName", out var rmVal)
+                        ? rmVal?.ToString() ?? ""
+                        : ""
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "staticMeshNames",
+                    args.TryGetValue("staticMeshNames", out var smVal)
+                        ? smVal?.ToString() ?? ""
+                        : ""
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "rootMeshIsStatic",
+                    args.TryGetValue("rootMeshIsStatic", out var rmsVal)
+                        ? Convert.ToBoolean(rmsVal)
+                        : true
+                );
+                SetField(paramsType, p, "rotationAxis", rotationAxisRaw);
+                SetField(
+                    paramsType,
+                    p,
+                    "rotationKind",
+                    args.TryGetValue("rotationKind", out var rkVal) ? rkVal?.ToString() ?? "" : ""
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "minAngle",
+                    args.TryGetValue("minAngle", out var minVal)
+                        ? (float)Convert.ToDouble(minVal)
+                        : 0f
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "maxAngle",
+                    args.TryGetValue("maxAngle", out var maxVal)
+                        ? (float)Convert.ToDouble(maxVal)
+                        : 90f
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "useRootAsParent",
+                    args.TryGetValue("useRootAsParent", out var urpVal)
+                        ? Convert.ToBoolean(urpVal)
+                        : false
+                );
                 // Hinge placement. hingeDirX/Y/Z is the world-direction-toward-hinge that drives the
                 // deterministic server-side snap; overridePivot/pivotX-Z are the explicit world-position
                 // escape hatch. These were previously dropped here, which is why the hinge stayed at center.
-                SetField(paramsType, p, "hingeDirX",        args.TryGetValue("hingeDirX",     out var hdxVal)  ? (float)Convert.ToDouble(hdxVal)  : 0f);
-                SetField(paramsType, p, "hingeDirY",        args.TryGetValue("hingeDirY",     out var hdyVal)  ? (float)Convert.ToDouble(hdyVal)  : 0f);
-                SetField(paramsType, p, "hingeDirZ",        args.TryGetValue("hingeDirZ",     out var hdzVal)  ? (float)Convert.ToDouble(hdzVal)  : 0f);
-                SetField(paramsType, p, "overridePivot",    args.TryGetValue("overridePivot", out var opVal)   ? Convert.ToBoolean(opVal)         : false);
-                SetField(paramsType, p, "pivotX",           args.TryGetValue("pivotX",        out var pxVal)   ? (float)Convert.ToDouble(pxVal)   : 0f);
-                SetField(paramsType, p, "pivotY",           args.TryGetValue("pivotY",        out var pyVal)   ? (float)Convert.ToDouble(pyVal)   : 0f);
-                SetField(paramsType, p, "pivotZ",           args.TryGetValue("pivotZ",        out var pzVal)   ? (float)Convert.ToDouble(pzVal)   : 0f);
+                SetField(
+                    paramsType,
+                    p,
+                    "hingeDirX",
+                    args.TryGetValue("hingeDirX", out var hdxVal)
+                        ? (float)Convert.ToDouble(hdxVal)
+                        : 0f
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "hingeDirY",
+                    args.TryGetValue("hingeDirY", out var hdyVal)
+                        ? (float)Convert.ToDouble(hdyVal)
+                        : 0f
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "hingeDirZ",
+                    args.TryGetValue("hingeDirZ", out var hdzVal)
+                        ? (float)Convert.ToDouble(hdzVal)
+                        : 0f
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "overridePivot",
+                    args.TryGetValue("overridePivot", out var opVal)
+                        ? Convert.ToBoolean(opVal)
+                        : false
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "pivotX",
+                    args.TryGetValue("pivotX", out var pxVal) ? (float)Convert.ToDouble(pxVal) : 0f
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "pivotY",
+                    args.TryGetValue("pivotY", out var pyVal) ? (float)Convert.ToDouble(pyVal) : 0f
+                );
+                SetField(
+                    paramsType,
+                    p,
+                    "pivotZ",
+                    args.TryGetValue("pivotZ", out var pzVal) ? (float)Convert.ToDouble(pzVal) : 0f
+                );
 
                 string result = (string)createMethod.Invoke(null, new object[] { p });
                 var parts = result.Split(new[] { "|||" }, StringSplitOptions.None);
 
                 if (parts[0] == "FAIL")
-                    return new Dictionary<string, object> { { "success", false }, { "message", parts.Length > 1 ? parts[1] : "Unknown error" } };
+                    return new Dictionary<string, object>
+                    {
+                        { "success", false },
+                        { "message", parts.Length > 1 ? parts[1] : "Unknown error" },
+                    };
 
                 return new Dictionary<string, object>
                 {
@@ -3556,7 +4865,11 @@ namespace UnityMCP.Editor
             }
             catch (Exception ex)
             {
-                return new Dictionary<string, object> { { "error", ex.Message }, { "stackTrace", ex.StackTrace } };
+                return new Dictionary<string, object>
+                {
+                    { "error", ex.Message },
+                    { "stackTrace", ex.StackTrace },
+                };
             }
         }
 
@@ -3565,7 +4878,8 @@ namespace UnityMCP.Editor
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
             {
                 var t = asm.GetType(typeName);
-                if (t != null) return t;
+                if (t != null)
+                    return t;
             }
             return null;
         }
@@ -3573,7 +4887,8 @@ namespace UnityMCP.Editor
         private static void SetField(Type type, object instance, string fieldName, object value)
         {
             var field = type.GetField(fieldName, BindingFlags.Public | BindingFlags.Instance);
-            if (field != null) field.SetValue(instance, value);
+            if (field != null)
+                field.SetValue(instance, value);
         }
     }
 }

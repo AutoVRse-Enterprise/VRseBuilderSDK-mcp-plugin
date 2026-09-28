@@ -27,7 +27,8 @@ namespace UnityMCP.Editor
         // Populated via CompilationPipeline.assemblyCompilationFinished.
         // Cleared automatically at the start of each new compilation cycle.
         // Not affected by console Clear().
-        private static readonly List<CompilationError> _compilationErrors = new List<CompilationError>();
+        private static readonly List<CompilationError> _compilationErrors =
+            new List<CompilationError>();
         private static bool _compilationHooked = false;
 
         private struct CompilationError
@@ -54,7 +55,8 @@ namespace UnityMCP.Editor
         /// </summary>
         public static void EnsureListening()
         {
-            if (_isListening) return;
+            if (_isListening)
+                return;
             // Use logMessageReceivedThreaded to capture messages from ALL threads,
             // not just the main thread. This catches async compilation errors,
             // background job failures, etc.
@@ -68,7 +70,8 @@ namespace UnityMCP.Editor
         /// </summary>
         public static void EnsureCompilationHook()
         {
-            if (_compilationHooked) return;
+            if (_compilationHooked)
+                return;
             CompilationPipeline.compilationStarted += OnCompilationStarted;
             CompilationPipeline.assemblyCompilationFinished += OnAssemblyCompilationFinished;
             _compilationHooked = true;
@@ -77,10 +80,16 @@ namespace UnityMCP.Editor
         private static void OnCompilationStarted(object context)
         {
             // Fresh compilation cycle — clear previous results
-            lock (_compilationErrors) { _compilationErrors.Clear(); }
+            lock (_compilationErrors)
+            {
+                _compilationErrors.Clear();
+            }
         }
 
-        private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
+        private static void OnAssemblyCompilationFinished(
+            string assemblyPath,
+            CompilerMessage[] messages
+        )
         {
             // Extract assembly name from path (e.g. "Library/ScriptAssemblies/Assembly-CSharp.dll" → "Assembly-CSharp")
             string asmName = System.IO.Path.GetFileNameWithoutExtension(assemblyPath);
@@ -90,19 +99,24 @@ namespace UnityMCP.Editor
                 foreach (var msg in messages)
                 {
                     // Only capture errors and warnings, skip info
-                    if (msg.type != CompilerMessageType.Error && msg.type != CompilerMessageType.Warning)
+                    if (
+                        msg.type != CompilerMessageType.Error
+                        && msg.type != CompilerMessageType.Warning
+                    )
                         continue;
 
-                    _compilationErrors.Add(new CompilationError
-                    {
-                        file = msg.file ?? "",
-                        line = msg.line,
-                        column = msg.column,
-                        message = msg.message ?? "",
-                        severity = msg.type == CompilerMessageType.Error ? "error" : "warning",
-                        assembly = asmName,
-                        timestamp = DateTime.Now,
-                    });
+                    _compilationErrors.Add(
+                        new CompilationError
+                        {
+                            file = msg.file ?? "",
+                            line = msg.line,
+                            column = msg.column,
+                            message = msg.message ?? "",
+                            severity = msg.type == CompilerMessageType.Error ? "error" : "warning",
+                            assembly = asmName,
+                            timestamp = DateTime.Now,
+                        }
+                    );
                 }
             }
         }
@@ -111,13 +125,15 @@ namespace UnityMCP.Editor
         {
             lock (_logEntries)
             {
-                _logEntries.Add(new LogEntry
-                {
-                    message = message,
-                    stackTrace = stackTrace,
-                    type = type,
-                    timestamp = DateTime.Now,
-                });
+                _logEntries.Add(
+                    new LogEntry
+                    {
+                        message = message,
+                        stackTrace = stackTrace,
+                        type = type,
+                        timestamp = DateTime.Now,
+                    }
+                );
 
                 // Keep max entries capped
                 if (_logEntries.Count > MaxEntries)
@@ -130,7 +146,9 @@ namespace UnityMCP.Editor
             EnsureListening();
 
             int count = args.ContainsKey("count") ? Convert.ToInt32(args["count"]) : 50;
-            string typeFilter = args.ContainsKey("type") ? args["type"].ToString().ToLower() : "all";
+            string typeFilter = args.ContainsKey("type")
+                ? args["type"].ToString().ToLower()
+                : "all";
 
             var entries = new List<Dictionary<string, object>>();
             lock (_logEntries)
@@ -144,7 +162,12 @@ namespace UnityMCP.Editor
 
                     if (typeFilter != "all")
                     {
-                        if (typeFilter == "error" && entry.type != LogType.Error && entry.type != LogType.Exception && entry.type != LogType.Assert)
+                        if (
+                            typeFilter == "error"
+                            && entry.type != LogType.Error
+                            && entry.type != LogType.Exception
+                            && entry.type != LogType.Assert
+                        )
                             continue;
                         if (typeFilter == "warning" && entry.type != LogType.Warning)
                             continue;
@@ -152,13 +175,15 @@ namespace UnityMCP.Editor
                             continue;
                     }
 
-                    entries.Add(new Dictionary<string, object>
-                    {
-                        { "message", entry.message },
-                        { "type", entry.type.ToString().ToLower() },
-                        { "timestamp", entry.timestamp.ToString("HH:mm:ss.fff") },
-                        { "stackTrace", entry.stackTrace ?? "" },
-                    });
+                    entries.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "message", entry.message },
+                            { "type", entry.type.ToString().ToLower() },
+                            { "timestamp", entry.timestamp.ToString("HH:mm:ss.fff") },
+                            { "stackTrace", entry.stackTrace ?? "" },
+                        }
+                    );
                 }
             }
 
@@ -181,7 +206,9 @@ namespace UnityMCP.Editor
             EnsureCompilationHook();
 
             int count = args.ContainsKey("count") ? Convert.ToInt32(args["count"]) : 50;
-            string severityFilter = args.ContainsKey("severity") ? args["severity"].ToString().ToLower() : "all";
+            string severityFilter = args.ContainsKey("severity")
+                ? args["severity"].ToString().ToLower()
+                : "all";
 
             var entries = new List<Dictionary<string, object>>();
             lock (_compilationErrors)
@@ -194,16 +221,18 @@ namespace UnityMCP.Editor
                     if (severityFilter != "all" && err.severity != severityFilter)
                         continue;
 
-                    entries.Add(new Dictionary<string, object>
-                    {
-                        { "file", err.file },
-                        { "line", err.line },
-                        { "column", err.column },
-                        { "message", err.message },
-                        { "severity", err.severity },
-                        { "assembly", err.assembly },
-                        { "timestamp", err.timestamp.ToString("HH:mm:ss.fff") },
-                    });
+                    entries.Add(
+                        new Dictionary<string, object>
+                        {
+                            { "file", err.file },
+                            { "line", err.line },
+                            { "column", err.column },
+                            { "message", err.message },
+                            { "severity", err.severity },
+                            { "assembly", err.assembly },
+                            { "timestamp", err.timestamp.ToString("HH:mm:ss.fff") },
+                        }
+                    );
                 }
             }
 
@@ -220,7 +249,10 @@ namespace UnityMCP.Editor
         public static object Clear()
         {
             EnsureListening();
-            lock (_logEntries) { _logEntries.Clear(); }
+            lock (_logEntries)
+            {
+                _logEntries.Clear();
+            }
             return new { success = true, message = "Console log buffer cleared" };
         }
     }

@@ -26,7 +26,12 @@ namespace UnityMCP.Editor
             File.WriteAllText(fullPath, content);
             AssetDatabase.ImportAsset(path);
 
-            return new { success = true, path, size = content.Length };
+            return new
+            {
+                success = true,
+                path,
+                size = content.Length,
+            };
         }
 
         public static object Read(Dictionary<string, object> args)
@@ -66,7 +71,12 @@ namespace UnityMCP.Editor
             File.WriteAllText(fullPath, content);
             AssetDatabase.ImportAsset(path);
 
-            return new { success = true, path, size = content.Length };
+            return new
+            {
+                success = true,
+                path,
+                size = content.Length,
+            };
         }
     }
 }

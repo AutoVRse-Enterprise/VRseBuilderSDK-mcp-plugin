@@ -14,21 +14,22 @@ namespace UnityMCP.Editor
     public static class MCPScenarioCommands
     {
         // Assembly: Unity.Multiplayer.PlayMode.Scenarios.Editor
-        private static Type _scenarioConfigType;   // Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioConfig (internal)
-        private static Type _scenarioRunnerType;    // Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioRunner (internal)
-        private static Type _scenarioStatusType;    // Unity.Multiplayer.PlayMode.Scenarios.Editor.Api.ScenarioStatus (internal struct)
-        private static Type _scenarioType;          // Unity.Multiplayer.PlayMode.Scenarios.Editor.GraphsFoundation.Scenario (internal)
+        private static Type _scenarioConfigType; // Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioConfig (internal)
+        private static Type _scenarioRunnerType; // Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioRunner (internal)
+        private static Type _scenarioStatusType; // Unity.Multiplayer.PlayMode.Scenarios.Editor.Api.ScenarioStatus (internal struct)
+        private static Type _scenarioType; // Unity.Multiplayer.PlayMode.Scenarios.Editor.GraphsFoundation.Scenario (internal)
         private static Type _instanceDescriptionType; // Unity.Multiplayer.PlayMode.Scenarios.Editor.InstanceDescription (internal)
 
         // Assembly: Unity.Multiplayer.Playmode
-        private static Type _currentPlayerType;     // Unity.Multiplayer.Playmode.CurrentPlayer (public)
+        private static Type _currentPlayerType; // Unity.Multiplayer.Playmode.CurrentPlayer (public)
 
         private static bool _initialized = false;
         private static bool _mppmAvailable = false;
 
         private static void InitializeReflection()
         {
-            if (_initialized) return;
+            if (_initialized)
+                return;
             _initialized = true;
 
             try
@@ -48,16 +49,28 @@ namespace UnityMCP.Editor
 
                 if (scenariosAssembly != null)
                 {
-                    _scenarioConfigType = scenariosAssembly.GetType("Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioConfig");
-                    _scenarioRunnerType = scenariosAssembly.GetType("Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioRunner");
-                    _scenarioStatusType = scenariosAssembly.GetType("Unity.Multiplayer.PlayMode.Scenarios.Editor.Api.ScenarioStatus");
-                    _scenarioType = scenariosAssembly.GetType("Unity.Multiplayer.PlayMode.Scenarios.Editor.GraphsFoundation.Scenario");
-                    _instanceDescriptionType = scenariosAssembly.GetType("Unity.Multiplayer.PlayMode.Scenarios.Editor.InstanceDescription");
+                    _scenarioConfigType = scenariosAssembly.GetType(
+                        "Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioConfig"
+                    );
+                    _scenarioRunnerType = scenariosAssembly.GetType(
+                        "Unity.Multiplayer.PlayMode.Scenarios.Editor.ScenarioRunner"
+                    );
+                    _scenarioStatusType = scenariosAssembly.GetType(
+                        "Unity.Multiplayer.PlayMode.Scenarios.Editor.Api.ScenarioStatus"
+                    );
+                    _scenarioType = scenariosAssembly.GetType(
+                        "Unity.Multiplayer.PlayMode.Scenarios.Editor.GraphsFoundation.Scenario"
+                    );
+                    _instanceDescriptionType = scenariosAssembly.GetType(
+                        "Unity.Multiplayer.PlayMode.Scenarios.Editor.InstanceDescription"
+                    );
                 }
 
                 if (mppmAssembly != null)
                 {
-                    _currentPlayerType = mppmAssembly.GetType("Unity.Multiplayer.Playmode.CurrentPlayer");
+                    _currentPlayerType = mppmAssembly.GetType(
+                        "Unity.Multiplayer.Playmode.CurrentPlayer"
+                    );
                 }
 
                 _mppmAvailable = _scenarioConfigType != null && _scenarioRunnerType != null;
@@ -74,7 +87,7 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "error", message },
-                { "mppmAvailable", _mppmAvailable }
+                { "mppmAvailable", _mppmAvailable },
             };
         }
 
@@ -98,18 +111,29 @@ namespace UnityMCP.Editor
                 var guids = AssetDatabase.FindAssets("t:ScriptableObject");
 
                 // Get properties we need (using NonPublic since type is internal)
-                var bindFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                var bindFlags =
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
                 var scenarioProperty = _scenarioConfigType.GetProperty("Scenario", bindFlags);
                 var descriptionProperty = _scenarioConfigType.GetProperty("Description", bindFlags);
-                var editorInstanceProperty = _scenarioConfigType.GetProperty("EditorInstance", bindFlags);
-                var virtualEditorInstancesProperty = _scenarioConfigType.GetProperty("VirtualEditorInstances", bindFlags);
-                var localInstancesProperty = _scenarioConfigType.GetProperty("LocalInstances", bindFlags);
+                var editorInstanceProperty = _scenarioConfigType.GetProperty(
+                    "EditorInstance",
+                    bindFlags
+                );
+                var virtualEditorInstancesProperty = _scenarioConfigType.GetProperty(
+                    "VirtualEditorInstances",
+                    bindFlags
+                );
+                var localInstancesProperty = _scenarioConfigType.GetProperty(
+                    "LocalInstances",
+                    bindFlags
+                );
 
                 foreach (var guid in guids)
                 {
                     var path = AssetDatabase.GUIDToAssetPath(guid);
                     var asset = AssetDatabase.LoadAssetAtPath(path, _scenarioConfigType);
-                    if (asset == null) continue;
+                    if (asset == null)
+                        continue;
 
                     try
                     {
@@ -118,8 +142,12 @@ namespace UnityMCP.Editor
                         var description = descriptionProperty?.GetValue(asset) as string ?? "";
 
                         var editorInst = editorInstanceProperty?.GetValue(asset);
-                        var virtualInsts = virtualEditorInstancesProperty?.GetValue(asset) as System.Collections.IEnumerable;
-                        var localInsts = localInstancesProperty?.GetValue(asset) as System.Collections.IEnumerable;
+                        var virtualInsts =
+                            virtualEditorInstancesProperty?.GetValue(asset)
+                            as System.Collections.IEnumerable;
+                        var localInsts =
+                            localInstancesProperty?.GetValue(asset)
+                            as System.Collections.IEnumerable;
 
                         var scenarioInfo = new Dictionary<string, object>
                         {
@@ -128,7 +156,7 @@ namespace UnityMCP.Editor
                             { "description", description },
                             { "hasEditorInstance", editorInst != null },
                             { "virtualInstanceCount", virtualInsts?.Cast<object>().Count() ?? 0 },
-                            { "localInstanceCount", localInsts?.Cast<object>().Count() ?? 0 }
+                            { "localInstanceCount", localInsts?.Cast<object>().Count() ?? 0 },
                         };
 
                         // Add instance details if available
@@ -164,7 +192,9 @@ namespace UnityMCP.Editor
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogWarning($"[UnityMCP] Error processing scenario config at {path}: {ex.Message}");
+                        Debug.LogWarning(
+                            $"[UnityMCP] Error processing scenario config at {path}: {ex.Message}"
+                        );
                     }
                 }
 
@@ -180,25 +210,26 @@ namespace UnityMCP.Editor
 
         private static Dictionary<string, object> GetInstanceInfo(object instance, string typeName)
         {
-            var info = new Dictionary<string, object>
-            {
-                { "type", typeName }
-            };
+            var info = new Dictionary<string, object> { { "type", typeName } };
 
             try
             {
-                if (instance == null) return info;
+                if (instance == null)
+                    return info;
 
                 var instanceType = instance.GetType();
-                var bindFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                var bindFlags =
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
                 var typeNameProperty = instanceType.GetProperty("InstanceTypeName", bindFlags);
                 var runModeStateProperty = instanceType.GetProperty("RunModeState", bindFlags);
 
                 if (typeNameProperty != null)
-                    info["instanceTypeName"] = typeNameProperty.GetValue(instance) as string ?? "Unknown";
+                    info["instanceTypeName"] =
+                        typeNameProperty.GetValue(instance) as string ?? "Unknown";
 
                 if (runModeStateProperty != null)
-                    info["runModeState"] = runModeStateProperty.GetValue(instance)?.ToString() ?? "Unknown";
+                    info["runModeState"] =
+                        runModeStateProperty.GetValue(instance)?.ToString() ?? "Unknown";
             }
             catch (Exception ex)
             {
@@ -227,10 +258,14 @@ namespace UnityMCP.Editor
 
                 var getStatusMethod = _scenarioRunnerType.GetMethod("GetScenarioStatus", bindFlags);
                 var isRunningProperty = _scenarioRunnerType.GetProperty("IsRunning", bindFlags);
-                var activeScenarioProperty = _scenarioRunnerType.GetProperty("ActiveScenario", bindFlags);
+                var activeScenarioProperty = _scenarioRunnerType.GetProperty(
+                    "ActiveScenario",
+                    bindFlags
+                );
 
                 result["isRunning"] = isRunningProperty?.GetValue(null) ?? false;
-                result["activeScenarioName"] = (activeScenarioProperty?.GetValue(null) as UnityEngine.Object)?.name ?? "None";
+                result["activeScenarioName"] =
+                    (activeScenarioProperty?.GetValue(null) as UnityEngine.Object)?.name ?? "None";
 
                 // Get detailed status
                 if (getStatusMethod != null)
@@ -242,16 +277,27 @@ namespace UnityMCP.Editor
                         if (scenarioStatus != null && _scenarioStatusType != null)
                         {
                             // ScenarioStatus is a struct with FIELDS, not properties
-                            var instanceFlags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+                            var instanceFlags =
+                                BindingFlags.Public
+                                | BindingFlags.NonPublic
+                                | BindingFlags.Instance;
                             var stateField = _scenarioStatusType.GetField("State", instanceFlags);
-                            var currentStageField = _scenarioStatusType.GetField("CurrentStage", instanceFlags);
-                            var totalProgressField = _scenarioStatusType.GetField("TotalProgress", instanceFlags);
+                            var currentStageField = _scenarioStatusType.GetField(
+                                "CurrentStage",
+                                instanceFlags
+                            );
+                            var totalProgressField = _scenarioStatusType.GetField(
+                                "TotalProgress",
+                                instanceFlags
+                            );
 
                             if (stateField != null)
-                                result["state"] = stateField.GetValue(scenarioStatus)?.ToString() ?? "Unknown";
+                                result["state"] =
+                                    stateField.GetValue(scenarioStatus)?.ToString() ?? "Unknown";
 
                             if (currentStageField != null)
-                                result["currentStage"] = currentStageField.GetValue(scenarioStatus)?.ToString() ?? "N/A";
+                                result["currentStage"] =
+                                    currentStageField.GetValue(scenarioStatus)?.ToString() ?? "N/A";
 
                             if (totalProgressField != null)
                             {
@@ -300,8 +346,10 @@ namespace UnityMCP.Editor
                     return WrapError($"Could not load ScenarioConfig at path: {path}");
 
                 // Get the Scenario object from the config
-                var scenarioProperty = _scenarioConfigType.GetProperty("Scenario",
-                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                var scenarioProperty = _scenarioConfigType.GetProperty(
+                    "Scenario",
+                    BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance
+                );
 
                 if (scenarioProperty == null)
                     return WrapError("Could not find ScenarioConfig.Scenario property");
@@ -312,8 +360,10 @@ namespace UnityMCP.Editor
 
                 // Call ScenarioRunner.LoadScenario(Scenario scenario)
                 // The parameter type is Scenario (GraphsFoundation.Scenario), not ScenarioConfig
-                var loadMethod = _scenarioRunnerType.GetMethod("LoadScenario",
-                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+                var loadMethod = _scenarioRunnerType.GetMethod(
+                    "LoadScenario",
+                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic
+                );
 
                 if (loadMethod == null)
                     return WrapError("Could not find ScenarioRunner.LoadScenario() method");
@@ -324,7 +374,7 @@ namespace UnityMCP.Editor
                 {
                     { "success", true },
                     { "scenario", (scenarioObj as UnityEngine.Object)?.name ?? configAsset.name },
-                    { "path", path }
+                    { "path", path },
                 };
             }
             catch (Exception ex)
@@ -347,8 +397,13 @@ namespace UnityMCP.Editor
             {
                 var bindFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-                var startMethod = _scenarioRunnerType.GetMethod("StartScenario", bindFlags,
-                    null, Type.EmptyTypes, null);
+                var startMethod = _scenarioRunnerType.GetMethod(
+                    "StartScenario",
+                    bindFlags,
+                    null,
+                    Type.EmptyTypes,
+                    null
+                );
 
                 if (startMethod == null)
                     return WrapError("Could not find ScenarioRunner.StartScenario() method");
@@ -358,7 +413,7 @@ namespace UnityMCP.Editor
                 return new Dictionary<string, object>
                 {
                     { "success", true },
-                    { "message", "Scenario started" }
+                    { "message", "Scenario started" },
                 };
             }
             catch (Exception ex)
@@ -381,8 +436,13 @@ namespace UnityMCP.Editor
             {
                 var bindFlags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
 
-                var stopMethod = _scenarioRunnerType.GetMethod("StopScenario", bindFlags,
-                    null, Type.EmptyTypes, null);
+                var stopMethod = _scenarioRunnerType.GetMethod(
+                    "StopScenario",
+                    bindFlags,
+                    null,
+                    Type.EmptyTypes,
+                    null
+                );
 
                 if (stopMethod == null)
                     return WrapError("Could not find ScenarioRunner.StopScenario() method");
@@ -392,7 +452,7 @@ namespace UnityMCP.Editor
                 return new Dictionary<string, object>
                 {
                     { "success", true },
-                    { "message", "Scenario stopped" }
+                    { "message", "Scenario stopped" },
                 };
             }
             catch (Exception ex)
@@ -419,7 +479,10 @@ namespace UnityMCP.Editor
                 if (System.IO.File.Exists(packageJsonPath))
                 {
                     var json = System.IO.File.ReadAllText(packageJsonPath);
-                    var match = System.Text.RegularExpressions.Regex.Match(json, @"""version""\s*:\s*""([^""]+)""");
+                    var match = System.Text.RegularExpressions.Regex.Match(
+                        json,
+                        @"""version""\s*:\s*""([^""]+)"""
+                    );
                     if (match.Success)
                         mppmVersion = match.Groups[1].Value;
                 }
@@ -440,11 +503,15 @@ namespace UnityMCP.Editor
             {
                 try
                 {
-                    var isMainEditorProperty = _currentPlayerType.GetProperty("IsMainEditor",
-                        BindingFlags.Static | BindingFlags.Public);
+                    var isMainEditorProperty = _currentPlayerType.GetProperty(
+                        "IsMainEditor",
+                        BindingFlags.Static | BindingFlags.Public
+                    );
 
-                    var readOnlyTagsMethod = _currentPlayerType.GetMethod("ReadOnlyTags",
-                        BindingFlags.Static | BindingFlags.Public);
+                    var readOnlyTagsMethod = _currentPlayerType.GetMethod(
+                        "ReadOnlyTags",
+                        BindingFlags.Static | BindingFlags.Public
+                    );
 
                     if (isMainEditorProperty != null)
                         result["isMainEditor"] = isMainEditorProperty.GetValue(null) ?? false;
@@ -454,7 +521,10 @@ namespace UnityMCP.Editor
                         var tags = readOnlyTagsMethod.Invoke(null, null);
                         if (tags is System.Collections.IEnumerable enumerable)
                         {
-                            result["tags"] = enumerable.Cast<object>().Select(t => t.ToString()).ToList();
+                            result["tags"] = enumerable
+                                .Cast<object>()
+                                .Select(t => t.ToString())
+                                .ToList();
                         }
                     }
                 }

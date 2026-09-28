@@ -21,12 +21,14 @@ namespace UnityMCP.Editor
 
             for (int i = 0; i < names.Length; i++)
             {
-                levels.Add(new Dictionary<string, object>
-                {
-                    { "index", i },
-                    { "name", names[i] },
-                    { "isCurrent", i == current },
-                });
+                levels.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "index", i },
+                        { "name", names[i] },
+                        { "isCurrent", i == current },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -88,7 +90,9 @@ namespace UnityMCP.Editor
         {
             return new Dictionary<string, object>
             {
-                { "gravity", new Dictionary<string, object>
+                {
+                    "gravity",
+                    new Dictionary<string, object>
                     {
                         { "x", Physics.gravity.x },
                         { "y", Physics.gravity.y },
@@ -156,11 +160,7 @@ namespace UnityMCP.Editor
             if (updated.Count == 0)
                 return new { error = "No valid settings provided to update" };
 
-            return new Dictionary<string, object>
-            {
-                { "success", true },
-                { "updated", updated },
-            };
+            return new Dictionary<string, object> { { "success", true }, { "updated", updated } };
         }
 
         // ─── Time Settings ───
@@ -203,11 +203,7 @@ namespace UnityMCP.Editor
             if (updated.Count == 0)
                 return new { error = "No valid time settings provided" };
 
-            return new Dictionary<string, object>
-            {
-                { "success", true },
-                { "updated", updated },
-            };
+            return new Dictionary<string, object> { { "success", true }, { "updated", updated } };
         }
 
         // ─── Player Settings ───
@@ -224,8 +220,18 @@ namespace UnityMCP.Editor
                 { "runInBackground", PlayerSettings.runInBackground },
                 { "colorSpace", PlayerSettings.colorSpace.ToString() },
                 { "gpuSkinning", PlayerSettings.gpuSkinning },
-                { "apiCompatibilityLevel", PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup).ToString() },
-                { "scriptingBackend", PlayerSettings.GetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup).ToString() },
+                {
+                    "apiCompatibilityLevel",
+                    PlayerSettings
+                        .GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup)
+                        .ToString()
+                },
+                {
+                    "scriptingBackend",
+                    PlayerSettings
+                        .GetScriptingBackend(EditorUserBuildSettings.selectedBuildTargetGroup)
+                        .ToString()
+                },
                 { "targetArchitecture", EditorUserBuildSettings.activeBuildTarget.ToString() },
             };
         }
@@ -261,11 +267,7 @@ namespace UnityMCP.Editor
             if (updated.Count == 0)
                 return new { error = "No valid player settings provided" };
 
-            return new Dictionary<string, object>
-            {
-                { "success", true },
-                { "updated", updated },
-            };
+            return new Dictionary<string, object> { { "success", true }, { "updated", updated } };
         }
 
         // ─── Render Pipeline ───
@@ -278,10 +280,16 @@ namespace UnityMCP.Editor
             return new Dictionary<string, object>
             {
                 { "currentPipeline", current != null ? current.name : "Built-in" },
-                { "currentPipelineType", current != null ? current.GetType().Name : "Built-in Render Pipeline" },
+                {
+                    "currentPipelineType",
+                    current != null ? current.GetType().Name : "Built-in Render Pipeline"
+                },
                 { "defaultPipeline", defaultPipeline != null ? defaultPipeline.name : "Built-in" },
                 { "colorSpace", QualitySettings.activeColorSpace.ToString() },
-                { "renderPipelineAssetPath", defaultPipeline != null ? AssetDatabase.GetAssetPath(defaultPipeline) : "" },
+                {
+                    "renderPipelineAssetPath",
+                    defaultPipeline != null ? AssetDatabase.GetAssetPath(defaultPipeline) : ""
+                },
             };
         }
     }

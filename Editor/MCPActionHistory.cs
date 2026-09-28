@@ -93,29 +93,71 @@ namespace UnityMCP.Editor
         /// <summary>
         /// Get filtered history. Pass null for any filter to skip it.
         /// </summary>
-        public static List<MCPActionRecord> GetFiltered(string agentFilter, string categoryFilter, string searchText)
+        public static List<MCPActionRecord> GetFiltered(
+            string agentFilter,
+            string categoryFilter,
+            string searchText
+        )
         {
             lock (_lock)
             {
                 var result = new List<MCPActionRecord>();
                 foreach (var r in _history)
                 {
-                    if (!string.IsNullOrEmpty(agentFilter) &&
-                        !string.Equals(r.AgentId, agentFilter, StringComparison.OrdinalIgnoreCase))
+                    if (
+                        !string.IsNullOrEmpty(agentFilter)
+                        && !string.Equals(
+                            r.AgentId,
+                            agentFilter,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
                         continue;
 
-                    if (!string.IsNullOrEmpty(categoryFilter) &&
-                        !string.Equals(r.Category, categoryFilter, StringComparison.OrdinalIgnoreCase))
+                    if (
+                        !string.IsNullOrEmpty(categoryFilter)
+                        && !string.Equals(
+                            r.Category,
+                            categoryFilter,
+                            StringComparison.OrdinalIgnoreCase
+                        )
+                    )
                         continue;
 
                     if (!string.IsNullOrEmpty(searchText))
                     {
                         bool match = false;
-                        if (r.ActionName != null && r.ActionName.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) match = true;
-                        if (!match && r.TargetPath != null && r.TargetPath.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) match = true;
-                        if (!match && r.AgentId != null && r.AgentId.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) match = true;
-                        if (!match && r.ErrorMessage != null && r.ErrorMessage.IndexOf(searchText, StringComparison.OrdinalIgnoreCase) >= 0) match = true;
-                        if (!match) continue;
+                        if (
+                            r.ActionName != null
+                            && r.ActionName.IndexOf(searchText, StringComparison.OrdinalIgnoreCase)
+                                >= 0
+                        )
+                            match = true;
+                        if (
+                            !match
+                            && r.TargetPath != null
+                            && r.TargetPath.IndexOf(searchText, StringComparison.OrdinalIgnoreCase)
+                                >= 0
+                        )
+                            match = true;
+                        if (
+                            !match
+                            && r.AgentId != null
+                            && r.AgentId.IndexOf(searchText, StringComparison.OrdinalIgnoreCase)
+                                >= 0
+                        )
+                            match = true;
+                        if (
+                            !match
+                            && r.ErrorMessage != null
+                            && r.ErrorMessage.IndexOf(
+                                searchText,
+                                StringComparison.OrdinalIgnoreCase
+                            ) >= 0
+                        )
+                            match = true;
+                        if (!match)
+                            continue;
                     }
 
                     result.Add(r);
@@ -162,7 +204,11 @@ namespace UnityMCP.Editor
 
         public static int Count
         {
-            get { lock (_lock) return _history.Count; }
+            get
+            {
+                lock (_lock)
+                    return _history.Count;
+            }
         }
 
         /// <summary>Clear all history.</summary>
@@ -176,8 +222,16 @@ namespace UnityMCP.Editor
             // Delete persistence file
             if (File.Exists(PersistencePath))
             {
-                try { File.Delete(PersistencePath); }
-                catch (Exception ex) { Debug.LogWarning($"[MCP History] Failed to delete persistence file: {ex.Message}"); }
+                try
+                {
+                    File.Delete(PersistencePath);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning(
+                        $"[MCP History] Failed to delete persistence file: {ex.Message}"
+                    );
+                }
             }
         }
 
@@ -190,7 +244,10 @@ namespace UnityMCP.Editor
             try
             {
                 List<MCPActionRecord> snapshot;
-                lock (_lock) { snapshot = new List<MCPActionRecord>(_history); }
+                lock (_lock)
+                {
+                    snapshot = new List<MCPActionRecord>(_history);
+                }
 
                 // Simple JSON array serialization using JsonUtility wrapper
                 var wrapper = new HistoryWrapper();
@@ -198,21 +255,23 @@ namespace UnityMCP.Editor
 
                 foreach (var r in snapshot)
                 {
-                    wrapper.records.Add(new HistoryEntry
-                    {
-                        id = r.Id,
-                        timestamp = r.Timestamp.ToString("O"),
-                        agentId = r.AgentId ?? "",
-                        actionName = r.ActionName ?? "",
-                        category = r.Category ?? "",
-                        status = r.Status ?? "",
-                        executionTimeMs = r.ExecutionTimeMs,
-                        errorMessage = r.ErrorMessage ?? "",
-                        targetInstanceId = r.TargetInstanceId,
-                        targetPath = r.TargetPath ?? "",
-                        targetType = r.TargetType ?? "",
-                        undoGroup = r.UndoGroup,
-                    });
+                    wrapper.records.Add(
+                        new HistoryEntry
+                        {
+                            id = r.Id,
+                            timestamp = r.Timestamp.ToString("O"),
+                            agentId = r.AgentId ?? "",
+                            actionName = r.ActionName ?? "",
+                            category = r.Category ?? "",
+                            status = r.Status ?? "",
+                            executionTimeMs = r.ExecutionTimeMs,
+                            errorMessage = r.ErrorMessage ?? "",
+                            targetInstanceId = r.TargetInstanceId,
+                            targetPath = r.TargetPath ?? "",
+                            targetType = r.TargetType ?? "",
+                            undoGroup = r.UndoGroup,
+                        }
+                    );
                 }
 
                 string json = JsonUtility.ToJson(wrapper, true);
@@ -226,14 +285,16 @@ namespace UnityMCP.Editor
 
         private static void LoadFromDisk()
         {
-            if (!File.Exists(PersistencePath)) return;
+            if (!File.Exists(PersistencePath))
+                return;
 
             try
             {
                 string json = File.ReadAllText(PersistencePath);
                 var wrapper = JsonUtility.FromJson<HistoryWrapper>(json);
 
-                if (wrapper?.records == null) return;
+                if (wrapper?.records == null)
+                    return;
 
                 lock (_lock)
                 {
@@ -241,21 +302,23 @@ namespace UnityMCP.Editor
                     foreach (var entry in wrapper.records)
                     {
                         DateTime.TryParse(entry.timestamp, out var ts);
-                        _history.Add(new MCPActionRecord
-                        {
-                            Id              = entry.id,
-                            Timestamp       = ts,
-                            AgentId         = entry.agentId,
-                            ActionName      = entry.actionName,
-                            Category        = entry.category,
-                            Status          = entry.status,
-                            ExecutionTimeMs = entry.executionTimeMs,
-                            ErrorMessage    = entry.errorMessage,
-                            TargetInstanceId = entry.targetInstanceId,
-                            TargetPath      = entry.targetPath,
-                            TargetType      = entry.targetType,
-                            UndoGroup       = entry.undoGroup,
-                        });
+                        _history.Add(
+                            new MCPActionRecord
+                            {
+                                Id = entry.id,
+                                Timestamp = ts,
+                                AgentId = entry.agentId,
+                                ActionName = entry.actionName,
+                                Category = entry.category,
+                                Status = entry.status,
+                                ExecutionTimeMs = entry.executionTimeMs,
+                                ErrorMessage = entry.errorMessage,
+                                TargetInstanceId = entry.targetInstanceId,
+                                TargetPath = entry.targetPath,
+                                TargetType = entry.targetType,
+                                UndoGroup = entry.undoGroup,
+                            }
+                        );
                     }
 
                     // Restore ID counter
@@ -281,18 +344,18 @@ namespace UnityMCP.Editor
         [Serializable]
         private class HistoryEntry
         {
-            public long   id;
+            public long id;
             public string timestamp;
             public string agentId;
             public string actionName;
             public string category;
             public string status;
-            public long   executionTimeMs;
+            public long executionTimeMs;
             public string errorMessage;
-            public int    targetInstanceId;
+            public int targetInstanceId;
             public string targetPath;
             public string targetType;
-            public int    undoGroup;
+            public int undoGroup;
         }
     }
 }

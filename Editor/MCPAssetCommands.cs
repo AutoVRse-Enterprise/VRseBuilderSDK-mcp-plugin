@@ -41,18 +41,21 @@ namespace UnityMCP.Editor
                 if (!recursive)
                 {
                     string parentDir = Path.GetDirectoryName(path).Replace("\\", "/");
-                    if (parentDir != folder) continue;
+                    if (parentDir != folder)
+                        continue;
                 }
 
                 var assetType = AssetDatabase.GetMainAssetTypeAtPath(path);
-                assets.Add(new Dictionary<string, object>
-                {
-                    { "path", path },
-                    { "name", Path.GetFileName(path) },
-                    { "type", assetType?.Name ?? "Unknown" },
-                    { "guid", guid },
-                    { "isFolder", AssetDatabase.IsValidFolder(path) },
-                });
+                assets.Add(
+                    new Dictionary<string, object>
+                    {
+                        { "path", path },
+                        { "name", Path.GetFileName(path) },
+                        { "type", assetType?.Name ?? "Unknown" },
+                        { "guid", guid },
+                        { "isFolder", AssetDatabase.IsValidFolder(path) },
+                    }
+                );
             }
 
             return new Dictionary<string, object>
@@ -66,7 +69,9 @@ namespace UnityMCP.Editor
         public static object Import(Dictionary<string, object> args)
         {
             string source = args.ContainsKey("sourcePath") ? args["sourcePath"].ToString() : "";
-            string dest = args.ContainsKey("destinationPath") ? args["destinationPath"].ToString() : "";
+            string dest = args.ContainsKey("destinationPath")
+                ? args["destinationPath"].ToString()
+                : "";
 
             if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(dest))
                 return new { error = "sourcePath and destinationPath are required" };
@@ -94,11 +99,14 @@ namespace UnityMCP.Editor
 
         public static object CreatePrefab(Dictionary<string, object> args)
         {
-            string goPath = args.ContainsKey("gameObjectPath") ? args["gameObjectPath"].ToString() : "";
+            string goPath = args.ContainsKey("gameObjectPath")
+                ? args["gameObjectPath"].ToString()
+                : "";
             string savePath = args.ContainsKey("savePath") ? args["savePath"].ToString() : "";
 
             var go = MCPGameObjectCommands.FindGameObject(args);
-            if (go == null) return new { error = "GameObject not found" };
+            if (go == null)
+                return new { error = "GameObject not found" };
 
             if (string.IsNullOrEmpty(savePath))
                 return new { error = "savePath is required" };
@@ -134,24 +142,31 @@ namespace UnityMCP.Editor
                 return new { error = "prefabPath is required" };
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
-            if (prefab == null) return new { error = $"Prefab not found at {prefabPath}" };
+            if (prefab == null)
+                return new { error = $"Prefab not found at {prefabPath}" };
 
             var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            if (instance == null) return new { error = "Failed to instantiate prefab" };
+            if (instance == null)
+                return new { error = "Failed to instantiate prefab" };
 
             if (args.ContainsKey("name"))
                 instance.name = args["name"].ToString();
 
             if (args.ContainsKey("position"))
-                instance.transform.position = MCPGameObjectCommands.DictToVector3(args["position"] as Dictionary<string, object>);
+                instance.transform.position = MCPGameObjectCommands.DictToVector3(
+                    args["position"] as Dictionary<string, object>
+                );
 
             if (args.ContainsKey("rotation"))
-                instance.transform.eulerAngles = MCPGameObjectCommands.DictToVector3(args["rotation"] as Dictionary<string, object>);
+                instance.transform.eulerAngles = MCPGameObjectCommands.DictToVector3(
+                    args["rotation"] as Dictionary<string, object>
+                );
 
             if (args.ContainsKey("parent"))
             {
                 var parent = GameObject.Find(args["parent"].ToString());
-                if (parent != null) instance.transform.SetParent(parent.transform);
+                if (parent != null)
+                    instance.transform.SetParent(parent.transform);
             }
 
             Undo.RegisterCreatedObjectUndo(instance, $"Instantiate {prefab.name}");
@@ -174,7 +189,8 @@ namespace UnityMCP.Editor
                 return new { error = "path is required" };
 
             var shader = Shader.Find(shaderName);
-            if (shader == null) return new { error = $"Shader '{shaderName}' not found" };
+            if (shader == null)
+                return new { error = $"Shader '{shaderName}' not found" };
 
             var material = new Material(shader);
 
@@ -210,7 +226,12 @@ namespace UnityMCP.Editor
             AssetDatabase.CreateAsset(material, path);
             AssetDatabase.SaveAssets();
 
-            return new { success = true, path, shader = shaderName };
+            return new
+            {
+                success = true,
+                path,
+                shader = shaderName,
+            };
         }
     }
 }

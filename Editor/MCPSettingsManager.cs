@@ -13,10 +13,30 @@ namespace UnityMCP.Editor
         // ─── Categories ───
         private static readonly string[] AllCategories = new[]
         {
-            "amplify", "animation", "asmdef", "asset", "audio", "build", "component", "console",
-            "debugger", "editor", "gameobject", "input", "lighting", "physics", "prefab",
-            "profiler", "project", "renderer", "scene", "script", "selection", "shadergraph", "taglayer",
-            "terrain"
+            "amplify",
+            "animation",
+            "asmdef",
+            "asset",
+            "audio",
+            "build",
+            "component",
+            "console",
+            "debugger",
+            "editor",
+            "gameobject",
+            "input",
+            "lighting",
+            "physics",
+            "prefab",
+            "profiler",
+            "project",
+            "renderer",
+            "scene",
+            "script",
+            "selection",
+            "shadergraph",
+            "taglayer",
+            "terrain",
         };
 
         private static Dictionary<string, bool> _enabledCategories;
@@ -113,7 +133,11 @@ namespace UnityMCP.Editor
                 string value = EditorPrefs.GetString(Prefix + "SelectedSkillIds", "");
                 return string.IsNullOrEmpty(value) ? new string[0] : value.Split('|');
             }
-            set => EditorPrefs.SetString(Prefix + "SelectedSkillIds", string.Join("|", value ?? new string[0]));
+            set =>
+                EditorPrefs.SetString(
+                    Prefix + "SelectedSkillIds",
+                    string.Join("|", value ?? new string[0])
+                );
         }
 
         // ─── Project Context ───
@@ -150,7 +174,8 @@ namespace UnityMCP.Editor
 
         public static Dictionary<string, bool> GetEnabledCategories()
         {
-            if (_enabledCategories != null) return _enabledCategories;
+            if (_enabledCategories != null)
+                return _enabledCategories;
 
             _enabledCategories = new Dictionary<string, bool>();
             foreach (var cat in AllCategories)
